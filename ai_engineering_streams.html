@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DeepManthan AI — Engineering Streams Emulator</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cyan:#38E1FF; --teal:#2DD4BF; --bg:#070B12; --bg2:#0A0F1A;
+    --text:#DCE6F2; --muted:#A0D8FF; --line:rgba(56,225,255,0.2);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{
+    font-family:'Space Grotesk',sans-serif;
+    background:linear-gradient(135deg,var(--bg) 0%,var(--bg2) 100%);
+    color:var(--text); min-height:100vh; line-height:1.5;
+  }
+  .header{
+    text-align:center; padding:48px 24px 28px;
+    border-bottom:1px solid var(--line); background:rgba(10,15,26,0.8);
+  }
+  .brand{
+    font-size:2.4rem; font-weight:700;
+    background:linear-gradient(90deg,var(--cyan),var(--teal));
+    -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+    letter-spacing:-0.02em;
+  }
+  .suite{ font-size:1.5rem; color:var(--cyan); margin-top:6px; }
+  .tagline{ color:var(--muted); margin-top:8px; font-size:1.02rem; max-width:760px; margin-left:auto; margin-right:auto;}
+  .back{ position:absolute; top:24px; left:24px; color:var(--cyan); text-decoration:none; font-size:0.9rem;
+    border:1px solid var(--cyan); padding:7px 14px; border-radius:6px; transition:.25s;}
+  .back:hover{ background:var(--cyan); color:var(--bg); }
+
+  .tabs{
+    display:flex; flex-wrap:wrap; justify-content:center; gap:10px;
+    padding:24px 16px 8px; max-width:1000px; margin:0 auto;
+  }
+  .tab{
+    font-family:inherit; font-size:0.95rem; font-weight:600; cursor:pointer;
+    background:rgba(56,225,255,0.06); color:var(--muted);
+    border:1px solid var(--line); border-radius:8px; padding:10px 16px; transition:.2s;
+    display:flex; align-items:center; gap:8px;
+  }
+  .tab:hover{ border-color:var(--cyan); color:var(--cyan); }
+  .tab.active{ background:linear-gradient(135deg,rgba(56,225,255,0.18),rgba(45,212,191,0.10));
+    border-color:var(--cyan); color:var(--cyan); box-shadow:0 0 16px rgba(56,225,255,0.2);}
+  .tab .ico{ font-size:1.15rem; }
+
+  .wrap{ max-width:1000px; margin:0 auto; padding:16px 24px 64px; }
+  .panel{ display:none; animation:fade .4s ease; }
+  .panel.active{ display:block; }
+  @keyframes fade{ from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:none;} }
+
+  .domain-head{ margin:14px 0 6px; }
+  .domain-title{ font-size:1.6rem; color:var(--cyan); font-weight:700; }
+  .domain-sub{ color:var(--muted); margin-top:4px; }
+  .badge{
+    display:inline-block; font-family:'IBM Plex Mono',monospace; font-size:0.78rem;
+    color:var(--teal); border:1px solid var(--teal); border-radius:20px;
+    padding:3px 12px; margin-top:10px; background:rgba(45,212,191,0.08);
+  }
+
+  .diagram{
+    background:rgba(10,15,26,0.6); border:1px solid var(--line); border-radius:14px;
+    padding:14px; margin:18px 0; overflow-x:auto;
+  }
+  .diagram svg{ width:100%; min-width:680px; height:auto; display:block; }
+  .stage-box{ rx:10; }
+  .stage-label{ font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:13px; fill:var(--text); }
+  .stage-sub{ font-family:'IBM Plex Mono',monospace; font-size:9.5px; fill:#7FA8C9; }
+
+  .cards{
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px; margin-top:8px;
+  }
+  .card{
+    background:linear-gradient(135deg,rgba(56,225,255,0.08),rgba(45,212,191,0.04));
+    border:1px solid var(--line); border-radius:12px; padding:18px; transition:.25s;
+  }
+  .card:hover{ border-color:var(--cyan); box-shadow:0 0 18px rgba(56,225,255,0.18); transform:translateY(-3px); }
+  .card h4{ color:var(--cyan); font-size:0.78rem; letter-spacing:.06em; text-transform:uppercase; margin-bottom:8px; }
+  .card p{ color:var(--text); font-size:0.95rem; }
+  .card .big{ font-size:1.25rem; color:var(--teal); font-weight:700; display:block; margin-bottom:4px; font-family:'IBM Plex Mono',monospace;}
+
+  .footer{ border-top:1px solid var(--line); background:rgba(10,15,26,0.95); padding:30px 24px; text-align:center; color:var(--muted); font-size:0.88rem;}
+  .footer .name{ color:var(--cyan); font-weight:600; }
+  .footer a{ color:var(--cyan); text-decoration:none; } .footer a:hover{ text-decoration:underline; }
+
+  @media (max-width:600px){
+    .brand{font-size:1.8rem;} .suite{font-size:1.2rem;}
+    .back{ position:static; display:inline-block; margin-bottom:14px;}
+    .header{ padding:24px 16px;}
+  }
+</style>
+</head>
+<body>
+  <div class="header">
+    <a href="index.html" class="back">← Suite Home</a>
+    <div class="brand">DeepManthan AI</div>
+    <div class="suite">Engineering Streams Emulator</div>
+    <div class="tagline">Real-world AI applications across six core engineering disciplines — from predictive maintenance to structural health monitoring, visualized as live data pipelines.</div>
+  </div>
+
+  <div class="tabs" id="tabs"></div>
+  <div class="wrap" id="panels"></div>
+
+<script>
+const C = { cyan:'#38E1FF', teal:'#2DD4BF', amber:'#FFB454', red:'#FF6B6B' };
+
+const domains = [
+  {
+    id:'electrical', icon:'⚡', tab:'Electrical',
+    title:'Electrical — Transformer Failure Prediction',
+    sub:'Continuously model transformer health from thermal, load and dissolved-gas signals to flag failures before they cascade.',
+    badge:'Early warning: 48–72 hours',
+    stages:[
+      {t:'Transformer Sensors', s:'temp · oil · load · DGA'},
+      {t:'Edge Gateway', s:'sampling · filtering'},
+      {t:'Predictive AI Model', s:'degradation forecast'},
+      {t:'Maintenance Alert', s:'48–72h lead time'}
+    ],
+    flow:C.cyan,
+    cards:[
+      {h:'Use Case', p:'Detect insulation breakdown and overheating in power transformers before catastrophic failure or fire.'},
+      {h:'Lead Time', big:'48–72 hrs', p:'Advance notice to schedule maintenance and avoid unplanned grid outages.'},
+      {h:'How AI Helps', p:'Time-series models learn each unit\'s thermal signature and detect drift from healthy baselines.'},
+      {h:'Impact', p:'Prevents costly downtime, extends asset life, and improves grid reliability.'}
+    ]
+  },
+  {
+    id:'chemical', icon:'⚗️', tab:'Chemical',
+    title:'Chemical — Abnormal Reaction Detection',
+    sub:'Stream reactor telemetry through anomaly models to catch runaway reactions while there is still time to intervene.',
+    badge:'Early warning: 5–30 minutes',
+    stages:[
+      {t:'Reactor Sensors', s:'temp · pressure · pH · flow'},
+      {t:'Real-time Stream', s:'high-rate ingest'},
+      {t:'Anomaly Detection AI', s:'deviation scoring'},
+      {t:'Safety Response', s:'shutdown / operator alert'}
+    ],
+    flow:C.amber,
+    cards:[
+      {h:'Use Case', p:'Identify abnormal exothermic behavior and process deviations in chemical reactors.'},
+      {h:'Lead Time', big:'5–30 min', p:'Window to trigger safe shutdown or corrective dosing before escalation.'},
+      {h:'How AI Helps', p:'Multivariate models correlate temperature, pressure and pH to spot unsafe trajectories early.'},
+      {h:'Impact', p:'Protects personnel, prevents batch loss, and reduces environmental risk.'}
+    ]
+  },
+  {
+    id:'mechanical', icon:'⚙️', tab:'Mechanical',
+    title:'Mechanical — Bearing Failure & RUL',
+    sub:'Vibration and acoustic signatures feed a Remaining-Useful-Life estimator that schedules replacement just in time.',
+    badge:'Output: Remaining Useful Life (RUL)',
+    stages:[
+      {t:'Vibration Sensors', s:'accel · acoustic'},
+      {t:'Feature Extraction', s:'FFT · envelope'},
+      {t:'RUL Estimator', s:'degradation curve'},
+      {t:'Service Schedule', s:'replace-by date'}
+    ],
+    flow:C.teal,
+    cards:[
+      {h:'Use Case', p:'Predict rolling-element bearing wear in motors, pumps and turbines from vibration data.'},
+      {h:'Output', big:'RUL est.', p:'Estimated remaining useful life so parts are replaced before failure, not on a fixed calendar.'},
+      {h:'How AI Helps', p:'Spectral features reveal early micro-defects; regression models project time-to-failure.'},
+      {h:'Impact', p:'Cuts unplanned downtime and avoids both premature and overdue part swaps.'}
+    ]
+  },
+  {
+    id:'telecom', icon:'📡', tab:'Electronics & Telecom',
+    title:'Electronics & Telecom — Network Anomaly Detection',
+    sub:'Inspect traffic at line rate and auto-mitigate anomalies and intrusions in well under a second.',
+    badge:'Response: sub-second',
+    stages:[
+      {t:'Traffic Probes', s:'flow · packet meta'},
+      {t:'Packet Inspection', s:'feature pipeline'},
+      {t:'Anomaly Detection AI', s:'intrusion scoring'},
+      {t:'Auto-Mitigation', s:'block / reroute'}
+    ],
+    flow:C.cyan,
+    cards:[
+      {h:'Use Case', p:'Spot DDoS, intrusions and equipment faults across network and telecom infrastructure.'},
+      {h:'Response', big:'< 1 sec', p:'Sub-second detection-to-action so threats are contained before they spread.'},
+      {h:'How AI Helps', p:'Streaming classifiers flag traffic that deviates from learned normal behavior.'},
+      {h:'Impact', p:'Maintains uptime, protects subscribers, and reduces manual SOC load.'}
+    ]
+  },
+  {
+    id:'robotics', icon:'🤖', tab:'Robotics',
+    title:'Robotics — Trajectory Optimization & Servo Health',
+    sub:'Optimize motion paths in real time while monitoring servo health to keep robots fast, smooth and reliable.',
+    badge:'Dual: path optimization + servo health',
+    stages:[
+      {t:'Joint Encoders / IMU', s:'position · current'},
+      {t:'Motion Planner', s:'path candidates'},
+      {t:'Optimizer + Health AI', s:'trajectory · servo wear'},
+      {t:'Actuation', s:'optimized path / alert'}
+    ],
+    flow:C.teal,
+    cards:[
+      {h:'Use Case', p:'Smooth, energy-efficient motion for robotic arms plus early detection of servo degradation.'},
+      {h:'Output', big:'2-in-1', p:'Real-time trajectory optimization alongside predictive servo-health monitoring.'},
+      {h:'How AI Helps', p:'Optimization refines paths for speed and energy; models track motor current for wear.'},
+      {h:'Impact', p:'Higher throughput, lower energy use, and fewer surprise actuator failures.'}
+    ]
+  },
+  {
+    id:'civil', icon:'🏗️', tab:'Civil',
+    title:'Civil — Structural Health Monitoring',
+    sub:'Round-the-clock monitoring of strain, tilt and acceleration to keep bridges and buildings safe.',
+    badge:'Coverage: 24/7 continuous',
+    stages:[
+      {t:'Structural Sensors', s:'strain · tilt · accel'},
+      {t:'Structural Gateway', s:'aggregation'},
+      {t:'SHM AI Model', s:'damage detection'},
+      {t:'Health Dashboard', s:'24/7 status'}
+    ],
+    flow:C.cyan,
+    cards:[
+      {h:'Use Case', p:'Continuous structural health monitoring for bridges, towers, dams and high-rises.'},
+      {h:'Coverage', big:'24 / 7', p:'Always-on assessment that flags fatigue, cracks and abnormal movement.'},
+      {h:'How AI Helps', p:'Models compare live sensor patterns to a structural baseline to localize damage.'},
+      {h:'Impact', p:'Early intervention, safer infrastructure, and data-driven inspection priorities.'}
+    ]
+  }
+];
+
+// --- Build an SVG pipeline diagram for a domain ---
+function buildDiagram(d){
+  const W=900, H=240, n=d.stages.length;
+  const boxW=170, boxH=86, gap=(W - n*boxW)/(n+1);
+  const cy=H/2 - boxH/2;
+  let boxes='', paths='', packets='';
+  const centers=[];
+  for(let i=0;i<n;i++){
+    const x=gap + i*(boxW+gap);
+    centers.push({x:x+boxW, xl:x, ym:H/2});
+    const s=d.stages[i];
+    boxes += `
+      <rect x="${x}" y="${cy}" width="${boxW}" height="${boxH}" rx="10"
+            fill="rgba(56,225,255,0.06)" stroke="${d.flow}" stroke-width="1.5"/>
+      <text class="stage-label" x="${x+boxW/2}" y="${cy+34}" text-anchor="middle">${wrapTspan(s.t,x+boxW/2,cy+34)}</text>
+      <text class="stage-sub" x="${x+boxW/2}" y="${cy+boxH-14}" text-anchor="middle">${s.s}</text>`;
+  }
+  for(let i=0;i<n-1;i++){
+    const x1=gap + i*(boxW+gap) + boxW;
+    const x2=gap + (i+1)*(boxW+gap);
+    const pid=`${d.id}-p${i}`;
+    paths += `<path id="${pid}" d="M ${x1} ${H/2} L ${x2} ${H/2}" stroke="${d.flow}" stroke-width="2" stroke-opacity="0.35" fill="none"/>
+      <polygon points="${x2-8},${H/2-5} ${x2},${H/2} ${x2-8},${H/2+5}" fill="${d.flow}" opacity="0.7"/>`;
+    // 3 packets per segment, staggered
+    for(let k=0;k<3;k++){
+      packets += `<circle r="5" fill="${d.flow}">
+        <animateMotion dur="2.2s" begin="${(k*0.73).toFixed(2)}s" repeatCount="indefinite" rotate="0">
+          <mpath xlink:href="#${pid}" href="#${pid}"/>
+        </animateMotion>
+        <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.15;0.85;1" dur="2.2s" begin="${(k*0.73).toFixed(2)}s" repeatCount="indefinite"/>
+      </circle>`;
+    }
+  }
+  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    ${paths}${boxes}${packets}</svg>`;
+}
+
+// crude two-line wrap for stage titles
+function wrapTspan(text,x,y){
+  const words=text.split(' ');
+  if(words.length<=2 && text.length<=14) return text;
+  let line1=[], line2=[], len=0;
+  words.forEach(w=>{ if(len<13 && line2.length===0){ line1.push(w); len+=w.length+1; } else line2.push(w); });
+  if(line2.length===0) return text;
+  return `<tspan x="${x}" dy="-6">${line1.join(' ')}</tspan><tspan x="${x}" dy="15">${line2.join(' ')}</tspan>`;
+}
+
+function buildCards(d){
+  return `<div class="cards">${d.cards.map(c=>`
+    <div class="card">
+      <h4>${c.h}</h4>
+      ${c.big?`<span class="big">${c.big}</span>`:''}
+      <p>${c.p}</p>
+    </div>`).join('')}</div>`;
+}
+
+// --- Render tabs + panels ---
+const tabsEl=document.getElementById('tabs');
+const panelsEl=document.getElementById('panels');
+domains.forEach((d,i)=>{
+  const btn=document.createElement('button');
+  btn.className='tab'+(i===0?' active':'');
+  btn.innerHTML=`<span class="ico">${d.icon}</span>${d.tab}`;
+  btn.onclick=()=>activate(i);
+  tabsEl.appendChild(btn);
+
+  const p=document.createElement('div');
+  p.className='panel'+(i===0?' active':'');
+  p.innerHTML=`
+    <div class="domain-head">
+      <div class="domain-title">${d.icon} ${d.title}</div>
+      <div class="domain-sub">${d.sub}</div>
+      <span class="badge">${d.badge}</span>
+    </div>
+    <div class="diagram">${buildDiagram(d)}</div>
+    ${buildCards(d)}`;
+  panelsEl.appendChild(p);
+});
+
+function activate(i){
+  document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',j===i));
+  document.querySelectorAll('.panel').forEach((p,j)=>p.classList.toggle('active',j===i));
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DeepManthan AI — AI Across Industries</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cyan:#38E1FF; --teal:#2DD4BF; --bg:#070B12; --bg2:#0A0F1A;
+    --text:#DCE6F2; --muted:#A0D8FF; --line:rgba(56,225,255,0.2);
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{
+    font-family:'Space Grotesk',sans-serif;
+    background:linear-gradient(135deg,var(--bg) 0%,var(--bg2) 100%);
+    color:var(--text); min-height:100vh; display:flex; flex-direction:column;
+  }
+  .header{
+    text-align:center; padding:48px 24px 28px; position:relative;
+    border-bottom:1px solid var(--line); background:rgba(10,15,26,0.8);
+  }
+  .brand{
+    font-size:2.4rem; font-weight:700;
+    background:linear-gradient(90deg,var(--cyan),var(--teal));
+    -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+    letter-spacing:-0.02em;
+  }
+  .suite{ font-size:1.5rem; color:var(--cyan); margin-top:6px; }
+  .tagline{ color:var(--muted); margin-top:8px; font-size:1.02rem; max-width:760px; margin-left:auto; margin-right:auto; line-height:1.6;}
+  .back{ position:absolute; top:24px; left:24px; color:var(--cyan); text-decoration:none; font-size:0.9rem;
+    border:1px solid var(--cyan); padding:7px 14px; border-radius:6px; transition:.25s;}
+  .back:hover{ background:var(--cyan); color:var(--bg); }
+
+  .wrap{ flex:1; max-width:1000px; margin:0 auto; padding:36px 40px 56px; width:100%; }
+
+  .domains-grid{
+    display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:18px;
+  }
+  .domain-tile{
+    background:linear-gradient(135deg,rgba(56,225,255,0.07),rgba(45,212,191,0.04));
+    border:1px solid rgba(56,225,255,0.25); border-radius:12px; padding:22px; transition:all .3s ease;
+  }
+  .domain-tile:hover{ border-color:var(--cyan); box-shadow:0 0 18px rgba(56,225,255,0.2); transform:translateY(-4px); }
+  .domain-tile .d-icon{ font-size:2rem; margin-bottom:10px; }
+  .domain-tile .d-name{ font-size:1.1rem; color:var(--cyan); font-weight:600; margin-bottom:12px; }
+  .domain-tile .d-uses{ list-style:none; padding:0; margin:0; }
+  .domain-tile .d-uses li{ color:var(--muted); font-size:0.9rem; padding:4px 0 4px 18px; position:relative; line-height:1.4; }
+  .domain-tile .d-uses li::before{ content:'▹'; position:absolute; left:0; color:var(--teal); }
+
+  .footer{ border-top:1px solid var(--line); background:rgba(10,15,26,0.95); padding:30px 24px; text-align:center; color:var(--muted); font-size:0.88rem;}
+  .footer .name{ color:var(--cyan); font-weight:600; }
+  .footer a{ color:var(--cyan); text-decoration:none; } .footer a:hover{ text-decoration:underline; }
+
+  @media (max-width:600px){
+    .brand{font-size:1.8rem;} .suite{font-size:1.2rem;}
+    .back{ position:static; display:inline-block; margin-bottom:14px;}
+    .header{ padding:24px 16px;} .wrap{ padding:28px 20px 40px; }
+  }
+</style>
+</head>
+<body>
+  <div class="header">
+    <a href="index.html" class="back">← Suite Home</a>
+    <div class="brand">DeepManthan AI</div>
+    <div class="suite">AI Across Industries</div>
+    <div class="tagline">Artificial intelligence is transforming every sector. Here are real-world applications powering smarter decisions across the domains that shape daily life.</div>
+  </div>
+
+  <div class="wrap">
+    <div class="domains-grid">
+
+      <div class="domain-tile">
+        <div class="d-icon">🌾</div>
+        <div class="d-name">Agriculture</div>
+        <ul class="d-uses">
+          <li>Crop disease &amp; pest detection</li>
+          <li>Yield prediction &amp; precision irrigation</li>
+          <li>Satellite &amp; drone field monitoring</li>
+        </ul>
+      </div>
+
+      <div class="domain-tile">
+        <div class="d-icon">🏥</div>
+        <div class="d-name">Medical &amp; Healthcare</div>
+        <ul class="d-uses">
+          <li>Diagnostic imaging &amp; early detection</li>
+          <li>Drug discovery &amp; development</li>
+          <li>Patient risk &amp; outcome prediction</li>
+        </ul>
+      </div>
+
+      <div class="domain-tile">
+        <div class="d-icon">🏦</div>
+        <div class="d-name">Banking &amp; Finance</div>
+        <ul class="d-uses">
+          <li>Fraud detection &amp; prevention</li>
+          <li>Credit scoring &amp; risk assessment</li>
+          <li>Algorithmic trading &amp; forecasting</li>
+        </ul>
+      </div>
+
+      <div class="domain-tile">
+        <div class="d-icon">🎓</div>
+        <div class="d-name">Education</div>
+        <ul class="d-uses">
+          <li>Personalized adaptive learning</li>
+          <li>Automated grading &amp; feedback</li>
+          <li>Intelligent tutoring systems</li>
+        </ul>
+      </div>
+
+      <div class="domain-tile">
+        <div class="d-icon">🛒</div>
+        <div class="d-name">Retail &amp; E-commerce</div>
+        <ul class="d-uses">
+          <li>Personalized recommendations</li>
+          <li>Demand forecasting</li>
+          <li>Inventory &amp; price optimization</li>
+        </ul>
+      </div>
+
+      <div class="domain-tile">
+        <div class="d-icon">🚗</div>
+        <div class="d-name">Transportation &amp; Mobility</div>
+        <ul class="d-uses">
+          <li>Autonomous &amp; assisted driving</li>
+          <li>Route &amp; traffic optimization</li>
+          <li>Fleet &amp; demand management</li>
+        </ul>
+      </div>
+
+      <div class="domain-tile">
+        <div class="d-icon">🏭</div>
+        <div class="d-name">Manufacturing</div>
+        <ul class="d-uses">
+          <li>Visual defect detection</li>
+          <li>Predictive maintenance</li>
+          <li>Process &amp; quality control</li>
+        </ul>
+      </div>
+
+      <div class="domain-tile">
+        <div class="d-icon">⚡</div>
+        <div class="d-name">Energy &amp; Utilities</div>
+        <ul class="d-uses">
+          <li>Smart grid load balancing</li>
+          <li>Demand &amp; consumption forecasting</li>
+          <li>Fault &amp; outage detection</li>
+        </ul>
+      </div>
+
+      <div class="domain-tile">
+        <div class="d-icon">🛡️</div>
+        <div class="d-name">Cybersecurity</div>
+        <ul class="d-uses">
+          <li>Threat &amp; intrusion detection</li>
+          <li>Anomaly monitoring</li>
+          <li>Automated incident response</li>
+        </ul>
+      </div>
+
+      <div class="domain-tile">
+        <div class="d-icon">📦</div>
+        <div class="d-name">Logistics &amp; Supply Chain</div>
+        <ul class="d-uses">
+          <li>Route &amp; delivery planning</li>
+          <li>Warehouse automation</li>
+          <li>Demand &amp; inventory planning</li>
+        </ul>
+      </div>
+
+      <div class="domain-tile">
+        <div class="d-icon">🏙️</div>
+        <div class="d-name">Smart Cities</div>
+        <ul class="d-uses">
+          <li>Traffic &amp; signal control</li>
+          <li>Public safety &amp; surveillance</li>
+          <li>Resource &amp; utility management</li>
+        </ul>
+      </div>
+
+      <div class="domain-tile">
+        <div class="d-icon">🌍</div>
+        <div class="d-name">Climate &amp; Environment</div>
+        <ul class="d-uses">
+          <li>Disaster &amp; weather prediction</li>
+          <li>Emissions &amp; pollution monitoring</li>
+          <li>Wildlife &amp; resource conservation</li>
+        </ul>
+      </div>
+
+    </div>
+  </div>
+
+</body>
+</html>
