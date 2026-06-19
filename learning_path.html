@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DeepManthan AI — Start Your Learning Journey</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cyan:#38E1FF; --teal:#2DD4BF; --bg:#070B12; --bg2:#0A0F1A;
+    --text:#DCE6F2; --muted:#A0D8FF; --line:rgba(56,225,255,0.2); --amber:#FFB454;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{
+    font-family:'Space Grotesk',sans-serif;
+    background:linear-gradient(135deg,var(--bg) 0%,var(--bg2) 100%);
+    color:var(--text); min-height:100vh; display:flex; flex-direction:column;
+  }
+  .header{
+    text-align:center; padding:48px 24px 28px; position:relative;
+    border-bottom:1px solid var(--line); background:rgba(10,15,26,0.8);
+  }
+  .brand{
+    font-size:2.4rem; font-weight:700;
+    background:linear-gradient(90deg,var(--cyan),var(--teal));
+    -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+    letter-spacing:-0.02em;
+  }
+  .suite{ font-size:1.5rem; color:var(--cyan); margin-top:6px; }
+  .tagline{ color:var(--muted); margin-top:8px; font-size:1.02rem; max-width:760px; margin-left:auto; margin-right:auto; line-height:1.6;}
+  .back{ position:absolute; top:24px; left:24px; color:var(--cyan); text-decoration:none; font-size:0.9rem;
+    border:1px solid var(--cyan); padding:7px 14px; border-radius:6px; transition:.25s;}
+  .back:hover{ background:var(--cyan); color:var(--bg); }
+
+  .wrap{ flex:1; max-width:780px; margin:0 auto; padding:38px 28px 56px; width:100%; }
+
+  /* Vertical roadmap */
+  .roadmap{ position:relative; padding-left:8px; }
+  .step{
+    position:relative; display:block; text-decoration:none;
+    padding:0 0 26px 60px;
+  }
+  .step:last-child{ padding-bottom:0; }
+  /* connector line */
+  .step::before{
+    content:''; position:absolute; left:21px; top:6px; bottom:-6px; width:2px;
+    background:linear-gradient(var(--cyan),rgba(56,225,255,0.25));
+  }
+  .step:last-child::before{ display:none; }
+  .step-num{
+    position:absolute; left:0; top:0; width:44px; height:44px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-weight:700; font-size:1.05rem; color:var(--bg);
+    background:linear-gradient(135deg,var(--cyan),var(--teal));
+    box-shadow:0 0 14px rgba(56,225,255,0.3); z-index:1;
+  }
+  .step-card{
+    background:rgba(10,15,26,0.6); border:1px solid var(--line); border-radius:11px;
+    padding:16px 18px; transition:.25s;
+  }
+  .step:hover .step-card{ border-color:var(--cyan); box-shadow:0 0 18px rgba(56,225,255,0.16); transform:translateY(-2px); }
+  .step-title{ color:var(--cyan); font-size:1.12rem; font-weight:600; display:flex; align-items:center; gap:9px; }
+  .step-desc{ color:var(--muted); font-size:0.94rem; margin-top:6px; line-height:1.5; }
+  .step-go{ color:var(--teal); font-size:0.85rem; font-weight:600; margin-top:9px; display:inline-block; }
+
+  /* Tips */
+  .tips{
+    margin-top:34px; padding:22px 24px; border-radius:12px;
+    background:linear-gradient(135deg,rgba(255,180,84,0.10),rgba(255,180,84,0.04));
+    border:1px solid rgba(255,180,84,0.4);
+  }
+  .tips-title{ color:var(--amber); font-weight:600; font-size:1.05rem; margin-bottom:12px; display:flex; align-items:center; gap:8px;}
+  .tips ul{ list-style:none; padding:0; margin:0; }
+  .tips li{ color:var(--text); font-size:0.94rem; padding:6px 0 6px 24px; position:relative; line-height:1.5;}
+  .tips li::before{ content:'✓'; position:absolute; left:0; color:var(--amber); font-weight:700; }
+
+  .footer{ border-top:1px solid var(--line); background:rgba(10,15,26,0.95); padding:28px 24px; text-align:center; color:var(--muted); font-size:0.88rem;}
+  .footer .name{ color:var(--cyan); font-weight:600; }
+  .footer a{ color:var(--cyan); text-decoration:none; } .footer a:hover{ text-decoration:underline; }
+
+  @media (max-width:600px){
+    .brand{font-size:1.8rem;} .suite{font-size:1.2rem;}
+    .back{ position:static; display:inline-block; margin-bottom:14px;}
+    .header{ padding:24px 16px;} .wrap{ padding:28px 18px 40px; }
+  }
+</style>
+</head>
+<body>
+  <div class="header">
+    <a href="index.html" class="back">← Suite Home</a>
+    <div class="suite">Start Your Learning Journey</div>
+    <div class="tagline">New here? Follow this simple step-by-step path through the suite. No coding experience needed — everything is visual and interactive.</div>
+  </div>
+
+  <div class="wrap">
+    <div class="roadmap">
+
+      <a class="step" href="technology_tree.html">
+        <div class="step-num">1</div>
+        <div class="step-card">
+          <div class="step-title">🌳 Understand the Big Picture</div>
+          <div class="step-desc">Start with the <strong>Technology Tree</strong> to see how core technologies connect to real-life uses and the languages that build them.</div>
+          <span class="step-go">Open Technology Tree →</span>
+        </div>
+      </a>
+
+      <a class="step" href="programming_concepts.html">
+        <div class="step-num">2</div>
+        <div class="step-card">
+          <div class="step-title">💻 Learn the Building Blocks</div>
+          <div class="step-desc">Get comfortable with the core ideas in <strong>Programming Concepts</strong> — multi-threading, Docker, networking, Linux, databases and Git.</div>
+          <span class="step-go">Open Programming Concepts →</span>
+        </div>
+      </a>
+
+      <a class="step" href="ai_suite.html">
+        <div class="step-num">3</div>
+        <div class="step-card">
+          <div class="step-title">📊 See Systems in Action</div>
+          <div class="step-desc">Explore the <strong>AI Ecosystem Simulation</strong> to watch edge, cloud, big data and security work together through live, animated data flows.</div>
+          <span class="step-go">Open AI Ecosystem Simulation →</span>
+        </div>
+      </a>
+
+      <a class="step" href="ai_engineering_streams.html">
+        <div class="step-num">4</div>
+        <div class="step-card">
+          <div class="step-title">🛠️ Apply It to Engineering</div>
+          <div class="step-desc">Dive into <strong>Engineering Streams</strong> to see AI solving real problems across electrical, chemical, mechanical, electronics, robotics and civil engineering.</div>
+          <span class="step-go">Open Engineering Streams →</span>
+        </div>
+      </a>
+
+      <a class="step" href="career_options.html">
+        <div class="step-num">5</div>
+        <div class="step-card">
+          <div class="step-title">🚀 Discover Where It Leads</div>
+          <div class="step-desc">Finish with <strong>Career Options</strong> and <strong>AI Across Industries</strong> to see the jobs and real-world fields these skills open up.</div>
+          <span class="step-go">Explore Careers →</span>
+        </div>
+      </a>
+    </div>
+  </div>
+</body>
+</html>
