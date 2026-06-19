@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DeepManthan AI — How Technology Connects to Real Life</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --cyan:#38E1FF; --teal:#2DD4BF; --bg:#070B12; --bg2:#0A0F1A;
+    --text:#DCE6F2; --muted:#A0D8FF; --line:rgba(56,225,255,0.2); --amber:#FFB454;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{
+    font-family:'Space Grotesk',sans-serif;
+    background:linear-gradient(135deg,var(--bg) 0%,var(--bg2) 100%);
+    color:var(--text); min-height:100vh; display:flex; flex-direction:column;
+  }
+  .header{
+    text-align:center; padding:48px 24px 28px; position:relative;
+    border-bottom:1px solid var(--line); background:rgba(10,15,26,0.8);
+  }
+  .brand{
+    font-size:2.4rem; font-weight:700;
+    background:linear-gradient(90deg,var(--cyan),var(--teal));
+    -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent;
+    letter-spacing:-0.02em;
+  }
+  .suite{ font-size:1.5rem; color:var(--cyan); margin-top:6px; }
+  .tagline{ color:var(--muted); margin-top:8px; font-size:1.02rem; max-width:780px; margin-left:auto; margin-right:auto; line-height:1.6;}
+  .back{ position:absolute; top:24px; left:24px; color:var(--cyan); text-decoration:none; font-size:0.9rem;
+    border:1px solid var(--cyan); padding:7px 14px; border-radius:6px; transition:.25s;}
+  .back:hover{ background:var(--cyan); color:var(--bg); }
+
+  .wrap{ flex:1; max-width:920px; margin:0 auto; padding:30px 28px 56px; width:100%; }
+
+  /* Legend explaining how to read the tree */
+  .legend{
+    display:flex; flex-wrap:wrap; justify-content:center; gap:12px; margin-bottom:8px;
+  }
+  .legend-item{
+    display:flex; align-items:center; gap:8px; font-size:0.9rem;
+    background:rgba(56,225,255,0.05); border:1px solid var(--line);
+    border-radius:30px; padding:7px 16px;
+  }
+  .legend-num{
+    display:inline-flex; align-items:center; justify-content:center;
+    width:22px; height:22px; border-radius:50%; font-size:0.8rem; font-weight:700;
+    color:var(--bg);
+  }
+  .l1 .legend-num{ background:var(--cyan); } .l1{ color:var(--cyan); }
+  .l2 .legend-num{ background:var(--teal); } .l2{ color:var(--teal); }
+  .l3 .legend-num{ background:var(--amber); } .l3{ color:var(--amber); }
+
+  .read-hint{ text-align:center; color:var(--muted); font-size:0.92rem; margin:14px auto 22px; max-width:680px; line-height:1.6;}
+
+  .controls{ display:flex; justify-content:center; gap:10px; margin-bottom:22px; }
+  .ctrl{
+    font-family:inherit; font-size:0.85rem; font-weight:600; cursor:pointer;
+    background:rgba(56,225,255,0.06); color:var(--muted);
+    border:1px solid var(--line); border-radius:7px; padding:8px 16px; transition:.2s;
+  }
+  .ctrl:hover{ border-color:var(--cyan); color:var(--cyan); }
+
+  /* Tree */
+  .tree{ display:flex; flex-direction:column; gap:14px; }
+  .node{
+    border:1px solid var(--line); border-radius:12px; overflow:hidden;
+    background:rgba(10,15,26,0.55); transition:.25s;
+  }
+  .node.open{ border-color:rgba(56,225,255,0.45); box-shadow:0 0 20px rgba(56,225,255,0.10); }
+
+  .node-head{
+    display:flex; align-items:center; gap:14px; padding:18px 20px; cursor:pointer;
+    border-left:4px solid var(--accent);
+  }
+  .node-head:hover{ background:rgba(56,225,255,0.04); }
+  .node-ico{ font-size:1.7rem; flex-shrink:0; }
+  .node-meta{ flex:1; min-width:0; }
+  .node-name{ font-size:1.18rem; font-weight:600; color:var(--accent); }
+  .node-tag{ color:var(--muted); font-size:0.92rem; margin-top:2px; line-height:1.4;}
+  .chevron{ color:var(--accent); font-size:1.1rem; transition:transform .25s; flex-shrink:0; }
+  .node.open .chevron{ transform:rotate(90deg); }
+
+  .node-body{ display:none; padding:4px 20px 22px 38px; }
+  .node.open .node-body{ display:block; animation:fade .3s ease; }
+  @keyframes fade{ from{opacity:0; transform:translateY(-4px);} to{opacity:1; transform:none;} }
+
+  .sub-label{
+    font-size:0.72rem; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--teal); margin:14px 0 10px; display:flex; align-items:center; gap:8px;
+  }
+  .sub-label .badge{
+    display:inline-flex; align-items:center; justify-content:center;
+    width:18px; height:18px; border-radius:50%; font-size:0.7rem; font-weight:700; color:var(--bg);
+  }
+  .sub-label.areas .badge{ background:var(--teal); }
+  .sub-label.langs{ color:var(--amber); }
+  .sub-label.langs .badge{ background:var(--amber); }
+
+  /* Level 2: real-life areas */
+  .areas-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:10px; border-left:2px dashed rgba(45,212,191,0.35); padding-left:16px; margin-left:4px;}
+  .area{
+    background:rgba(45,212,191,0.06); border:1px solid rgba(45,212,191,0.25);
+    border-radius:9px; padding:11px 14px;
+  }
+  .area .a-name{ color:var(--text); font-weight:600; font-size:0.96rem; }
+  .area .a-ex{ color:var(--muted); font-size:0.85rem; margin-top:3px; }
+  .area .a-ex em{ color:#7FD3C0; font-style:normal; }
+
+  /* Level 3: languages */
+  .langs-row{ display:flex; flex-wrap:wrap; gap:8px; border-left:2px dashed rgba(255,180,84,0.4); padding-left:16px; margin-left:4px;}
+  .lang{
+    font-family:'IBM Plex Mono',monospace; font-size:0.82rem;
+    background:rgba(255,180,84,0.10); border:1px solid rgba(255,180,84,0.4);
+    color:#FFD9A0; border-radius:6px; padding:5px 11px;
+  }
+  .lang.tool{ background:rgba(56,225,255,0.06); border-color:var(--line); color:var(--muted); }
+
+  /* Takeaway */
+  .takeaway{
+    margin-top:30px; padding:20px 22px; border-radius:12px;
+    background:linear-gradient(135deg,rgba(56,225,255,0.10),rgba(45,212,191,0.05));
+    border:1px solid rgba(56,225,255,0.4); color:var(--text); line-height:1.6;
+  }
+  .takeaway strong{ color:var(--cyan); }
+
+  .footer{ border-top:1px solid var(--line); background:rgba(10,15,26,0.95); padding:28px 24px; text-align:center; color:var(--muted); font-size:0.88rem;}
+  .footer .name{ color:var(--cyan); font-weight:600; }
+  .footer a{ color:var(--cyan); text-decoration:none; } .footer a:hover{ text-decoration:underline; }
+
+  @media (max-width:600px){
+    .brand{font-size:1.8rem;} .suite{font-size:1.2rem;}
+    .back{ position:static; display:inline-block; margin-bottom:14px;}
+    .header{ padding:24px 16px;} .wrap{ padding:22px 16px 40px; }
+    .node-body{ padding-left:20px; }
+  }
+</style>
+</head>
+<body>
+  <div class="header">
+    <a href="index.html" class="back">← Suite Home</a>
+    <div class="brand">DeepManthan AI</div>
+    <div class="suite">How Technology Connects to Real Life</div>
+    <div class="tagline">A simple map from a technology, to where it's used in everyday life, to the programming languages that build it. Click any technology to explore.</div>
+  </div>
+
+  <div class="wrap">
+    <div class="legend">
+      <div class="legend-item l1"><span class="legend-num">1</span> Technology</div>
+      <div class="legend-item l2"><span class="legend-num">2</span> Where it's used</div>
+      <div class="legend-item l3"><span class="legend-num">3</span> Built with (code)</div>
+    </div>
+    <div class="read-hint">Read it left to right: each <strong style="color:var(--cyan)">technology</strong> powers real-life <strong style="color:var(--teal)">applications</strong>, and is built using common <strong style="color:var(--amber)">programming languages</strong>.</div>
+
+    <div class="controls">
+      <button class="ctrl" id="expandAll">⊕ Expand all</button>
+      <button class="ctrl" id="collapseAll">⊖ Collapse all</button>
+    </div>
+
+    <div class="tree" id="tree"></div>
+
+    <div class="takeaway">
+      💡 <strong>The big takeaway:</strong> You don't need a different language for every technology.
+      A small set — mainly <strong>Python, C/C++ and Java</strong> — powers almost all of these fields.
+      Learn the fundamentals once, and you can work across cybersecurity, cloud, data, AI and more.
+    </div>
+  </div>
+
+  <div class="footer">
+    <div class="name">Vivek Salwaru</div>
+    <div>Founder &amp; CTO, DeepManthan AI</div>
+    <div style="margin-top:8px;font-family:'IBM Plex Mono',monospace;">
+      📧 vivek@deepmanthan.ai &nbsp;·&nbsp; 🌐 <a href="https://www.deepmanthan.ai" target="_blank">www.deepmanthan.ai</a>
+    </div>
+  </div>
+
+<script>
+const T = { cyan:'#38E1FF', teal:'#2DD4BF' };
+
+const domains = [
+  {
+    icon:'🛡️', name:'Cybersecurity', accent:T.cyan,
+    tag:'Keeping data, money and systems safe from hackers.',
+    areas:[
+      {a:'Banking', ex:'blocking fraud &amp; securing transactions'},
+      {a:'Healthcare', ex:'protecting patient records'},
+      {a:'E-commerce', ex:'safe online payments'},
+      {a:'Government', ex:'national security &amp; defense'}
+    ],
+    langs:['Python','C / C++','Go'], tools:['Encryption','Firewalls']
+  },
+  {
+    icon:'☁️', name:'Edge / Cloud Computing', accent:T.teal,
+    tag:'Where the work happens — on your device (edge) or in big remote data centers (cloud).',
+    areas:[
+      {a:'Streaming', ex:'like <em>Netflix</em> &amp; <em>YouTube</em> delivery'},
+      {a:'Agriculture', ex:'processing sensor data on the farm'},
+      {a:'Healthcare', ex:'remote patient monitoring'},
+      {a:'Smart Cities', ex:'traffic cameras &amp; signals'}
+    ],
+    langs:['Python','Java','Go'], tools:['AWS','Azure','GCP']
+  },
+  {
+    icon:'🔗', name:'Distributed Systems', accent:T.cyan,
+    tag:'Many computers working as one, so services stay fast and never go down.',
+    areas:[
+      {a:'Banking', ex:'ATM networks &amp; <em>UPI</em> payments'},
+      {a:'E-commerce', ex:'<em>Amazon</em>-scale shopping'},
+      {a:'Social Media', ex:'<em>WhatsApp</em> messaging'},
+      {a:'Telecom', ex:'mobile networks'}
+    ],
+    langs:['Java','Go','C++','Python'], tools:['Kafka','Kubernetes']
+  },
+  {
+    icon:'📊', name:'Big Data', accent:T.teal,
+    tag:'Making sense of huge amounts of information to find patterns.',
+    areas:[
+      {a:'Retail', ex:'product recommendations'},
+      {a:'Healthcare', ex:'spotting disease trends'},
+      {a:'Finance', ex:'risk &amp; credit scoring'},
+      {a:'Agriculture', ex:'predicting crop yields'}
+    ],
+    langs:['Python','Scala','SQL'], tools:['Hadoop','Spark']
+  },
+  {
+    icon:'🤖', name:'AI & Machine Learning', accent:T.cyan,
+    tag:'Teaching computers to learn from data and make smart decisions.',
+    areas:[
+      {a:'Healthcare', ex:'spotting tumors in scans'},
+      {a:'Agriculture', ex:'detecting crop disease from photos'},
+      {a:'Finance', ex:'catching fraud as it happens'},
+      {a:'Retail', ex:'recommendations, like <em>Amazon</em> &amp; <em>Netflix</em>'}
+    ],
+    langs:['Python','R','C++'], tools:['TensorFlow','PyTorch']
+  },
+  {
+    icon:'📡', name:'IoT (Internet of Things)', accent:T.teal,
+    tag:'Everyday devices and sensors connected to the internet, sharing data.',
+    areas:[
+      {a:'Smart Homes', ex:'thermostats &amp; cameras, like <em>Alexa</em>'},
+      {a:'Agriculture', ex:'soil &amp; weather sensors'},
+      {a:'Healthcare', ex:'wearables, like smartwatches'},
+      {a:'Smart Cities', ex:'smart streetlights &amp; parking'}
+    ],
+    langs:['C / C++','Embedded C','Python'], tools:['Arduino','Raspberry Pi']
+  },
+  {
+    icon:'⛓️', name:'Blockchain', accent:T.cyan,
+    tag:'A secure, shared digital ledger that no single person can tamper with.',
+    areas:[
+      {a:'Banking', ex:'secure payments &amp; remittances'},
+      {a:'Supply Chain', ex:'tracking goods farm-to-shelf'},
+      {a:'Healthcare', ex:'tamper-proof medical records'},
+      {a:'Finance', ex:'cryptocurrency, like <em>Bitcoin</em>'}
+    ],
+    langs:['Solidity','Go','Python','C++'], tools:['Ethereum']
+  }
+];
+
+const tree = document.getElementById('tree');
+domains.forEach((d,i)=>{
+  const node=document.createElement('div');
+  node.className='node';
+  node.style.setProperty('--accent', d.accent);
+  node.innerHTML=`
+    <div class="node-head">
+      <span class="node-ico">${d.icon}</span>
+      <div class="node-meta">
+        <div class="node-name">${d.name}</div>
+        <div class="node-tag">${d.tag}</div>
+      </div>
+      <span class="chevron">▶</span>
+    </div>
+    <div class="node-body">
+      <div class="sub-label areas"><span class="badge">2</span> Used in real life</div>
+      <div class="areas-grid">
+        ${d.areas.map(x=>`<div class="area"><div class="a-name">${x.a}</div><div class="a-ex">${x.ex}</div></div>`).join('')}
+      </div>
+      <div class="sub-label langs"><span class="badge">3</span> Built with</div>
+      <div class="langs-row">
+        ${d.langs.map(l=>`<span class="lang">${l}</span>`).join('')}
+        ${d.tools.map(t=>`<span class="lang tool">${t}</span>`).join('')}
+      </div>
+    </div>`;
+  node.querySelector('.node-head').addEventListener('click',()=>node.classList.toggle('open'));
+  tree.appendChild(node);
+});
+
+// open the first node by default
+tree.firstElementChild.classList.add('open');
+
+document.getElementById('expandAll').onclick=()=>document.querySelectorAll('.node').forEach(n=>n.classList.add('open'));
+document.getElementById('collapseAll').onclick=()=>document.querySelectorAll('.node').forEach(n=>n.classList.remove('open'));
+</script>
+</body>
+</html>
