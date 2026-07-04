@@ -1,0 +1,1426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI for All · Training Programme Index v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ── Reset ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  /* base */
+  --bg:      #060A10;
+  --bg2:     #090E18;
+  --surface: #0D1520;
+  --surface2:#121D2E;
+  --border:  #1A2840;
+  --border2: #243550;
+  --ink:     #D8E6F4;
+  --ink-dim: #6E88A6;
+  --ink-faint:#344D66;
+
+  /* tier accents */
+  --b-col:  #38BDF8;   /* Beginner  – sky blue  */
+  --b-glow: rgba(56,189,248,.18);
+  --b-soft: rgba(56,189,248,.08);
+  --i-col:  #A78BFA;   /* Intermediate – violet */
+  --i-glow: rgba(167,139,250,.18);
+  --i-soft: rgba(167,139,250,.08);
+  --a-col:  #F59E0B;   /* Advanced – amber gold */
+  --a-glow: rgba(245,158,11,.18);
+  --a-soft: rgba(245,158,11,.07);
+
+  /* category label palette */
+  --cat-green:  #34D399;
+  --cat-pink:   #F472B6;
+  --cat-teal:   #2DD4BF;
+  --cat-orange: #FB923C;
+  --cat-lime:   #A3E635;
+  --cat-red:    #F87171;
+  --cat-indigo: #818CF8;
+  --cat-cyan:   #22D3EE;
+  --cat-rose:   #FB7185;
+  --cat-purple: #C084FC;
+  --cat-yellow: #FDE047;
+  --cat-emerald:#6EE7B7;
+}
+
+html { font-size: 15px; scroll-behavior: smooth; }
+body {
+  font-family: "Sora", sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  min-height: 100vh;
+}
+
+/* ════════════════════════════════
+   HERO
+════════════════════════════════ */
+.hero {
+  padding: 52px 32px 40px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(180deg, #04080F 0%, var(--bg) 100%);
+}
+.hero::before {
+  content: "";
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(900px 350px at 20% 60%, rgba(56,189,248,.06), transparent 55%),
+    radial-gradient(900px 350px at 80% 40%, rgba(245,158,11,.05), transparent 55%),
+    radial-gradient(700px 400px at 50% 0%,  rgba(167,139,250,.07), transparent 60%);
+  pointer-events: none;
+}
+
+/* connecting beam at top of hero – the signature element */
+.hero-beam {
+  position: absolute;
+  top: 0; left: 0; right: 0; height: 3px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    var(--b-col) 20%,
+    var(--i-col) 50%,
+    var(--a-col) 80%,
+    transparent 100%);
+  opacity: .65;
+}
+.hero-beam::after {
+  content: "";
+  position: absolute; inset: 0;
+  background: inherit;
+  filter: blur(8px);
+  opacity: .6;
+}
+
+.hero-eyebrow {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: .72rem; letter-spacing: .3em; text-transform: uppercase;
+  color: var(--ink-dim); margin-bottom: 18px;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+}
+.hero-eyebrow span { opacity: .4; }
+
+.hero-title {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: clamp(2.2rem, 5vw, 3.6rem);
+  font-weight: 800; letter-spacing: -.03em; line-height: 1.05;
+  margin-bottom: 16px;
+}
+.hero-title .t1 { color: var(--b-col); }
+.hero-title .t2 { color: var(--ink); }
+.hero-title .t3 {
+  background: linear-gradient(90deg, var(--i-col), var(--a-col));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+
+.hero-sub {
+  font-size: .95rem; color: var(--ink-dim); max-width: 700px;
+  margin: 0 auto 28px; line-height: 1.7;
+}
+
+/* stat pills */
+.hero-stats {
+  display: flex; align-items: center; justify-content: center;
+  gap: 12px; flex-wrap: wrap; margin-bottom: 10px;
+}
+.stat-pill {
+  display: flex; align-items: center; gap: 8px;
+  font-family: "IBM Plex Mono", monospace; font-size: .73rem;
+  letter-spacing: .1em; text-transform: uppercase;
+  padding: 6px 14px; border-radius: 999px;
+  border: 1px solid var(--border2);
+  background: var(--surface);
+}
+.sp-dot { width: 7px; height: 7px; border-radius: 50%; }
+
+/* tier journey row */
+.journey-row {
+  display: flex; align-items: center; justify-content: center;
+  gap: 0; margin-top: 22px;
+}
+.jr-node {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+}
+.jr-circle {
+  width: 44px; height: 44px; border-radius: 50%;
+  display: grid; place-items: center;
+  font-size: 1.2rem;
+  border: 2px solid;
+  box-shadow: 0 0 18px -4px currentColor;
+}
+.jr-b { color: var(--b-col); border-color: var(--b-col); background: rgba(56,189,248,.08); }
+.jr-i { color: var(--i-col); border-color: var(--i-col); background: rgba(167,139,250,.08); }
+.jr-a { color: var(--a-col); border-color: var(--a-col); background: rgba(245,158,11,.08); }
+.jr-label {
+  font-family: "IBM Plex Mono", monospace; font-size: .62rem;
+  letter-spacing: .1em; text-transform: uppercase;
+}
+.jr-b .jr-label { color: var(--b-col); }
+.jr-i .jr-label { color: var(--i-col); }
+.jr-a .jr-label { color: var(--a-col); }
+.jr-arrow {
+  font-family: "IBM Plex Mono", monospace; font-size: 1.1rem;
+  color: var(--ink-faint); margin: 0 12px; padding-bottom: 18px;
+}
+
+/* ════════════════════════════════
+   THREE-COLUMN GRID
+════════════════════════════════ */
+.columns-wrap {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 0 60px;
+  border-top: 1px solid var(--border);
+}
+
+/* ── Single column ── */
+.col {
+  padding: 0 0 40px;
+  border-right: 1px solid var(--border);
+  position: relative;
+}
+.col:last-child { border-right: none; }
+
+/* top accent bar */
+.col-top-bar {
+  height: 4px;
+  background: linear-gradient(90deg, var(--tier-col, #38BDF8), transparent);
+  opacity: .9;
+}
+.col-top-bar::after {
+  content: "";
+  display: block; height: 100%;
+  background: inherit;
+  filter: blur(6px);
+  opacity: .5;
+  margin-top: -4px;
+}
+.col-b { --tier-col: var(--b-col); }
+.col-i { --tier-col: var(--i-col); }
+.col-a { --tier-col: var(--a-col); }
+
+/* column header */
+.col-header {
+  padding: 24px 22px 18px;
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 10;
+  background: var(--bg2);
+}
+.col-tier-label {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: .64rem; letter-spacing: .22em; text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.col-b .col-tier-label { color: var(--b-col); }
+.col-i .col-tier-label { color: var(--i-col); }
+.col-a .col-tier-label { color: var(--a-col); }
+
+.col-title {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 1.28rem; font-weight: 700; margin-bottom: 5px;
+}
+.col-b .col-title { color: var(--b-col); }
+.col-i .col-title { color: var(--i-col); }
+.col-a .col-title { color: var(--a-col); }
+
+.col-tagline {
+  font-size: .8rem; color: var(--ink-dim); line-height: 1.5;
+}
+.col-meta {
+  display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px;
+}
+.col-meta-pill {
+  font-family: "IBM Plex Mono", monospace; font-size: .6rem;
+  letter-spacing: .08em; padding: 3px 9px; border-radius: 999px;
+  background: var(--surface2); border: 1px solid var(--border2);
+  color: var(--ink-dim);
+}
+
+/* ── Category block ── */
+.cat-block {
+  padding: 18px 22px 4px;
+  animation: fadeUp .5s ease both;
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* stagger by position */
+.cat-block:nth-child(2)  { animation-delay: .04s; }
+.cat-block:nth-child(3)  { animation-delay: .08s; }
+.cat-block:nth-child(4)  { animation-delay: .12s; }
+.cat-block:nth-child(5)  { animation-delay: .16s; }
+.cat-block:nth-child(6)  { animation-delay: .20s; }
+.cat-block:nth-child(7)  { animation-delay: .24s; }
+.cat-block:nth-child(8)  { animation-delay: .28s; }
+.cat-block:nth-child(9)  { animation-delay: .32s; }
+.cat-block:nth-child(10) { animation-delay: .36s; }
+.cat-block:nth-child(11) { animation-delay: .40s; }
+.cat-block:nth-child(12) { animation-delay: .44s; }
+.cat-block:nth-child(13) { animation-delay: .48s; }
+.cat-block:nth-child(14) { animation-delay: .52s; }
+.cat-block:nth-child(15) { animation-delay: .56s; }
+.cat-block:nth-child(16) { animation-delay: .60s; }
+.cat-block:nth-child(17) { animation-delay: .64s; }
+.cat-block:nth-child(18) { animation-delay: .68s; }
+.cat-block:nth-child(19) { animation-delay: .72s; }
+.cat-block:nth-child(20) { animation-delay: .76s; }
+.cat-block:nth-child(21) { animation-delay: .80s; }
+.cat-block:nth-child(22) { animation-delay: .84s; }
+
+.cat-header {
+  display: flex; align-items: center; gap: 9px;
+  margin-bottom: 8px;
+}
+.cat-icon { font-size: 1rem; line-height: 1; width: 20px; text-align: center; }
+.cat-name {
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 600; font-size: .88rem; color: var(--ink);
+  flex: 1;
+}
+.cat-tag {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: .56rem; letter-spacing: .1em; text-transform: uppercase;
+  padding: 2px 7px; border-radius: 4px;
+}
+
+/* ── Topic items ── */
+.topic-list {
+  list-style: none;
+  display: flex; flex-direction: column; gap: 3px;
+  margin-left: 29px;
+  margin-bottom: 10px;
+}
+.topic-item {
+  display: flex; align-items: flex-start; gap: 8px;
+  font-size: .78rem; line-height: 1.5; color: var(--ink-dim);
+  padding: 3px 8px 3px 6px;
+  border-radius: 5px;
+  border: 1px solid transparent;
+  transition: border-color .2s, background .2s, color .2s;
+  cursor: default;
+}
+.topic-item:hover {
+  color: var(--ink);
+  background: rgba(255,255,255,.03);
+  border-color: var(--border2);
+}
+.topic-bullet {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: .65rem; margin-top: 2px; flex-shrink: 0;
+  opacity: .45;
+}
+.topic-added {
+  color: var(--ink-faint);
+  font-style: italic;
+}
+.topic-added::before {
+  content: "✦ ";
+  font-size: .6rem;
+  font-style: normal;
+  opacity: .5;
+}
+
+/* category divider line */
+.cat-sep {
+  height: 1px;
+  margin: 6px 22px 0;
+  background: var(--border);
+  opacity: .5;
+}
+
+/* ── NEW badge ── */
+.badge-new {
+  font-family: "IBM Plex Mono", monospace; font-size: .52rem;
+  letter-spacing: .1em; text-transform: uppercase;
+  padding: 1px 5px; border-radius: 3px;
+  background: rgba(163,230,53,.12); color: var(--cat-lime);
+  border: 1px solid rgba(163,230,53,.25);
+  margin-left: 4px; vertical-align: middle;
+}
+
+/* ── Topic count footer ── */
+.col-footer {
+  margin: 16px 22px 0;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.cf-count {
+  font-family: "IBM Plex Mono", monospace; font-size: .7rem; color: var(--ink-dim);
+}
+.cf-count strong { font-size: .9rem; }
+.cf-outcome {
+  font-size: .72rem; color: var(--ink-dim); text-align: right; max-width: 160px;
+  line-height: 1.4;
+}
+
+/* ── Bottom programme banner ── */
+.bottom-banner {
+  background: linear-gradient(135deg, var(--surface) 0%, var(--surface2) 100%);
+  border-top: 1px solid var(--border);
+  padding: 32px 40px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 24px;
+  max-width: 1440px;
+  margin: 0 auto;
+}
+.bb-item { display: flex; flex-direction: column; gap: 4px; }
+.bb-val {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 1.7rem; font-weight: 700; letter-spacing: -.02em; line-height: 1;
+}
+.bb-label {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: .65rem; letter-spacing: .14em; text-transform: uppercase;
+  color: var(--ink-dim);
+}
+.bb-sub { font-size: .76rem; color: var(--ink-faint); }
+
+.page-footer {
+  text-align: center; padding: 20px;
+  font-family: "IBM Plex Mono", monospace; font-size: .65rem;
+  letter-spacing: .12em; color: var(--ink-faint);
+  border-top: 1px solid var(--border);
+}
+
+/* ── Responsive ── */
+@media (max-width: 1024px) {
+  .columns-wrap { grid-template-columns: 1fr; }
+  .col { border-right: none; border-bottom: 1px solid var(--border); }
+  .bottom-banner { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 600px) {
+  .hero { padding: 36px 16px 28px; }
+  .bottom-banner { grid-template-columns: 1fr; padding: 24px 20px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════
+     HERO
+══════════════════════════════ -->
+<section class="hero">
+  <div class="hero-beam"></div>
+  <div class="hero-eyebrow">
+    <span>◈</span> AI for All Programme <span>◈</span> Full Curriculum Index <span>◈</span>
+  </div>
+  <h1 class="hero-title">
+    <span class="t1">Foundation</span> <span class="t2">→ Production</span><br>
+    <span class="t3">→ Mastery</span>
+  </h1>
+  <p class="hero-sub">
+    A three-tier, zero-entry-barrier curriculum covering the <strong style="color:var(--ink)">complete AI ecosystem</strong> —
+    from mathematics foundations to advanced autonomous systems. Revised v2 — 10 new sections added, 2 topics re-tiered.
+    Delivered by faculty with <strong style="color:var(--ink)">50+ years</strong> of cumulative industry experience
+    on <strong style="color:var(--ink)">production-grade AI server infrastructure</strong>.
+  </p>
+
+  <div class="hero-stats">
+    <div class="stat-pill"><span class="sp-dot" style="background:var(--b-col)"></span> Any academic background welcome</div>
+    <div class="stat-pill"><span class="sp-dot" style="background:var(--i-col)"></span> 3 tiers · 53+ topic areas</div>
+    <div class="stat-pill"><span class="sp-dot" style="background:var(--a-col)"></span> Industry-equivalent 5–10 yrs experience</div>
+    <div class="stat-pill"><span class="sp-dot" style="background:var(--cat-green)"></span> Live Govt. of Maharashtra deployment</div>
+  </div>
+
+  <div class="journey-row">
+    <div class="jr-node jr-b">
+      <div class="jr-circle">🌱</div>
+      <div class="jr-label">Beginner</div>
+    </div>
+    <div class="jr-arrow">──▶</div>
+    <div class="jr-node jr-i">
+      <div class="jr-circle">⚡</div>
+      <div class="jr-label">Intermediate</div>
+    </div>
+    <div class="jr-arrow">──▶</div>
+    <div class="jr-node jr-a">
+      <div class="jr-circle">🔥</div>
+      <div class="jr-label">Advanced</div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════
+     THREE COLUMNS
+══════════════════════════════ -->
+<div class="columns-wrap">
+
+  <!-- ════════ COLUMN 1: BEGINNER ════════ -->
+  <div class="col col-b">
+    <div class="col-top-bar"></div>
+    <div class="col-header">
+      <div class="col-tier-label">Tier 1 · Foundation</div>
+      <div class="col-title">🌱 AI for Beginners</div>
+      <div class="col-tagline">Laying the foundation of AI Ecosystems.<br>No prior coding or AI knowledge required.</div>
+      <div class="col-meta">
+        <span class="col-meta-pill">Any stream</span>
+        <span class="col-meta-pill">Zero prerequisites</span>
+        <span class="col-meta-pill">Hands-on from day 1</span>
+      </div>
+    </div>
+
+    <!-- 1. Birth of AI -->
+    <div class="cat-block">
+      <div class="cat-header">
+        <span class="cat-icon">📜</span>
+        <span class="cat-name">Birth of AI</span>
+        <span class="cat-tag" style="background:rgba(34,211,238,.1);color:var(--cat-cyan);border:1px solid rgba(34,211,238,.2);">HISTORY</span>
+      </div>
+      <ul class="topic-list">
+        <li class="topic-item"><span class="topic-bullet">▸</span> From Turing's test to modern deep learning</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> AI winters and the deep learning renaissance</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> The 2012 ImageNet moment — why GPUs changed everything</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Moore's Law, compute curves & why AI is possible now</li>
+      </ul>
+    </div><div class="cat-sep"></div>
+
+    <!-- 2. Basics of AI Ecosystem -->
+    <div class="cat-block">
+      <div class="cat-header">
+        <span class="cat-icon">🌐</span>
+        <span class="cat-name">Basics of Building an AI Ecosystem</span>
+        <span class="cat-tag" style="background:rgba(56,189,248,.1);color:var(--b-col);border:1px solid rgba(56,189,248,.2);">ECOSYSTEM</span>
+      </div>
+      <ul class="topic-list">
+        <li class="topic-item"><span class="topic-bullet">▸</span> What makes a system "AI-powered" vs traditional software</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Data → Model → Inference → Action pipeline overview</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Edge, Fog and Cloud tiers in an AI system</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Open-source vs proprietary AI stack trade-offs</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Real system walkthrough: Wildlife Surveillance (Govt. Maharashtra)</li>
+      </ul>
+    </div><div class="cat-sep"></div>
+
+    <!-- 3. Linux & System Programming -->
+    <div class="cat-block">
+      <div class="cat-header">
+        <span class="cat-icon">🐧</span>
+        <span class="cat-name">Linux & System Programming</span>
+        <span class="cat-tag" style="background:rgba(251,146,60,.1);color:var(--cat-orange);border:1px solid rgba(251,146,60,.2);">SYSTEMS</span>
+      </div>
+      <ul class="topic-list">
+        <li class="topic-item"><span class="topic-bullet">▸</span> Linux fundamentals: file system, processes, permissions</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Shell scripting for AI workflows & automation</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Process management, memory & I/O basics</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Why Linux powers 99% of AI servers and clouds</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Virtual environments, containers (Docker intro)</span></li>
+      </ul>
+    </div><div class="cat-sep"></div>
+
+    <!-- B-NEW-1. Mathematics for AI -->
+    <div class="cat-block">
+      <div class="cat-header">
+        <span class="cat-icon">📐</span>
+        <span class="cat-name">Mathematics for AI <span class="badge-new">NEW</span></span>
+        <span class="cat-tag" style="background:rgba(245,158,11,.1);color:var(--a-col);border:1px solid rgba(245,158,11,.2);">MATH</span>
+      </div>
+      <ul class="topic-list">
+        <li class="topic-item"><span class="topic-bullet">▸</span> Linear algebra: vectors, matrices, dot products — visual intuition, no intimidation</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> What a tensor is — the universal data type of every AI framework</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Probability & statistics: mean, variance, normal distribution, Bayes' theorem</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Derivatives and gradients — why the model learns from mistakes</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Chain rule intuition — the mathematical backbone of backpropagation</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Visualise everything with matplotlib — maths becomes tangible, not abstract</li>
+      </ul>
+    </div><div class="cat-sep"></div>
+
+    <!-- B-NEW-2. Version Control with Git -->
+    <div class="cat-block">
+      <div class="cat-header">
+        <span class="cat-icon">🌿</span>
+        <span class="cat-name">Version Control with Git <span class="badge-new">NEW</span></span>
+        <span class="cat-tag" style="background:rgba(52,211,153,.1);color:var(--cat-green);border:1px solid rgba(52,211,153,.2);">GIT</span>
+      </div>
+      <ul class="topic-list">
+        <li class="topic-item"><span class="topic-bullet">▸</span> Why version control is non-negotiable for any AI developer</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Git init, add, commit, push, pull — the daily survival commands</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Branching, merging and resolving conflicts — practical session</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> GitHub: pull requests, code review, issues</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Building a public AI portfolio on GitHub from day one</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> .gitignore for large model weights, datasets and API keys</li>
+      </ul>
+    </div><div class="cat-sep"></div>
+
+    <!-- B-NEW-3. How the Internet & APIs Work -->
+    <div class="cat-block">
+      <div class="cat-header">
+        <span class="cat-icon">🌐</span>
+        <span class="cat-name">How the Internet & APIs Work <span class="badge-new">NEW</span></span>
+        <span class="cat-tag" style="background:rgba(56,189,248,.1);color:var(--b-col);border:1px solid rgba(56,189,248,.2);">WEB</span>
+      </div>
+      <ul class="topic-list">
+        <li class="topic-item"><span class="topic-bullet">▸</span> HTTP/HTTPS: request, response, status codes — how every AI service talks</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> JSON format — the universal language of AI APIs, explained simply</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> REST APIs: calling a live AI service with Python's requests library</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Authentication: API keys, tokens, and why you never commit them to Git</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Hands-on: query a public AI API (weather, maps, LLM) and parse the JSON response</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> WebSockets and event-driven communication — intro to real-time AI pipelines</li>
+      </ul>
+    </div><div class="cat-sep"></div>
+
+    <!-- B-NEW-3b. Network Programming & Packet Analysis -->
+    <div class="cat-block">
+      <div class="cat-header">
+        <span class="cat-icon">🔌</span>
+        <span class="cat-name">Network Programming & Packet Analysis <span class="badge-new">NEW</span></span>
+        <span class="cat-tag" style="background:rgba(251,113,133,.1);color:var(--cat-rose);border:1px solid rgba(251,113,133,.2);">NETWORK</span>
+      </div>
+      <ul class="topic-list">
+        <li class="topic-item"><span class="topic-bullet">▸</span> TCP/IP fundamentals: sockets, ports & the three-way handshake — what really happens under an API call</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Writing a basic TCP client-server in Python — hands-on socket programming</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> TCP vs UDP: reliability vs speed, and when each is used in real AI systems</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Wireshark 101: capturing live traffic and filtering by protocol</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Hands-on: capture and inspect packets from your own AI API call in Wireshark</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Reading a TCP handshake and HTTP request inside a packet capture, byte by byte</li>
+      </ul>
+    </div><div class="cat-sep"></div>
+
+    <!-- B-NEW-4. Database Fundamentals -->
+    <div class="cat-block">
+      <div class="cat-header">
+        <span class="cat-icon">🗄️</span>
+        <span class="cat-name">Database Fundamentals <span class="badge-new">NEW</span></span>
+        <span class="cat-tag" style="background:rgba(244,114,182,.1);color:var(--cat-pink);border:1px solid rgba(244,114,182,.2);">DATABASE</span>
+      </div>
+      <ul class="topic-list">
+        <li class="topic-item"><span class="topic-bullet">▸</span> Why every AI system is inseparable from a database</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> SQL basics: SELECT, INSERT, WHERE, JOIN — hands-on with sensor data</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> SQL vs NoSQL — when to use which and why</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> SQLite: store and query AI inference results locally</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Introduction to MongoDB — storing unstructured AI outputs (images, logs)</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Schema design for a simple wildlife alert logging system</li>
+      </ul>
+    </div><div class="cat-sep"></div>
+
+    <!-- 4. Programming & Data Structures -->
+    <div class="cat-block">
+      <div class="cat-header">
+        <span class="cat-icon">🐍</span>
+        <span class="cat-name">Programming & Data Structures</span>
+        <span class="cat-tag" style="background:rgba(52,211,153,.1);color:var(--cat-green);border:1px solid rgba(52,211,153,.2);">CODE</span>
+      </div>
+      <ul class="topic-list">
+        <li class="topic-item"><span class="topic-bullet">▸</span> Python for AI — syntax, libraries, Jupyter notebooks</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> NumPy arrays, Pandas DataFrames — the AI data layer</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Lists, trees, graphs — how models store knowledge</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Tensor concept: the universal data type of AI</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Writing your first inference script end-to-end</li>
+      </ul>
+    </div><div class="cat-sep"></div>
+
+    <!-- B-NEW-5. Debugging Techniques (C & Python) -->
+    <div class="cat-block">
+      <div class="cat-header">
+        <span class="cat-icon">🐛</span>
+        <span class="cat-name">Debugging Techniques in C & Python <span class="badge-new">NEW</span></span>
+        <span class="cat-tag" style="background:rgba(253,224,71,.1);color:var(--cat-yellow);border:1px solid rgba(253,224,71,.2);">DEBUG</span>
+      </div>
+      <ul class="topic-list">
+        <li class="topic-item"><span class="topic-bullet">▸</span> Reading and interpreting error messages & stack traces — your first debugging superpower</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Common bug categories: syntax errors, logic errors, off-by-one errors, null/None references</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Strategic print/logging statements — placing them where they actually help</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Python debugging with pdb: breakpoints, step, continue, inspecting variables live</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> C debugging with gdb: compiling with -g, breakpoints, backtrace, watching variables</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Segmentation faults in C — reading a core dump and finding the bad memory access</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Visual debugging in VS Code: breakpoints, watch expressions, call stack, step-through</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Rubber-duck debugging & bisection — isolating a bug by systematically narrowing down the failure point</li>
+      </ul>
+    </div><div class="cat-sep"></div>
+
+    <!-- 5. AI Data Fundamentals -->
+    <div class="cat-block">
+      <div class="cat-header">
+        <span class="cat-icon">🗃️</span>
+        <span class="cat-name">AI Data Fundamentals</span>
+        <span class="cat-tag" style="background:rgba(244,114,182,.1);color:var(--cat-pink);border:1px solid rgba(244,114,182,.2);">DATA</span>
+      </div>
+      <ul class="topic-list">
+        <li class="topic-item"><span class="topic-bullet">▸</span> Structured vs unstructured data — images, text, sensors</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Dataset collection, labelling & annotation workflows</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Data quality: bias, noise, imbalance</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Train / Validation / Test splits — why they matter</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Data versioning with DVC; dataset cards</li>
+      </ul>
+    </div><div class="cat-sep"></div>
+
+    <!-- 6. AI vs Non-AI Systems + Tech Shift -->
+    <div class="cat-block">
+      <div class="cat-header">
+        <span class="cat-icon">⚖️</span>
+        <span class="cat-name">AI vs Non-AI Systems · Technology Shift</span>
+        <span class="cat-tag" style="background:rgba(129,140,248,.1);color:var(--cat-indigo);border:1px solid rgba(129,140,248,.2);">CONCEPT</span>
+      </div>
+      <ul class="topic-list">
+        <li class="topic-item"><span class="topic-bullet">▸</span> Rule-based systems vs learned behaviour</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> When NOT to use AI — the right tool for the job</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> How AI is reshaping every industry vertical</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> AI's impact on software development (Claude, Codex, Copilot)</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Prompt engineering as a new developer skill</li>
+      </ul>
+    </div><div class="cat-sep"></div>
+
+    <!-- 7. AI Server Infrastructure -->
+    <div class="cat-block">
+      <div class="cat-header">
+        <span class="cat-icon">🖥️</span>
+        <span class="cat-name">AI Server Infrastructure</span>
+        <span class="cat-tag" style="background:rgba(251,146,60,.1);color:var(--cat-orange);border:1px solid rgba(251,146,60,.2);">HARDWARE</span>
+      </div>
+      <ul class="topic-list">
+        <li class="topic-item"><span class="topic-bullet">▸</span> GPU vs CPU — why parallel compute matters for AI</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> NVIDIA CUDA, Tensor Cores, VRAM explained simply</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> AI server rack anatomy: NVMe, PCIe, NVLink</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Hands-on: accessing and monitoring the DC AI server</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Indigenous data centre vs cloud: cost & sovereignty</li>
+      </ul>
+    </div><div class="cat-sep"></div>
+
+    <!-- 8. Core AI & Compute Terminologies -->
+    <div class="cat-block">
+      <div class="cat-header">
+        <span class="cat-icon">📖</span>
+        <span class="cat-name">Core AI & Compute Terminologies</span>
+        <span class="cat-tag" style="background:rgba(45,212,191,.1);color:var(--cat-teal);border:1px solid rgba(45,212,191,.2);">VOCAB</span>
+      </div>
+      <ul class="topic-list">
+        <li class="topic-item"><span class="topic-bullet">▸</span> Model, weight, parameter, epoch, batch, gradient</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Loss, accuracy, precision, recall, F1 score, mAP</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Inference vs Training — two different compute regimes</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> FLOPS, TFLOPS, memory bandwidth — perf numbers decoded</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Latency vs throughput trade-offs in real deployments</li>
+      </ul>
+    </div><div class="cat-sep"></div>
+
+    <!-- 9. AI Model Lifecycle -->
+    <div class="cat-block">
+      <div class="cat-header">
+        <span class="cat-icon">♻️</span>
+        <span class="cat-name">AI Model Lifecycle</span>
+        <span class="cat-tag" style="background:rgba(52,211,153,.1);color:var(--cat-green);border:1px solid rgba(52,211,153,.2);">LIFECYCLE</span>
+      </div>
+      <ul class="topic-list">
+        <li class="topic-item"><span class="topic-bullet">▸</span> Data collection → training → evaluation → deployment → monitoring</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Model versioning and experiment tracking (MLflow intro)</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Model decay — why models need retraining</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> CI/CD for AI models — the MLOps concept introduced</li>
+      </ul>
+    </div><div class="cat-sep"></div>
+
+    <!-- 10. AI Toolchain Vocabulary -->
+    <div class="cat-block">
+      <div class="cat-header">
+        <span class="cat-icon">🧰</span>
+        <span class="cat-name">AI Toolchain Vocabulary</span>
+        <span class="cat-tag" style="background:rgba(192,132,252,.1);color:var(--cat-purple);border:1px solid rgba(192,132,252,.2);">TOOLS</span>
+      </div>
+      <ul class="topic-list">
+        <li class="topic-item"><span class="topic-bullet">▸</span> PyTorch, TensorFlow — the two major frameworks</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> HuggingFace Hub, OpenCV, Scikit-learn, Matplotlib</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> VS Code, Jupyter Lab, Git — the developer workspace</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Cloud AI services overview (AWS, Azure, GCP) — and why on-prem wins for cost</li>
+      </ul>
+    </div><div class="cat-sep"></div>
+
+    <!-- 11. Classical Machine Learning -->
+    <div class="cat-block">
+      <div class="cat-header">
+        <span class="cat-icon">📊</span>
+        <span class="cat-name">Classical Machine Learning</span>
+        <span class="cat-tag" style="background:rgba(56,189,248,.1);color:var(--b-col);border:1px solid rgba(56,189,248,.2);">ML</span>
+      </div>
+      <ul class="topic-list">
+        <li class="topic-item"><span class="topic-bullet">▸</span> Supervised, unsupervised, reinforcement learning</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Linear/logistic regression, decision trees, random forests</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Clustering: K-Means, DBSCAN</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Feature engineering and dimensionality reduction (PCA)</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Practical: train a crop-yield predictor from sensor data</li>
+      </ul>
+    </div><div class="cat-sep"></div>
+
+    <!-- 12. Introduction to Neural Networks -->
+    <div class="cat-block">
+      <div class="cat-header">
+        <span class="cat-icon">🧠</span>
+        <span class="cat-name">Introduction to Neural Networks</span>
+        <span class="cat-tag" style="background:rgba(167,139,250,.1);color:var(--i-col);border:1px solid rgba(167,139,250,.2);">NN</span>
+      </div>
+      <ul class="topic-list">
+        <li class="topic-item"><span class="topic-bullet">▸</span> The neuron analogy: weights, biases, activation functions</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Forward pass, loss function, backpropagation visualised</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Building a simple MLP in PyTorch from scratch</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Overfitting, dropout and why more data beats more layers</li>
+      </ul>
+    </div><div class="cat-sep"></div>
+
+    <!-- 13. Career Options -->
+    <div class="cat-block">
+      <div class="cat-header">
+        <span class="cat-icon">💼</span>
+        <span class="cat-name">Career Options in AI/ML</span>
+        <span class="cat-tag" style="background:rgba(163,230,53,.1);color:var(--cat-lime);border:1px solid rgba(163,230,53,.2);">CAREER</span>
+      </div>
+      <ul class="topic-list">
+        <li class="topic-item"><span class="topic-bullet">▸</span> ML Engineer, Data Scientist, AI Researcher, MLOps Engineer</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> AI Product Manager, AI Ethicist, Prompt Engineer</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Salary ranges and demand outlook 2025–2030 (India & global)</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Building your GitHub portfolio from day one</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Because you're building the full AI Ecosystem, careers reach beyond AI-only roles — Linux, networking, security, data engineering & systems jobs open up too</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> <a href="https://viveksalwaru.github.io/deepmanthan-ai-ecosystem/career_options.html" target="_blank" rel="noopener" style="color:var(--b-col); font-style:normal; text-decoration:underline; text-underline-offset:2px;">Explore the full list of career options →</a></li>
+      </ul>
+    </div><div class="cat-sep"></div>
+
+    <!-- 14. Resource Monitoring & Security -->
+    <div class="cat-block">
+      <div class="cat-header">
+        <span class="cat-icon">🔒</span>
+        <span class="cat-name">Resource Monitoring & Security</span>
+        <span class="cat-tag" style="background:rgba(248,113,113,.1);color:var(--cat-red);border:1px solid rgba(248,113,113,.2);">SECURITY</span>
+      </div>
+      <ul class="topic-list">
+        <li class="topic-item"><span class="topic-bullet">▸</span> htop, nvidia-smi, iostat — reading server health</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> SSH hardening, firewall basics, user privilege management</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Secure handling of training datasets and model weights</li>
+      </ul>
+    </div><div class="cat-sep"></div>
+
+    <!-- 15. Use Case per Stream -->
+    <div class="cat-block">
+      <div class="cat-header">
+        <span class="cat-icon">🎓</span>
+        <span class="cat-name">Use Case per Engineering Stream</span>
+        <span class="cat-tag" style="background:rgba(34,211,238,.1);color:var(--cat-cyan);border:1px solid rgba(34,211,238,.2);">APPLIED</span>
+      </div>
+      <ul class="topic-list">
+        <li class="topic-item"><span class="topic-bullet">▸</span> Mech: predictive maintenance, defect detection</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Civil: structural health monitoring with sensors + AI</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Electronics: smart sensor fusion, FPGA + AI</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Agriculture: crop disease detection via drone imagery</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Healthcare: X-ray/MRI anomaly detection for non-CS students</li>
+      </ul>
+    </div><div class="cat-sep"></div>
+
+    <!-- 16. Future with AI -->
+    <div class="cat-block">
+      <div class="cat-header">
+        <span class="cat-icon">🔭</span>
+        <span class="cat-name">Future with AI</span>
+        <span class="cat-tag" style="background:rgba(52,211,153,.1);color:var(--cat-green);border:1px solid rgba(52,211,153,.2);">VISION</span>
+      </div>
+      <ul class="topic-list">
+        <li class="topic-item"><span class="topic-bullet">▸</span> AGI timeline — what it means and what it doesn't</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> AI in Bharat: government, defence, agriculture, healthcare</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Jobs that AI will create vs replace — honest assessment</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Why indigenous AI infrastructure is a national strategic asset</li>
+      </ul>
+    </div>
+
+    <div class="col-footer">
+      <div class="cf-count"><strong style="color:var(--b-col)">22</strong> topic areas · 110+ concepts</div>
+      <div class="cf-outcome" style="color:var(--b-col)">Outcome: confident AI literacy for any student</div>
+    </div>
+  </div>
+  <!-- /col-b -->
+
+
+  <!-- ════════ COLUMN 2: INTERMEDIATE ════════ -->
+  <div class="col col-i">
+    <div class="col-top-bar"></div>
+    <div class="col-header">
+      <div class="col-tier-label">Tier 2 · Production Systems</div>
+      <div class="col-title">⚡ AI for Intermediate</div>
+      <div class="col-tagline">Stepping into AI Production Systems.<br>Build and deploy real models at scale.</div>
+      <div class="col-meta">
+        <span class="col-meta-pill">Requires Tier 1</span>
+        <span class="col-meta-pill">Live project contribution</span>
+        <span class="col-meta-pill">Industry-ready</span>
+      </div>
+    </div>
+
+    <!-- 1. Recap -->
+    <div class="cat-block">
+      <div class="cat-header">
+        <span class="cat-icon">🔁</span>
+        <span class="cat-name">Recap of AI for Beginners</span>
+        <span class="cat-tag" style="background:rgba(167,139,250,.1);color:var(--i-col);border:1px solid rgba(167,139,250,.2);">RECAP</span>
+      </div>
+      <ul class="topic-list">
+        <li class="topic-item"><span class="topic-bullet">▸</span> Fast consolidation of Tier 1 concepts</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Self-assessment and skill gap identification</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Setting up a personal AI dev environment on the lab server</li>
+      </ul>
+    </div><div class="cat-sep"></div>
+
+    <!-- 2. Deep Learning Foundations -->
+    <div class="cat-block">
+      <div class="cat-header">
+        <span class="cat-icon">🏗️</span>
+        <span class="cat-name">Deep Learning Foundations</span>
+        <span class="cat-tag" style="background:rgba(167,139,250,.1);color:var(--i-col);border:1px solid rgba(167,139,250,.2);">DL</span>
+      </div>
+      <ul class="topic-list">
+        <li class="topic-item"><span class="topic-bullet">▸</span> CNNs: convolution, pooling, feature maps — visual intuition</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> RNNs, LSTMs — sequence modelling fundamentals</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Transfer learning: fine-tuning pre-trained models</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Optimisers: SGD, Adam, learning rate schedulers</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Mixed precision training (FP16/BF16) — speed vs accuracy</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Optimised DataLoader: batch_size, num_workers, pinned_memory</li>
+      </ul>
+    </div><div class="cat-sep"></div>
+
+    <!-- I-NEW-1. Model Evaluation Methodology -->
+    <div class="cat-block">
+      <div class="cat-header">
+        <span class="cat-icon">📏</span>
+        <span class="cat-name">Model Evaluation Methodology <span class="badge-new">NEW</span></span>
+        <span class="cat-tag" style="background:rgba(245,158,11,.1);color:var(--a-col);border:1px solid rgba(245,158,11,.2);">EVAL</span>
+      </div>
+      <ul class="topic-list">
+        <li class="topic-item"><span class="topic-bullet">▸</span> Confusion matrix deep dive: TP, TN, FP, FN in real detection scenarios</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> ROC-AUC, precision-recall curves — reading and interpreting them correctly</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> K-fold cross-validation — why a single test split is never enough</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Statistical significance of model results — is improvement real or noise?</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> mAP@50, mAP@50-95 — the standard production metrics for object detection</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Practical: compare two leopard detector checkpoints and justify the winner</li>
+      </ul>
+    </div><div class="cat-sep"></div>
+
+    <!-- 3. Computer Vision -->
+    <div class="cat-block">
+      <div class="cat-header">
+        <span class="cat-icon">👁️</span>
+        <span class="cat-name">Computer Vision Systems</span>
+        <span class="cat-tag" style="background:rgba(34,211,238,.1);color:var(--cat-cyan);border:1px solid rgba(34,211,238,.2);">VISION</span>
+      </div>
+      <ul class="topic-list">
+        <li class="topic-item"><span class="topic-bullet">▸</span> Object detection: YOLO family (v5 → v11), SSD, DETR</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Segmentation: semantic, instance, panoptic</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Image classification, pose estimation, OCR</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Practical: leopard detection model training on real dataset</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Annotation tools: Roboflow, CVAT, Label Studio</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Data augmentation strategies: albumentations, imgaug</li>
+      </ul>
+    </div><div class="cat-sep"></div>
+
+    <!-- I-NEW-2. Time-Series & IoT Sensor ML -->
+    <div class="cat-block">
+      <div class="cat-header">
+        <span class="cat-icon">📈</span>
+        <span class="cat-name">Time-Series & IoT Sensor ML <span class="badge-new">NEW</span></span>
+        <span class="cat-tag" style="background:rgba(251,146,60,.1);color:var(--cat-orange);border:1px solid rgba(251,146,60,.2);">TIME-SERIES</span>
+      </div>
+      <ul class="topic-list">
+        <li class="topic-item"><span class="topic-bullet">▸</span> Time-series characteristics: trend, seasonality, stationarity</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Forecasting models: ARIMA, Facebook Prophet, LSTM for sequences</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Anomaly detection in continuous sensor streams</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Sliding window features — turning raw IoT signals into ML-ready inputs</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Ingesting live MQTT sensor streams into a preprocessing pipeline</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Practical: predict soil-moisture anomaly from farm sensor data</li>
+      </ul>
+    </div><div class="cat-sep"></div>
+
+    <!-- 4. Multi-Modal AI -->
+    <div class="cat-block">
+      <div class="cat-header">
+        <span class="cat-icon">🔀</span>
+        <span class="cat-name">Multi-Modal AI (Vision + Sensor ML)</span>
+        <span class="cat-tag" style="background:rgba(251,146,60,.1);color:var(--cat-orange);border:1px solid rgba(251,146,60,.2);">FUSION</span>
+      </div>
+      <ul class="topic-list">
+        <li class="topic-item"><span class="topic-bullet">▸</span> Sensor fusion: camera + thermal + radar + GPS</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Time-series ML from IoT sensor streams</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Early vs late fusion architectures</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Vision-Language Models (CLIP, LLaVA) — image + text</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Real project: fusing drone RGB + thermal for wildlife tracking</li>
+      </ul>
+    </div><div class="cat-sep"></div>
+
+    <!-- 5. MLOps -->
+    <div class="cat-block">
+      <div class="cat-header">
+        <span class="cat-icon">🔄</span>
+        <span class="cat-name">MLOps & AI Deployment for Production</span>
+        <span class="cat-tag" style="background:rgba(52,211,153,.1);color:var(--cat-green);border:1px solid rgba(52,211,153,.2);">MLOPS</span>
+      </div>
+      <ul class="topic-list">
+        <li class="topic-item"><span class="topic-bullet">▸</span> MLflow: experiment tracking, model registry, serving</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Containerisation: Docker images for AI models</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Kubernetes for AI workload orchestration</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> CI/CD pipelines for model retraining (GitHub Actions)</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Model serving: TorchServe, Triton Inference Server, FastAPI</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> A/B testing models in production; canary deployments</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Data drift detection and automated retraining triggers</li>
+      </ul>
+    </div><div class="cat-sep"></div>
+
+    <!-- I-NEW-3. API Development & Model Serving -->
+    <div class="cat-block">
+      <div class="cat-header">
+        <span class="cat-icon">🔌</span>
+        <span class="cat-name">API Development & Model Serving <span class="badge-new">NEW</span></span>
+        <span class="cat-tag" style="background:rgba(52,211,153,.1);color:var(--cat-green);border:1px solid rgba(52,211,153,.2);">API</span>
+      </div>
+      <ul class="topic-list">
+        <li class="topic-item"><span class="topic-bullet">▸</span> FastAPI / Flask — wrapping a trained model as a REST HTTP service</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Request validation, async endpoints, error handling</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Serving a YOLOv8 leopard detector via API — full end-to-end</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> API versioning — how to update a model without breaking existing clients</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> TorchServe & Triton Inference Server — production-grade multi-model serving</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Benchmarking API latency and throughput under load (locust)</li>
+      </ul>
+    </div><div class="cat-sep"></div>
+
+    <!-- I-NEW-4. Edge AI Deployment -->
+    <div class="cat-block">
+      <div class="cat-header">
+        <span class="cat-icon">📡</span>
+        <span class="cat-name">Edge AI Deployment <span class="badge-new">NEW</span></span>
+        <span class="cat-tag" style="background:rgba(56,189,248,.1);color:var(--b-col);border:1px solid rgba(56,189,248,.2);">EDGE</span>
+      </div>
+      <ul class="topic-list">
+        <li class="topic-item"><span class="topic-bullet">▸</span> Exporting a trained model to ONNX — the universal interchange format</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Running inference on NVIDIA Jetson (TensorRT) and Raspberry Pi</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Model size vs latency vs accuracy trade-offs on constrained hardware</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> INT8 post-training quantisation for edge — shrink without losing accuracy</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Edge-to-cloud sync: MQTT publish from edge device on detection event</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Practical: deploy leopard detector to Jetson, measure real FPS vs cloud</li>
+      </ul>
+    </div><div class="cat-sep"></div>
+
+    <!-- I-NEW-5. Experiment Tracking in Practice -->
+    <div class="cat-block">
+      <div class="cat-header">
+        <span class="cat-icon">🧪</span>
+        <span class="cat-name">Experiment Tracking in Practice <span class="badge-new">NEW</span></span>
+        <span class="cat-tag" style="background:rgba(167,139,250,.1);color:var(--i-col);border:1px solid rgba(167,139,250,.2);">TRACKING</span>
+      </div>
+      <ul class="topic-list">
+        <li class="topic-item"><span class="topic-bullet">▸</span> Why reproducibility is the hardest problem in ML — and how to solve it</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> MLflow: logging runs, comparing metrics, registering the best model</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Weights & Biases: rich dashboards, sweep hyperparameter optimisation</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Tagging experiments: dataset version, model version, hardware used</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Practical: run 10 training experiments, track all in W&B, present findings</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Team experiment sharing — collaborating on a shared MLflow server</li>
+      </ul>
+    </div><div class="cat-sep"></div>
+
+    <!-- I-NEW-6. Database Integration for AI Pipelines -->
+    <div class="cat-block">
+      <div class="cat-header">
+        <span class="cat-icon">🔗</span>
+        <span class="cat-name">Database Integration for AI Pipelines <span class="badge-new">NEW</span></span>
+        <span class="cat-tag" style="background:rgba(244,114,182,.1);color:var(--cat-pink);border:1px solid rgba(244,114,182,.2);">DATABASE</span>
+      </div>
+      <ul class="topic-list">
+        <li class="topic-item"><span class="topic-bullet">▸</span> Connecting a trained model to PostgreSQL — writing detections to a table</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> MongoDB for storing unstructured AI outputs: images, metadata, embeddings</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Redis for caching model predictions — reduce repeated inference cost</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> SQLAlchemy ORM — database access without raw SQL in Python</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Time-series database (InfluxDB, TimescaleDB) for IoT sensor storage</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Practical: build an end-to-end detection → store → query → dashboard pipeline</li>
+      </ul>
+    </div><div class="cat-sep"></div>
+
+    <!-- 6. NLP -->
+    <div class="cat-block">
+      <div class="cat-header">
+        <span class="cat-icon">💬</span>
+        <span class="cat-name">Natural Language Processing (NLP)</span>
+        <span class="cat-tag" style="background:rgba(167,139,250,.1);color:var(--i-col);border:1px solid rgba(167,139,250,.2);">NLP</span>
+      </div>
+      <ul class="topic-list">
+        <li class="topic-item"><span class="topic-bullet">▸</span> Tokenisation, embeddings, word2vec, sentence transformers</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Named Entity Recognition (NER), text classification</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Sentiment analysis on real-world datasets</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Multilingual NLP — Indic languages support (IndicBERT)</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Practical: forest officer report auto-summarisation</li>
+      </ul>
+    </div><div class="cat-sep"></div>
+
+    <!-- 7. LLMs — using, not optimising internals -->
+    <div class="cat-block">
+      <div class="cat-header">
+        <span class="cat-icon">🤖</span>
+        <span class="cat-name">Using Large Language Models (LLMs)</span>
+        <span class="cat-tag" style="background:rgba(232,121,249,.1);color:var(--cat-pink);border:1px solid rgba(232,121,249,.2);">LLM</span>
+      </div>
+      <ul class="topic-list">
+        <li class="topic-item"><span class="topic-bullet">▸</span> Transformer architecture intuition: attention, Q/K/V — conceptual overview</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Pre-training vs fine-tuning — understanding the difference</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Running open-source LLMs on-prem: Ollama, LLaMA 3, Mistral</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Prompt engineering: zero-shot, few-shot, chain-of-thought, system prompts</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Instruction tuning and RLHF — concept only; deep implementation in Tier 3</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Practical: build a forest officer advisory chatbot using an on-prem LLM</li>
+      </ul>
+    </div><div class="cat-sep"></div>
+
+    <!-- 8. RAG -->
+    <div class="cat-block">
+      <div class="cat-header">
+        <span class="cat-icon">🔍</span>
+        <span class="cat-name">Retrieval Augmented Generation (RAG)</span>
+        <span class="cat-tag" style="background:rgba(34,211,238,.1);color:var(--cat-teal);border:1px solid rgba(34,211,238,.2);">RAG</span>
+      </div>
+      <ul class="topic-list">
+        <li class="topic-item"><span class="topic-bullet">▸</span> Vector databases: ChromaDB, Pinecone, Weaviate, pgvector</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Embeddings search: cosine similarity, FAISS</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> RAG pipeline: chunk → embed → retrieve → generate</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Hybrid search: BM25 + dense retrieval</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Practical: wildlife policy Q&A bot over Forest Dept documents</li>
+      </ul>
+    </div><div class="cat-sep"></div>
+
+    <!-- 9. AI Ethics, Safety & Compliance -->
+    <div class="cat-block">
+      <div class="cat-header">
+        <span class="cat-icon">⚖️</span>
+        <span class="cat-name">AI Ethics, Safety & Compliance</span>
+        <span class="cat-tag" style="background:rgba(248,113,113,.1);color:var(--cat-red);border:1px solid rgba(248,113,113,.2);">ETHICS</span>
+      </div>
+      <ul class="topic-list">
+        <li class="topic-item"><span class="topic-bullet">▸</span> Algorithmic bias: detection, mitigation, fairness metrics</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Model explainability: SHAP, LIME, GradCAM</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Data privacy: GDPR, India's DPDP Act, consent frameworks</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> AI in surveillance: legal, ethical, civil liberties considerations</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Responsible AI disclosure and model cards</li>
+      </ul>
+    </div><div class="cat-sep"></div>
+
+    <!-- 11. Resource Monitoring & Security -->
+    <div class="cat-block">
+      <div class="cat-header">
+        <span class="cat-icon">🔒</span>
+        <span class="cat-name">Resource Monitoring & Security</span>
+        <span class="cat-tag" style="background:rgba(248,113,113,.1);color:var(--cat-red);border:1px solid rgba(248,113,113,.2);">SECURITY</span>
+      </div>
+      <ul class="topic-list">
+        <li class="topic-item"><span class="topic-bullet">▸</span> Prometheus + Grafana: GPU/CPU/memory dashboards</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Model poisoning attacks and adversarial robustness</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Secrets management for AI credentials (Vault, .env hygiene)</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Network isolation for AI inference servers</li>
+      </ul>
+    </div><div class="cat-sep"></div>
+
+    <!-- 12. Industry Skill Map + Live Project -->
+    <div class="cat-block">
+      <div class="cat-header">
+        <span class="cat-icon">🗺️</span>
+        <span class="cat-name">Industry-Ready Skill Map · Live Project</span>
+        <span class="cat-tag" style="background:rgba(163,230,53,.1);color:var(--cat-lime);border:1px solid rgba(163,230,53,.2);">PROJECT</span>
+      </div>
+      <ul class="topic-list">
+        <li class="topic-item"><span class="topic-bullet">▸</span> Active contribution to the Govt. Maharashtra wildlife system</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Git workflow: feature branches, PRs, code reviews</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Writing technical documentation for production code</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Interview simulation: AI/ML engineer technical rounds</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> LinkedIn optimisation + open-source contribution strategy</li>
+      </ul>
+    </div>
+
+    <div class="col-footer">
+      <div class="cf-count"><strong style="color:var(--i-col)">17</strong> topic areas · 110+ concepts</div>
+      <div class="cf-outcome" style="color:var(--i-col)">Outcome: production-grade AI practitioner & deployer</div>
+    </div>
+  </div>
+  <!-- /col-i -->
+
+
+  <!-- ════════ COLUMN 3: ADVANCED ════════ -->
+  <div class="col col-a">
+    <div class="col-top-bar"></div>
+    <div class="col-header">
+      <div class="col-tier-label">Tier 3 · Mastery</div>
+      <div class="col-title">🔥 AI for Advanced</div>
+      <div class="col-tagline">Design, optimise, scale, and innovate.<br>Contribute to live production AI systems.</div>
+      <div class="col-meta">
+        <span class="col-meta-pill">Requires Tier 1+2</span>
+        <span class="col-meta-pill">R&D Lab access</span>
+        <span class="col-meta-pill">Architect-level</span>
+      </div>
+    </div>
+
+    <!-- 1. Recap -->
+    <div class="cat-block">
+      <div class="cat-header">
+        <span class="cat-icon">🔁</span>
+        <span class="cat-name">Rapid Recap · Tiers 1 & 2</span>
+        <span class="cat-tag" style="background:rgba(245,158,11,.1);color:var(--a-col);border:1px solid rgba(245,158,11,.2);">RECAP</span>
+      </div>
+      <ul class="topic-list">
+        <li class="topic-item"><span class="topic-bullet">▸</span> Fast audit of Tier 1+2 competencies</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Identifying personal specialisation tracks</li>
+      </ul>
+    </div><div class="cat-sep"></div>
+
+    <!-- 2. Transformer Architecture -->
+    <div class="cat-block">
+      <div class="cat-header">
+        <span class="cat-icon">⚙️</span>
+        <span class="cat-name">Transformer Architecture & Evolution</span>
+        <span class="cat-tag" style="background:rgba(245,158,11,.1);color:var(--a-col);border:1px solid rgba(245,158,11,.2);">ARCH</span>
+      </div>
+      <ul class="topic-list">
+        <li class="topic-item"><span class="topic-bullet">▸</span> "Attention Is All You Need" — deep paper walkthrough</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Multi-head attention, positional encoding, FFN layers</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> BERT, GPT, T5, ViT — architecture comparisons</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> From Transformers to Mamba / SSM — next-gen architectures</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Mixture of Experts (MoE): how GPT-4 and Mixtral scale</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> KV-cache, flash attention, grouped query attention optimisations</li>
+      </ul>
+    </div><div class="cat-sep"></div>
+
+    <!-- 3. Advanced Model Engineering -->
+    <div class="cat-block">
+      <div class="cat-header">
+        <span class="cat-icon">🔬</span>
+        <span class="cat-name">Advanced Model Engineering & Optimisation</span>
+        <span class="cat-tag" style="background:rgba(251,146,60,.1);color:var(--cat-orange);border:1px solid rgba(251,146,60,.2);">OPTIM</span>
+      </div>
+      <ul class="topic-list">
+        <li class="topic-item"><span class="topic-bullet">▸</span> Model pruning, quantisation (INT8/INT4), knowledge distillation</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> TensorRT & ONNX export for production deployment</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> LoRA, QLoRA, DoRA — parameter-efficient fine-tuning</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Hyperparameter optimisation: Optuna, Ray Tune</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Latency profiling: torch.profiler, Nsight Systems</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Speculative decoding for faster LLM inference</li>
+      </ul>
+    </div><div class="cat-sep"></div>
+
+    <!-- 4. Agentic AI -->
+    <div class="cat-block">
+      <div class="cat-header">
+        <span class="cat-icon">🤖</span>
+        <span class="cat-name">Agentic AI Systems & Autonomous Workflows</span>
+        <span class="cat-tag" style="background:rgba(192,132,252,.1);color:var(--cat-purple);border:1px solid rgba(192,132,252,.2);">AGENTS</span>
+      </div>
+      <ul class="topic-list">
+        <li class="topic-item"><span class="topic-bullet">▸</span> Single-agent architecture: ReAct, tool-calling, memory</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Multi-Agent Systems (MAS): orchestrator + specialist agents</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> LangChain, LangGraph, CrewAI, AutoGen frameworks</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> MAS for automated code review, RCA, DevOps</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Agent memory: episodic, semantic, procedural stores</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Practical: MAS pipeline for wildlife alert auto-triage</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Model Context Protocol (MCP) — agent tool standards</li>
+      </ul>
+    </div><div class="cat-sep"></div>
+
+    <!-- 5. Distributed AI Systems -->
+    <div class="cat-block">
+      <div class="cat-header">
+        <span class="cat-icon">🌐</span>
+        <span class="cat-name">Distributed AI Systems & Scalable Platforms</span>
+        <span class="cat-tag" style="background:rgba(56,189,248,.1);color:var(--b-col);border:1px solid rgba(56,189,248,.2);">DISTRIBUTED</span>
+      </div>
+      <ul class="topic-list">
+        <li class="topic-item"><span class="topic-bullet">▸</span> Pipeline, tensor, and 3D parallelism (Megatron-LM)</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Distributed training: NCCL, Ring-AllReduce, ZeRO</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Ray cluster for distributed ML workloads</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Apache Spark ML for big data preprocessing</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Federated learning in production (PySyft, Flower)</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Edge-to-cloud orchestration: K3s + central Kubernetes</li>
+      </ul>
+    </div><div class="cat-sep"></div>
+
+    <!-- 6. HPC + GPU Systems -->
+    <div class="cat-block">
+      <div class="cat-header">
+        <span class="cat-icon">🚀</span>
+        <span class="cat-name">High Performance AI Computing (HPC + GPU)</span>
+        <span class="cat-tag" style="background:rgba(245,158,11,.1);color:var(--a-col);border:1px solid rgba(245,158,11,.2);">HPC</span>
+      </div>
+      <ul class="topic-list">
+        <li class="topic-item"><span class="topic-bullet">▸</span> CUDA kernel programming for custom AI ops</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> NVLink, NVSwitch, GPU interconnect topology</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Memory hierarchy: HBM3, L2 cache, register file tuning</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Custom CUDA extensions in PyTorch (cpp_extension)</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Power, cooling and rack design for AI data centres</li>
+      </ul>
+    </div><div class="cat-sep"></div>
+
+    <!-- 7. AI Platform Engineering & Advanced MLOps -->
+    <div class="cat-block">
+      <div class="cat-header">
+        <span class="cat-icon">🏭</span>
+        <span class="cat-name">AI Platform Engineering & Advanced MLOps</span>
+        <span class="cat-tag" style="background:rgba(52,211,153,.1);color:var(--cat-green);border:1px solid rgba(52,211,153,.2);">PLATFORM</span>
+      </div>
+      <ul class="topic-list">
+        <li class="topic-item"><span class="topic-bullet">▸</span> Feature stores: Feast, Tecton — reusable feature pipelines</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Model registries at scale: MLflow, Weights & Biases</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Kubeflow Pipelines for reproducible ML workflows</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Automated retraining on data drift signals</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Shadow deployment and traffic splitting strategies</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Building an internal AI platform for an organisation</li>
+      </ul>
+    </div><div class="cat-sep"></div>
+
+    <!-- 8. AI Observability ★ NEW -->
+    <div class="cat-block">
+      <div class="cat-header">
+        <span class="cat-icon">📡</span>
+        <span class="cat-name">AI Observability <span class="badge-new">KEY</span></span>
+        <span class="cat-tag" style="background:rgba(163,230,53,.1);color:var(--cat-lime);border:1px solid rgba(163,230,53,.2);">OBSERVE</span>
+      </div>
+      <ul class="topic-list">
+        <li class="topic-item"><span class="topic-bullet">▸</span> The three pillars: metrics, logs, traces — applied to ML systems</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Model performance monitoring: prediction drift, label drift</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> LLM observability: token latency, hallucination rate, cost per query</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> OpenTelemetry for AI pipelines — distributed tracing</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Arize AI, Evidently, WhyLabs — production model monitoring tools</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Real-time alerting when model behaviour degrades</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> SLOs for AI services: availability, latency, accuracy targets</li>
+      </ul>
+    </div><div class="cat-sep"></div>
+
+    <!-- 9. AI Guardrails ★ NEW -->
+    <div class="cat-block">
+      <div class="cat-header">
+        <span class="cat-icon">🛡️</span>
+        <span class="cat-name">AI Guardrails & Output Safety <span class="badge-new">KEY</span></span>
+        <span class="cat-tag" style="background:rgba(248,113,113,.1);color:var(--cat-red);border:1px solid rgba(248,113,113,.2);">GUARDRAILS</span>
+      </div>
+      <ul class="topic-list">
+        <li class="topic-item"><span class="topic-bullet">▸</span> Input validation: prompt injection detection, schema enforcement</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Output filtering: toxicity, PII redaction, hallucination detection</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> NeMo Guardrails, Guardrails.ai, LlamaGuard frameworks</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Constitutional AI and RLHF for safer model alignment</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Red-teaming LLMs: adversarial prompts, jailbreak resistance</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Confidence thresholding and human-in-the-loop fallback</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Practical: guardrail pipeline for the wildlife advisory LLM</li>
+      </ul>
+    </div><div class="cat-sep"></div>
+
+    <!-- 10. Full Stack AI Case Study -->
+    <div class="cat-block">
+      <div class="cat-header">
+        <span class="cat-icon">🎯</span>
+        <span class="cat-name">Full Stack AI Ecosystem Case Study</span>
+        <span class="cat-tag" style="background:rgba(245,158,11,.1);color:var(--a-col);border:1px solid rgba(245,158,11,.2);">CASE STUDY</span>
+      </div>
+      <ul class="topic-list">
+        <li class="topic-item"><span class="topic-bullet">▸</span> Architecture review: the complete Wildlife Surveillance System</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> IoT → Edge (YOLOv8) → Fog → Cloud → Dashboard full stack</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> SLA analysis, incident post-mortems, architecture evolution</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Cost engineering: on-prem vs cloud TCO comparison</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Scaling from 5 to 500 edge devices — what breaks and how to fix it</li>
+      </ul>
+    </div><div class="cat-sep"></div>
+
+    <!-- 11. Domain-Specific Advanced AI -->
+    <div class="cat-block">
+      <div class="cat-header">
+        <span class="cat-icon">🔭</span>
+        <span class="cat-name">Domain-Specific Advanced AI Systems</span>
+        <span class="cat-tag" style="background:rgba(129,140,248,.1);color:var(--cat-indigo);border:1px solid rgba(129,140,248,.2);">DOMAIN</span>
+      </div>
+      <ul class="topic-list">
+        <li class="topic-item"><span class="topic-bullet">▸</span> Robotics & autonomous systems: ROS 2 + AI perception stack</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Smart agriculture: multi-spectral + LLM advisory pipelines</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Healthcare AI: DICOM processing, FDA-grade model validation</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> AI for cybersecurity: anomaly detection, threat intelligence</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Generative AI for content creation and synthetic data</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> AI-driven autonomous vehicles: perception + planning stack</li>
+      </ul>
+    </div><div class="cat-sep"></div>
+
+    <!-- 12. AI Security, Safety & Trust -->
+    <div class="cat-block">
+      <div class="cat-header">
+        <span class="cat-icon">🔐</span>
+        <span class="cat-name">AI Security, Safety & Trust Engineering</span>
+        <span class="cat-tag" style="background:rgba(248,113,113,.1);color:var(--cat-red);border:1px solid rgba(248,113,113,.2);">SECURITY</span>
+      </div>
+      <ul class="topic-list">
+        <li class="topic-item"><span class="topic-bullet">▸</span> Adversarial attacks: FGSM, PGD — and robust training defences</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Membership inference & model inversion attacks</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Supply chain security: model weight integrity, SBOM for AI</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Differential privacy for training data protection</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Secure multi-party computation for collaborative AI</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> AI governance frameworks: EU AI Act, NIST AI RMF, India NITI Aayog</li>
+      </ul>
+    </div><div class="cat-sep"></div>
+
+    <!-- 13. Resource Monitoring at Scale -->
+    <div class="cat-block">
+      <div class="cat-header">
+        <span class="cat-icon">📊</span>
+        <span class="cat-name">Resource Monitoring at Scale</span>
+        <span class="cat-tag" style="background:rgba(245,158,11,.1);color:var(--a-col);border:1px solid rgba(245,158,11,.2);">MONITOR</span>
+      </div>
+      <ul class="topic-list">
+        <li class="topic-item"><span class="topic-bullet">▸</span> Prometheus + Grafana: custom AI inference dashboards</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> DCGM exporter for GPU fleet monitoring</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> ELK stack for AI application log aggregation</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Capacity planning: GPU hours budgeting for training jobs</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> PagerDuty / alerting integration for on-call AI ops</li>
+      </ul>
+    </div><div class="cat-sep"></div>
+
+    <!-- 14. Live Project + Career -->
+    <div class="cat-block">
+      <div class="cat-header">
+        <span class="cat-icon">🏆</span>
+        <span class="cat-name">Live Production Contribution · Career</span>
+        <span class="cat-tag" style="background:rgba(163,230,53,.1);color:var(--cat-lime);border:1px solid rgba(163,230,53,.2);">CAREER</span>
+      </div>
+      <ul class="topic-list">
+        <li class="topic-item"><span class="topic-bullet">▸</span> Architecture-level contribution to the Govt. Maharashtra system</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> Technical paper / R&D lab research contribution</li>
+        <li class="topic-item"><span class="topic-bullet">▸</span> AI Architect, Principal Engineer, Research Scientist roles</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Open-source contribution: upstream to PyTorch / HuggingFace</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Patent filing process for novel AI innovations</li>
+        <li class="topic-item topic-added"><span class="topic-bullet">▸</span> Startup / deep-tech venture pathway in AI</li>
+      </ul>
+    </div>
+
+    <div class="col-footer">
+      <div class="cf-count"><strong style="color:var(--a-col)">14</strong> topic areas · 100+ concepts</div>
+      <div class="cf-outcome" style="color:var(--a-col)">Outcome: AI architect & system designer</div>
+    </div>
+  </div>
+  <!-- /col-a -->
+
+</div><!-- /columns-wrap -->
+
+<!-- ══ BOTTOM BANNER ══ -->
+<div class="bottom-banner">
+  <div class="bb-item">
+    <div class="bb-val" style="color:var(--b-col)">3</div>
+    <div class="bb-label">Progressive Tiers</div>
+    <div class="bb-sub">Beginner → Intermediate → Advanced</div>
+  </div>
+  <div class="bb-item">
+    <div class="bb-val" style="color:var(--i-col)">250+</div>
+    <div class="bb-label">Concepts Covered</div>
+    <div class="bb-sub">Across the full AI ecosystem</div>
+  </div>
+  <div class="bb-item">
+    <div class="bb-val" style="color:var(--a-col)">50+</div>
+    <div class="bb-label">Years Faculty Experience</div>
+    <div class="bb-sub">Cumulative industry expertise</div>
+  </div>
+  <div class="bb-item">
+    <div class="bb-val" style="background:linear-gradient(90deg,var(--b-col),var(--a-col));-webkit-background-clip:text;background-clip:text;color:transparent;">5–10yr</div>
+    <div class="bb-label">Industry Equivalent</div>
+    <div class="bb-sub">Experience outcome for graduates</div>
+  </div>
+</div>
+
+<footer class="page-footer">
+  AI for All · Wildlife Surveillance AI System · Government of Maharashtra · Indigenous Data Centre Programme
+</footer>
+
+</body>
+</html>
