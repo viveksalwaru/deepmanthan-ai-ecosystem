@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Install Linux on Windows with Docker · Guide</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+:root{
+  --bg:#070B12; --bg2:#0A0F1A; --panel:#0E1622; --panel2:#111a28; --line:#1E2C3F; --line-soft:#16212F;
+  --cyan:#38E1FF; --teal:#2DD4BF; --violet:#A78BFA; --green:#4ADE80; --amber:#FBBF24; --rose:#FB5E6D; --orange:#FB923C;
+  --ink:#DCE6F2; --ink2:#A0D8FF; --dim:#7C8CA3; --faint:#3D4F63;
+}
+html,body{ height:100%; background:var(--bg); color:var(--ink); font-family:"Sora",sans-serif; overflow:hidden; }
+a{ color:inherit; text-decoration:none; }
+
+.top-header{ height:58px; background:linear-gradient(90deg,#08101E,#0A0F1A); border-bottom:1px solid var(--line);
+  display:flex; align-items:center; padding:0 22px; gap:13px; }
+.back{ font-family:"IBM Plex Mono"; font-size:.72rem; color:var(--cyan); border:1px solid rgba(56,225,255,.4);
+  border-radius:8px; padding:6px 12px; }
+.back:hover{ background:rgba(56,225,255,.1); }
+.logo-glyph{ width:34px;height:34px;border-radius:9px; background:linear-gradient(150deg,rgba(74,222,128,.22),rgba(56,225,255,.12));
+  border:1px solid rgba(74,222,128,.45); display:grid; place-items:center; font-size:1.1rem; }
+.logo-txt b{ font-family:"Space Grotesk"; font-weight:700; font-size:1rem; }
+.logo-txt span{ display:block; font-size:.63rem; color:var(--dim); letter-spacing:1.2px; text-transform:uppercase; }
+.hdr-spacer{ flex:1; }
+.progresspill{ font-family:"IBM Plex Mono"; font-size:.7rem; color:var(--dim); border:1px solid var(--line); border-radius:20px; padding:5px 13px; }
+.progresspill b{ color:var(--cyan); }
+
+.body{ height:calc(100% - 58px); display:flex; }
+
+/* step rail */
+.rail{ width:290px; flex-shrink:0; background:#0b0e15; border-right:1px solid var(--line); overflow-y:auto; padding:14px 0; }
+.rail-head{ font-family:"IBM Plex Mono"; font-size:.58rem; letter-spacing:1.6px; text-transform:uppercase; color:var(--faint); padding:4px 18px 12px; }
+.step-li{ display:flex; gap:11px; align-items:flex-start; padding:10px 18px; cursor:pointer; border-left:2px solid transparent; transition:.15s; }
+.step-li:hover{ background:rgba(255,255,255,.02); }
+.step-li.active{ background:rgba(56,225,255,.07); border-left-color:var(--cyan); }
+.step-li.done .num{ background:var(--green); color:var(--bg); border-color:var(--green); }
+.step-li .num{ width:24px;height:24px;border-radius:50%; flex-shrink:0; display:grid; place-items:center; font-family:"IBM Plex Mono";
+  font-size:.7rem; font-weight:600; border:1.5px solid var(--line); color:var(--dim); }
+.step-li.active .num{ border-color:var(--cyan); color:var(--cyan); }
+.step-li .st{ font-size:.8rem; color:var(--ink2); line-height:1.35; padding-top:2px; }
+.step-li.active .st{ color:var(--ink); font-weight:500; }
+
+/* content */
+.content{ flex:1; overflow-y:auto; padding:26px 34px 40px; }
+.progressbar{ height:5px; background:var(--line-soft); border-radius:5px; overflow:hidden; margin-bottom:24px; }
+.progressbar>i{ display:block; height:100%; background:linear-gradient(90deg,var(--teal),var(--green)); width:0; transition:width .3s; }
+.intro-note{ display:flex; gap:11px; align-items:flex-start; background:var(--panel); border:1px solid var(--line); border-left:3px solid var(--amber);
+  border-radius:10px; padding:12px 15px; margin-bottom:22px; }
+.intro-note p{ font-size:.76rem; color:var(--dim); line-height:1.55; } .intro-note b{ color:var(--ink); }
+
+.step-num-big{ font-family:"IBM Plex Mono"; font-size:.72rem; color:var(--cyan); letter-spacing:1px; }
+.step-title{ font-family:"Space Grotesk"; font-size:1.5rem; font-weight:700; margin:4px 0 12px; }
+.step-desc{ font-size:.92rem; color:var(--ink2); line-height:1.65; margin-bottom:18px; max-width:760px; }
+.step-desc b{ color:var(--ink); }
+
+.cmd{ background:#05090F; border:1px solid var(--line); border-radius:10px; margin:12px 0; overflow:hidden; max-width:760px; }
+.cmd-bar{ display:flex; align-items:center; gap:8px; padding:7px 12px; border-bottom:1px solid var(--line-soft); background:#0A121D; }
+.cmd-bar .where{ font-family:"IBM Plex Mono"; font-size:.62rem; color:var(--dim); }
+.cmd-bar .copy{ margin-left:auto; font-family:"IBM Plex Mono"; font-size:.62rem; color:var(--cyan); background:none; border:1px solid rgba(56,225,255,.4);
+  border-radius:6px; padding:3px 10px; cursor:pointer; }
+.cmd-bar .copy:hover{ background:rgba(56,225,255,.12); }
+.cmd-bar .copy.done{ color:var(--green); border-color:var(--green); }
+.cmd pre{ padding:12px 14px; font-family:"IBM Plex Mono"; font-size:.8rem; color:var(--ink); white-space:pre-wrap; word-break:break-word; line-height:1.6; }
+.cmd pre .pmt{ color:var(--green); }
+
+.expect{ background:var(--panel2); border:1px dashed var(--line); border-radius:10px; padding:11px 14px; margin:12px 0; max-width:760px; }
+.expect .el{ font-family:"IBM Plex Mono"; font-size:.62rem; color:var(--faint); text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; }
+.expect pre{ font-family:"IBM Plex Mono"; font-size:.74rem; color:var(--teal); white-space:pre-wrap; line-height:1.55; }
+
+.tip{ display:flex; gap:10px; align-items:flex-start; border-radius:10px; padding:11px 14px; margin:14px 0; max-width:760px; font-size:.8rem; line-height:1.5; }
+.tip.info{ background:rgba(56,225,255,.06); border:1px solid rgba(56,225,255,.25); color:var(--ink2); }
+.tip.warn{ background:rgba(251,191,36,.07); border:1px solid rgba(251,191,36,.3); color:#f6e2ad; }
+.tip b{ color:var(--ink); }
+
+/* footer controls */
+.controls{ display:flex; align-items:center; gap:12px; margin-top:26px; max-width:760px; }
+.nbtn{ font-family:"Space Grotesk"; font-weight:600; font-size:.86rem; border-radius:10px; padding:11px 22px; cursor:pointer; border:1px solid var(--line);
+  background:var(--panel2); color:var(--ink); transition:.15s; }
+.nbtn:hover{ border-color:var(--dim); }
+.nbtn.prev{ }
+.nbtn.next{ color:var(--bg); background:linear-gradient(90deg,var(--cyan),var(--teal)); border:none; }
+.nbtn.next:hover{ filter:brightness(1.08); }
+.nbtn:disabled{ opacity:.35; cursor:default; }
+.controls .spacer{ flex:1; }
+.done-badge{ display:none; align-items:center; gap:8px; color:var(--green); font-family:"IBM Plex Mono"; font-size:.78rem; }
+.done-badge.show{ display:flex; }
+
+@media (max-width:820px){ .rail{ display:none; } }
+</style>
+</head>
+<body>
+<div class="top-header">
+  <div class="logo-glyph">🐧</div>
+  <div class="logo-txt"><b>Install Linux on Windows — with Docker</b><span>Run Linux virtually, step by step</span></div>
+  <div class="hdr-spacer"></div>
+  <div class="progresspill">Step <b id="pill-cur">1</b> / <b id="pill-tot">10</b></div>
+  <a href="index.html" class="back">← Suite Home</a>
+</div>
+
+<div class="body">
+  <nav class="rail"><div class="rail-head">Steps</div><div id="stepList"></div></nav>
+  <main class="content">
+    <div class="progressbar"><i id="prog"></i></div>
+    <div class="intro-note"><span>💡</span><p><b>Good to know:</b> Docker doesn't create a full, heavy virtual machine. On Windows it uses <b>WSL 2</b> (a fast, built-in Linux engine), and containers share that Linux kernel — so you get real Linux, running in seconds, using very little memory.</p></div>
+    <div id="stepBody"></div>
+    <div class="controls">
+      <button class="nbtn prev" id="prevBtn">← Previous</button>
+      <div class="spacer"></div>
+      <span class="done-badge" id="doneBadge">✓ You're done — Linux is running on Windows!</span>
+      <button class="nbtn next" id="nextBtn">Next →</button>
+    </div>
+  </main>
+</div>
+
+<script>
+const STEPS=[
+  { t:"Check the requirements", d:"Make sure your PC can run Docker. You need <b>Windows 10 (64-bit, build 19044+) or Windows 11</b>, and <b>hardware virtualization</b> must be turned on in the BIOS/UEFI (it usually is by default).",
+    cmds:[{w:"Task Manager → Performance → CPU", c:"Virtualization:  Enabled"}],
+    tip:{k:"info", h:"To open Task Manager: press <b>Ctrl + Shift + Esc</b>. If Virtualization says <b>Disabled</b>, enable “Intel VT-x / AMD-SVM” in your BIOS."} },
+
+  { t:"Enable WSL 2", d:"WSL 2 (Windows Subsystem for Linux) is the Linux engine Docker uses. Open <b>PowerShell as Administrator</b> and run one command — it installs WSL 2 and a default Ubuntu.",
+    cmds:[{w:"PowerShell (Administrator)", c:"wsl --install"}],
+    expect:"Installing: Virtual Machine Platform\nInstalling: Windows Subsystem for Linux\nInstalling: Ubuntu\nThe requested operation is successful.",
+    tip:{k:"warn", h:"<b>Reboot your PC</b> after this finishes so the changes take effect."} },
+
+  { t:"Verify WSL 2 is ready", d:"After rebooting, confirm WSL is installed and set to version 2 (the version Docker needs).",
+    cmds:[{w:"PowerShell", c:"wsl --status"},{w:"PowerShell", c:"wsl --set-default-version 2"}],
+    expect:"Default Version: 2\nDefault Distribution: Ubuntu",
+    tip:{k:"info", h:"If a command isn't found, restart the PC once more, then try again."} },
+
+  { t:"Download Docker Desktop", d:"Docker Desktop is the app that manages containers on Windows. Download the installer from the official site.",
+    cmds:[{w:"Web browser", c:"https://www.docker.com/products/docker-desktop/"}],
+    tip:{k:"info", h:"Choose the <b>Windows</b> installer (AMD64 for most PCs, ARM64 for ARM laptops)."} },
+
+  { t:"Install Docker Desktop", d:"Run the installer you downloaded. On the configuration screen, keep <b>“Use WSL 2 instead of Hyper-V”</b> ticked, then finish and let it complete.",
+    cmds:[{w:"Installer options", c:"[✓] Use WSL 2 instead of Hyper-V\n[✓] Add shortcut to desktop"}],
+    tip:{k:"warn", h:"When it says <b>“Installation succeeded”</b>, click <b>Close and restart</b> if prompted."} },
+
+  { t:"Start Docker & enable WSL integration", d:"Launch <b>Docker Desktop</b> from the Start menu and wait until the whale icon in the taskbar stops animating (that means the engine is running). Then make sure WSL integration is on.",
+    cmds:[{w:"Docker Desktop → Settings", c:"Resources → WSL Integration → Enable integration with Ubuntu"}],
+    tip:{k:"info", h:"First start can take a minute while it sets up the Linux engine. Accept the service agreement if asked."} },
+
+  { t:"Verify Docker works", d:"Open a terminal (PowerShell, Command Prompt, or the Ubuntu shell) and check the version, then run a tiny test container.",
+    cmds:[{w:"Terminal", c:"docker --version"},{w:"Terminal", c:"docker run hello-world"}],
+    expect:"Hello from Docker!\nThis message shows that your installation appears to be working correctly.",
+    tip:{k:"info", h:"Seeing “Hello from Docker!” means Docker can download images and run containers. 🎉"} },
+
+  { t:"Pull a Linux (Ubuntu) image", d:"An <b>image</b> is a ready-made Linux filesystem. Download the Ubuntu image — this is the Linux you'll run.",
+    cmds:[{w:"Terminal", c:"docker pull ubuntu:22.04"}],
+    expect:"22.04: Pulling from library/ubuntu\nStatus: Downloaded newer image for ubuntu:22.04",
+    tip:{k:"info", h:"You can pull other flavours too, e.g. <b>debian</b>, <b>fedora</b>, or <b>alpine</b> (a tiny 5 MB Linux)."} },
+
+  { t:"Run Linux interactively", d:"Start a container from the image and drop straight into its shell. The <b>-it</b> flags give you an interactive terminal — you're now <b>inside Linux</b>.",
+    cmds:[{w:"Terminal", c:"docker run -it ubuntu:22.04 bash"}],
+    expect:"root@3f9a2c1b:/#",
+    tip:{k:"info", h:"That new prompt (<b>root@…:/#</b>) is the Linux shell running on your Windows PC."} },
+
+  { t:"Explore Linux, then exit or reuse", d:"You're inside a real Linux system. Try a few commands. Type <b>exit</b> to leave. You can name a container to keep and restart it later.",
+    cmds:[
+      {w:"Inside the container", c:"cat /etc/os-release"},
+      {w:"Inside the container", c:"apt update && apt install -y neofetch && neofetch"},
+      {w:"Inside the container", c:"exit"},
+      {w:"Reuse later (named container)", c:"docker run -it --name mylinux ubuntu:22.04 bash\ndocker start -ai mylinux"}
+    ],
+    expect:"NAME=\"Ubuntu\"\nVERSION=\"22.04.x LTS (Jammy Jellyfish)\"",
+    tip:{k:"info", h:"🎓 That's it — you now have Linux running virtually on Windows through Docker. Use <b>docker ps -a</b> to see your containers."} },
+];
+
+const $=id=>document.getElementById(id);
+let cur=0;
+const listEl=$('stepList');
+STEPS.forEach((s,i)=>{ const li=document.createElement('div'); li.className='step-li'; li.dataset.i=i;
+  li.innerHTML=`<span class="num">${i+1}</span><span class="st">${s.t}</span>`; li.onclick=()=>go(i); listEl.appendChild(li); });
+$('pill-tot').textContent=STEPS.length;
+
+function esc(s){ return s.replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+function render(){
+  const s=STEPS[cur];
+  let html=`<div class="step-num-big">STEP ${cur+1} OF ${STEPS.length}</div><div class="step-title">${s.t}</div><div class="step-desc">${s.d}</div>`;
+  (s.cmds||[]).forEach((cm,idx)=>{
+    html+=`<div class="cmd"><div class="cmd-bar"><span class="where">${esc(cm.w)}</span><button class="copy" data-cmd="${encodeURIComponent(cm.c)}">Copy</button></div><pre>${esc(cm.c)}</pre></div>`;
+  });
+  if(s.expect) html+=`<div class="expect"><div class="el">What you should see</div><pre>${esc(s.expect)}</pre></div>`;
+  if(s.tip) html+=`<div class="tip ${s.tip.k}"><span>${s.tip.k==='warn'?'⚠️':'💡'}</span><span>${s.tip.h}</span></div>`;
+  $('stepBody').innerHTML=html;
+  // copy buttons
+  document.querySelectorAll('.copy').forEach(b=>b.onclick=()=>{ const txt=decodeURIComponent(b.dataset.cmd);
+    navigator.clipboard&&navigator.clipboard.writeText(txt); b.textContent='Copied ✓'; b.classList.add('done'); setTimeout(()=>{b.textContent='Copy';b.classList.remove('done');},1400); });
+  // rail state
+  document.querySelectorAll('.step-li').forEach((li,i)=>{ li.classList.toggle('active',i===cur); li.classList.toggle('done',i<cur); });
+  $('prog').style.width=((cur+1)/STEPS.length*100)+'%';
+  $('pill-cur').textContent=cur+1;
+  $('prevBtn').disabled=cur===0;
+  $('nextBtn').textContent = cur===STEPS.length-1 ? 'Finish ✓' : 'Next →';
+  $('doneBadge').classList.toggle('show', cur===STEPS.length-1);
+  $('stepBody').parentElement.scrollTop=0;
+}
+function go(i){ cur=Math.max(0,Math.min(STEPS.length-1,i)); render(); }
+$('prevBtn').onclick=()=>go(cur-1);
+$('nextBtn').onclick=()=>{ if(cur<STEPS.length-1) go(cur+1); };
+render();
+</script>
+</body>
+</html>

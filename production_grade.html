@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Production-Grade System · Characteristics</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+:root{
+  --bg:#0a0b0f; --surface:#111318; --panel:#141821; --panel2:#0e121b; --border:#1e2130; --border-soft:#181b26;
+  --cyan:#00d4ff; --teal:#00e5c7; --violet:#a78bfa; --green:#22c55e; --amber:#f59e0b; --magenta:#e879f9; --red:#ef4444; --blue:#5b9dff;
+  --ink:#e2e8f0; --ink-dim:#94a3b8; --ink-faint:#475569;
+}
+html,body{ height:100%; font-family:"Sora",sans-serif; background:var(--bg); color:var(--ink); overflow:hidden; }
+
+.top-header{ height:56px; background:linear-gradient(90deg,#0b0d13,#0a0b0f); border-bottom:1px solid var(--border);
+  display:flex; align-items:center; padding:0 20px; gap:13px; flex-shrink:0; }
+.logo-glyph{ width:34px;height:34px;border-radius:9px; background:linear-gradient(150deg,rgba(0,212,255,.25),rgba(0,229,199,.12));
+  border:1px solid rgba(0,212,255,.45); display:grid; place-items:center; font-size:1.05rem; }
+.logo-txt b{ font-family:"Space Grotesk"; font-weight:700; font-size:1rem; }
+.logo-txt span{ display:block; font-size:.63rem; color:var(--ink-dim); letter-spacing:1.2px; text-transform:uppercase; }
+.home-btn{ font-family:"IBM Plex Mono"; font-size:.72rem; color:var(--cyan); text-decoration:none; border:1px solid rgba(0,212,255,.4);
+  border-radius:8px; padding:6px 13px; transition:.15s; } .home-btn:hover{ background:rgba(0,212,255,.12); }
+
+.body{ height:calc(100% - 56px); }
+.content{ height:100%; overflow:hidden; display:flex; flex-direction:column; }
+
+/* home grid of property blocks */
+#home{ height:100%; overflow-y:auto; padding:24px 28px 30px; }
+#home.hidden{ display:none; }
+.home-intro h1{ font-family:"Space Grotesk"; font-size:1.35rem; font-weight:700; }
+.home-intro p{ font-size:.82rem; color:var(--ink-dim); margin:6px 0 20px; max-width:780px; line-height:1.5; }
+.prop-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:16px; }
+.prop-card{ position:relative; display:flex; flex-direction:column; cursor:pointer; overflow:hidden;
+  background:linear-gradient(160deg,var(--panel),var(--panel2)); border:1px solid var(--border);
+  border-top:3px solid var(--ac,var(--cyan)); border-radius:14px; padding:18px 18px 16px; transition:.2s; }
+.prop-card:hover{ transform:translateY(-4px); border-color:var(--ac,var(--cyan)); box-shadow:0 14px 32px -16px var(--ac,var(--cyan)); }
+.prop-card .pc-ic{ width:44px;height:44px;border-radius:11px; display:grid; place-items:center; font-size:1.4rem; margin-bottom:12px;
+  background:rgba(255,255,255,.04); border:1px solid var(--ac,var(--cyan)); }
+.prop-card .pc-title{ font-family:"Space Grotesk"; font-size:1.02rem; font-weight:600; }
+.prop-card .pc-short{ font-family:"IBM Plex Mono"; font-size:.58rem; color:var(--ac,var(--cyan)); text-transform:uppercase; letter-spacing:1px; margin:3px 0 9px; }
+.prop-card .pc-desc{ font-size:.77rem; color:var(--ink-dim); line-height:1.5; flex:1; }
+.prop-card .pc-cta{ margin-top:13px; font-family:"IBM Plex Mono"; font-size:.64rem; color:var(--ac,var(--cyan)); font-weight:600; }
+@media (max-width:920px){ .prop-grid{ grid-template-columns:repeat(2,1fr); } }
+
+/* back bar + demo views */
+#backbar{ display:none; align-items:center; gap:12px; padding:10px 24px; border-bottom:1px solid var(--border-soft); flex-shrink:0; }
+#backbar.show{ display:flex; }
+#backbar .backbtn{ font-family:"Space Grotesk"; font-weight:600; font-size:.74rem; color:var(--ink); background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:7px 13px; cursor:pointer; }
+#backbar .backbtn:hover{ border-color:var(--ink-dim); }
+#backbar .bt{ font-family:"IBM Plex Mono"; font-size:.68rem; color:var(--ink-dim); }
+.view{ display:none; flex-direction:column; flex:1; min-height:0; }
+.view.active{ display:flex; }
+.view-head{ padding:16px 24px 12px; border-bottom:1px solid var(--border-soft); flex-shrink:0; display:flex; align-items:flex-start; gap:13px; }
+.view-head .vic{ width:40px;height:40px;border-radius:10px; display:grid; place-items:center; font-size:1.25rem; flex-shrink:0;
+  background:var(--panel); border:1px solid var(--border); }
+.view-head h2{ font-family:"Space Grotesk"; font-size:1.12rem; font-weight:600; }
+.view-head p{ font-size:.75rem; color:var(--ink-dim); margin-top:3px; line-height:1.45; max-width:820px; }
+.metrics{ display:flex; gap:10px; padding:12px 24px; flex-wrap:wrap; flex-shrink:0; }
+.metric{ background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:9px 14px; min-width:120px; }
+.metric .mv{ font-family:"Space Grotesk"; font-size:1.2rem; font-weight:700; line-height:1; }
+.metric .ml{ font-size:.6rem; color:var(--ink-dim); margin-top:4px; letter-spacing:.4px; text-transform:uppercase; }
+.stage-wrap{ flex:1; overflow:auto; padding:6px 24px 18px; }
+.controls{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-bottom:14px; }
+.btn{ font-family:"Space Grotesk"; font-weight:600; font-size:.73rem; border-radius:8px; padding:8px 13px; cursor:pointer;
+  border:1px solid var(--border); background:var(--panel); color:var(--ink); transition:.15s; }
+.btn:hover{ border-color:var(--ink-dim); }
+.btn.r{ border-color:rgba(239,68,68,.5); color:#ffc9c9; } .btn.r:hover{ background:rgba(239,68,68,.12); }
+.btn.g{ border-color:rgba(34,197,94,.5); color:#bff3cf; } .btn.g:hover{ background:rgba(34,197,94,.12); }
+.btn.c{ border-color:rgba(0,212,255,.5); color:#c3f2ff; } .btn.c:hover{ background:rgba(0,212,255,.12); }
+.btn.on{ background:rgba(0,212,255,.16); border-color:var(--cyan); }
+.note{ display:flex; gap:9px; align-items:flex-start; background:var(--panel); border:1px solid var(--border);
+  border-left:3px solid var(--kc,var(--cyan)); border-radius:8px; padding:10px 13px; margin-top:14px; }
+.note p{ font-size:.72rem; color:var(--ink-dim); line-height:1.5; } .note b{ color:var(--ink); }
+.analogy{ display:flex; gap:13px; align-items:center; margin:14px 24px 2px; padding:14px 17px;
+  background:linear-gradient(135deg, rgba(0,212,255,.10), rgba(167,139,250,.07)); border:1px solid rgba(0,212,255,.3); border-radius:12px; }
+.analogy .ae{ font-size:1.7rem; flex-shrink:0; }
+.analogy .at{ font-size:.92rem; color:var(--ink); line-height:1.5; }
+.analogy .at .lead{ font-family:"IBM Plex Mono"; font-size:.6rem; letter-spacing:1.4px; text-transform:uppercase; color:var(--cyan); display:block; margin-bottom:3px; }
+.analogy .at b{ color:var(--teal); }
+
+/* generic diagram */
+.diagram{ position:relative; background:var(--panel2); border:1px solid var(--border); border-radius:12px; }
+svg.overlay{ position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
+.node-box{ position:absolute; transform:translate(-50%,-50%); background:linear-gradient(160deg,var(--panel),var(--panel2));
+  border:1.5px solid var(--border); border-radius:11px; padding:8px 11px; text-align:center; min-width:82px; transition:.3s; z-index:2; }
+.node-box .nn{ font-family:"IBM Plex Mono"; font-size:.72rem; font-weight:600; }
+.node-box .ns{ font-size:.56rem; color:var(--ink-dim); font-family:"IBM Plex Mono"; }
+.node-box.up{ border-color:rgba(34,197,94,.6); } .node-box.up .nn{ color:var(--green); }
+.node-box.down{ border-color:rgba(239,68,68,.6); opacity:.45; filter:grayscale(.5); }
+.node-box.lb{ border-color:rgba(0,212,255,.6); } .node-box.lb .nn{ color:var(--cyan); }
+
+/* chart */
+.chart{ background:var(--panel2); border:1px solid var(--border); border-radius:10px; padding:10px; }
+.chart .ct{ font-family:"IBM Plex Mono"; font-size:.62rem; color:var(--ink-dim); margin-bottom:6px; display:flex; justify-content:space-between; }
+polyline{ fill:none; stroke-width:2; }
+
+/* pipeline */
+.pipe{ display:flex; align-items:stretch; gap:0; }
+.pstage{ flex:1; background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:12px 8px; text-align:center; transition:.15s; position:relative; }
+.pstage.hot{ border-color:var(--cyan); box-shadow:0 0 16px -4px var(--cyan); background:rgba(0,212,255,.06); }
+.pstage .pi{ font-size:1.2rem; } .pstage .pn{ font-size:.68rem; font-weight:600; margin-top:4px; }
+.pstage .pm{ font-family:"IBM Plex Mono"; font-size:.6rem; color:var(--ink-dim); margin-top:2px; }
+.parrow{ display:flex; align-items:center; color:var(--ink-faint); padding:0 4px; }
+
+/* confusion matrix */
+.cm{ display:grid; grid-template-columns:auto auto auto; gap:6px; font-family:"IBM Plex Mono"; font-size:.72rem; align-items:center; }
+.cm .cell{ width:96px; height:56px; border-radius:8px; display:grid; place-items:center; font-size:1.1rem; font-weight:600; border:1px solid var(--border); }
+.cm .tp{ background:rgba(34,197,94,.14); color:var(--green); } .cm .tn{ background:rgba(34,197,94,.10); color:var(--green); }
+.cm .fp{ background:rgba(245,158,11,.14); color:var(--amber); } .cm .fn{ background:rgba(239,68,68,.14); color:var(--red); }
+.cm .lbl{ color:var(--ink-dim); font-size:.6rem; text-align:center; }
+.bar{ height:7px; border-radius:4px; background:var(--border); overflow:hidden; }
+.bar>i{ display:block; height:100%; border-radius:4px; transition:width .4s; }
+.frame-strip{ display:flex; gap:6px; flex-wrap:wrap; margin-top:12px; min-height:34px; }
+.fchip{ font-family:"IBM Plex Mono"; font-size:.6rem; padding:4px 8px; border-radius:6px; border:1px solid var(--border); }
+.fchip.ok{ background:rgba(34,197,94,.12); color:var(--green); border-color:rgba(34,197,94,.4); }
+.fchip.bad{ background:rgba(239,68,68,.12); color:var(--red); border-color:rgba(239,68,68,.4); }
+
+/* deploy */
+.fleet{ display:grid; grid-template-columns:repeat(8,1fr); gap:10px; }
+.dnode{ background:var(--panel); border:1.5px solid var(--border); border-radius:10px; padding:12px 6px; text-align:center; transition:.3s; }
+.dnode .dn{ font-family:"IBM Plex Mono"; font-size:.64rem; color:var(--ink-dim); }
+.dnode .dv{ font-family:"IBM Plex Mono"; font-size:.78rem; font-weight:600; margin-top:5px; }
+.dnode.v1{ } .dnode.v1 .dv{ color:var(--ink-dim); }
+.dnode.updating{ border-color:var(--amber); box-shadow:0 0 14px -4px var(--amber); }
+.dnode.updating .dv{ color:var(--amber); }
+.dnode.v2{ border-color:var(--green); } .dnode.v2 .dv{ color:var(--green); }
+.dnode.failed{ border-color:var(--red); } .dnode.failed .dv{ color:var(--red); }
+.progress{ height:8px; background:var(--border); border-radius:5px; overflow:hidden; margin-top:14px; }
+.progress>i{ display:block; height:100%; background:linear-gradient(90deg,var(--teal),var(--green)); width:0; transition:width .4s; }
+
+.status{ font-family:"IBM Plex Mono"; font-size:.66rem; color:var(--ink-dim); padding:8px 24px; border-top:1px solid var(--border-soft); min-height:34px; display:flex; align-items:center; flex-shrink:0; }
+.status .g{color:var(--green)} .status .a{color:var(--amber)} .status .r{color:var(--red)} .status .c{color:var(--cyan)}
+</style>
+</head>
+<body>
+<div class="top-header">
+  <div class="logo-glyph">🏭</div>
+  <div class="logo-txt"><b>Production-Grade System</b><span>What separates a demo from production</span></div>
+  <div style="flex:1"></div>
+  <a href="index.html" class="home-btn">← Suite Home</a>
+</div>
+
+<div class="body">
+  <div class="content" id="content">
+    <div id="home">
+      <div class="home-intro">
+        <h1>What makes a system “Production-Grade”?</h1>
+        <p>A demo only has to work once. A real production system must keep these promises 24/7 — for real users, in the real world. Tap any card to see it in action.</p>
+      </div>
+      <div class="prop-grid" id="propGrid"></div>
+    </div>
+    <div id="backbar"><button class="backbtn" id="backBtn">← All qualities</button><span class="bt" id="backTitle"></span></div>
+
+    <!-- HIGH AVAILABILITY -->
+    <section class="view" data-view="ha">
+      <div class="view-head"><div class="vic">🛡️</div><div>
+        <h2>High Availability</h2>
+        <p>Even if one server breaks, the system keeps working — because the job is shared across many servers.</p></div></div>
+      <div class="analogy"><span class="ae">🧑‍🤝‍🧑</span><span class="at"><span class="lead">In simple words</span>Like a <b>group project</b> — if one teammate is absent, the others cover their part, and the work still gets done on time.</span></div>
+      <div class="metrics">
+        <div class="metric"><div class="mv" id="ha-up" style="color:var(--green)">100.00%</div><div class="ml">Uptime</div></div>
+        <div class="metric"><div class="mv" id="ha-healthy" style="color:var(--cyan)">4 / 4</div><div class="ml">Healthy servers</div></div>
+        <div class="metric"><div class="mv" id="ha-req">0</div><div class="ml">Requests served</div></div>
+        <div class="metric"><div class="mv" id="ha-drop" style="color:var(--amber)">0</div><div class="ml">Dropped</div></div>
+      </div>
+      <div class="stage-wrap">
+        <div class="controls">
+          <button class="btn r" id="ha-kill">☠ Kill a server</button>
+          <button class="btn g" id="ha-reset">⟲ Restore all</button>
+        </div>
+        <div class="diagram" id="ha-diagram" style="height:320px"><svg class="overlay" id="ha-svg"></svg></div>
+        <div class="note" style="--kc:var(--green)"><span>🛡️</span><p><b>Try it:</b> kill a server and watch traffic instantly reroute to the healthy ones — uptime stays at 100% and requests keep being served. Redundancy + health-checks + automatic failover = high availability.</p></div>
+      </div>
+      <div class="status" id="ha-status"></div>
+    </section>
+
+    <!-- SCALABILITY -->
+    <section class="view" data-view="scale">
+      <div class="view-head"><div class="vic">📈</div><div>
+        <h2>Scalability</h2>
+        <p>When more users arrive, the system automatically adds more servers — so it stays just as fast. Turn this off to see a single server get overwhelmed.</p></div></div>
+      <div class="analogy"><span class="ae">🍽️</span><span class="at"><span class="lead">In simple words</span>Like a <b>canteen that opens more counters</b> when the lunch crowd grows — the queue stays short no matter how many students show up.</span></div>
+      <div class="metrics">
+        <div class="metric"><div class="mv" id="sc-load" style="color:var(--cyan)">0</div><div class="ml">Users arriving / sec</div></div>
+        <div class="metric"><div class="mv" id="sc-inst" style="color:var(--violet)">1</div><div class="ml">Servers running</div></div>
+        <div class="metric"><div class="mv" id="sc-lat" style="color:var(--green)">—</div><div class="ml">Response time</div></div>
+        <div class="metric"><div class="mv" id="sc-acc" style="color:var(--green)">98.7%</div><div class="ml">Accuracy</div></div>
+      </div>
+      <div class="stage-wrap">
+        <div class="controls">
+          <button class="btn on" id="sc-auto">⚙ Auto-scaling: ON</button>
+          <span style="font-family:'IBM Plex Mono';font-size:.66rem;color:var(--ink-dim)">load ramps up &amp; down automatically</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div class="chart"><div class="ct"><span>Traffic coming in ↑</span><span id="sc-load2" style="color:var(--cyan)">—</span></div>
+            <svg viewBox="0 0 320 110" preserveAspectRatio="none" style="width:100%;height:110px"><polyline id="sc-loadline" style="stroke:var(--cyan)"/></svg></div>
+          <div class="chart"><div class="ct"><span>Response time — stays flat &amp; low ✓</span><span id="sc-lat2">—</span></div>
+            <svg viewBox="0 0 320 110" preserveAspectRatio="none" style="width:100%;height:110px">
+              <line x1="0" y1="42" x2="320" y2="42" stroke="rgba(239,68,68,.4)" stroke-dasharray="4 4"/>
+              <polyline id="sc-latline" style="stroke:var(--green)"/></svg></div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:12px;align-items:center">
+          <span style="font-family:'IBM Plex Mono';font-size:.66rem;color:var(--ink-dim)">Instances:</span>
+          <div id="sc-instances" style="display:flex;gap:6px"></div>
+        </div>
+        <div class="note" style="--kc:var(--violet)"><span>📈</span><p><b>The point:</b> with auto-scaling ON, latency hugs the SLO line and accuracy holds at 98.7% no matter how high the load climbs. Switch it OFF and the fixed single instance saturates — latency shoots past the SLO and accuracy degrades.</p></div>
+      </div>
+      <div class="status" id="sc-status"></div>
+    </section>
+
+    <!-- ACCURACY -->
+    <section class="view" data-view="accuracy">
+      <div class="view-head"><div class="vic">🎯</div><div>
+        <h2>Accuracy</h2>
+        <p>Being fast is not enough — the answers must be <b>right</b>. Every detection is checked, and the system keeps getting almost all of them correct.</p></div></div>
+      <div class="analogy"><span class="ae">🏆</span><span class="at"><span class="lead">In simple words</span>Like a <b>topper who scores 98 out of 100 in every test</b> — reliably correct, not just lucky once.</span></div>
+      <div class="metrics">
+        <div class="metric"><div class="mv" id="ac-acc" style="color:var(--green)">—</div><div class="ml">Accuracy</div></div>
+        <div class="metric"><div class="mv" id="ac-ok" style="color:var(--green)">0</div><div class="ml">Correct</div></div>
+        <div class="metric"><div class="mv" id="ac-bad" style="color:var(--amber)">0</div><div class="ml">Wrong</div></div>
+      </div>
+      <div class="stage-wrap">
+        <div style="font-family:'IBM Plex Mono';font-size:.7rem;color:var(--ink-dim);margin-bottom:8px">Live camera stream — each frame is checked: ✓ correct or ✗ wrong</div>
+        <div class="frame-strip" id="ac-strip"></div>
+        <div style="margin-top:18px;max-width:560px">
+          <div style="display:flex;justify-content:space-between;font-size:.74rem;margin-bottom:6px"><span>How many the model got right</span><b id="ac-acc2" style="color:var(--green)">—</b></div>
+          <div class="bar" style="height:16px"><i id="ac-accbar" style="background:linear-gradient(90deg,var(--teal),var(--green))"></i></div>
+        </div>
+        <div class="note" style="--kc:var(--green)"><span>🎯</span><p><b>What to watch:</b> nearly every frame comes back correct. A rare mistake happens, but the accuracy bar stays high and steady — that's what makes it trustworthy.</p></div>
+      </div>
+      <div class="status" id="ac-status"></div>
+    </section>
+
+    <!-- PERFORMANCE -->
+    <section class="view" data-view="perf">
+      <div class="view-head"><div class="vic">⚡</div><div>
+        <h2>Performance</h2>
+        <p>The system must give an answer <b>quickly</b>, every single time. Each camera frame passes through a few quick steps and comes out in about 40 milliseconds.</p></div></div>
+      <div class="analogy"><span class="ae">🍔</span><span class="at"><span class="lead">In simple words</span>Like a <b>fast-food counter that serves in 40 seconds every time</b> — quick and consistent, so you never wait.</span></div>
+      <div class="metrics">
+        <div class="metric"><div class="mv" id="pf-fps" style="color:var(--cyan)">28</div><div class="ml">Frames per second</div></div>
+        <div class="metric"><div class="mv" id="pf-p50" style="color:var(--green)">38 ms</div><div class="ml">Typical time</div></div>
+        <div class="metric"><div class="mv" id="pf-p95" style="color:var(--amber)">46 ms</div><div class="ml">Slowest time</div></div>
+        <div class="metric"><div class="mv" id="pf-frames">0</div><div class="ml">Frames processed</div></div>
+      </div>
+      <div class="stage-wrap">
+        <div class="pipe" id="pf-pipe">
+          <div class="pstage" data-s="0"><div class="pi">📷</div><div class="pn">Capture</div><div class="pm">4 ms</div></div>
+          <div class="parrow">▸</div>
+          <div class="pstage" data-s="1"><div class="pi">🔄</div><div class="pn">Preprocess</div><div class="pm">6 ms</div></div>
+          <div class="parrow">▸</div>
+          <div class="pstage" data-s="2"><div class="pi">🧠</div><div class="pn">Inference</div><div class="pm">24 ms</div></div>
+          <div class="parrow">▸</div>
+          <div class="pstage" data-s="3"><div class="pi">📦</div><div class="pn">Post-process</div><div class="pm">5 ms</div></div>
+          <div class="parrow">▸</div>
+          <div class="pstage" data-s="4"><div class="pi">✅</div><div class="pn">Output</div><div class="pm">detection</div></div>
+        </div>
+        <div class="chart" style="margin-top:14px"><div class="ct"><span>Time per frame — stays under budget ✓</span><span id="pf-lat2" style="color:var(--green)">—</span></div>
+          <svg viewBox="0 0 320 90" preserveAspectRatio="none" style="width:100%;height:90px">
+            <line x1="0" y1="20" x2="320" y2="20" stroke="rgba(245,158,11,.4)" stroke-dasharray="4 4"/>
+            <polyline id="pf-latline" style="stroke:var(--cyan)"/></svg></div>
+        <div class="note" style="--kc:var(--cyan)"><span>⚡</span><p><b>Why it matters:</b> the inference stage dominates the budget, so it's the one to optimise (TensorRT, batching, mixed precision). Staying under the frame budget is what keeps detection truly real-time.</p></div>
+      </div>
+      <div class="status" id="pf-status"></div>
+    </section>
+
+    <!-- SECURITY -->
+    <section class="view" data-view="security">
+      <div class="view-head"><div class="vic">🔒</div><div>
+        <h2>Security</h2>
+        <p>Only trusted requests are allowed in. Everything is checked at the gate first — anything suspicious is blocked before it can reach the system.</p></div></div>
+      <div class="analogy"><span class="ae">🎫</span><span class="at"><span class="lead">In simple words</span>Like a <b>college gate with ID checks</b> — students with a valid ID walk in, outsiders are stopped at the gate.</span></div>
+      <div class="metrics">
+        <div class="metric"><div class="mv" id="se-allow" style="color:var(--green)">0</div><div class="ml">Allowed</div></div>
+        <div class="metric"><div class="mv" id="se-block" style="color:var(--red)">0</div><div class="ml">Blocked</div></div>
+        <div class="metric"><div class="mv" id="se-breach" style="color:var(--green)">0</div><div class="ml">Breaches</div></div>
+      </div>
+      <div class="stage-wrap">
+        <div class="controls"><button class="btn r" id="se-attack">⚠ Simulate attack burst</button></div>
+        <div class="diagram" id="se-diagram" style="height:300px"><svg class="overlay" id="se-svg"></svg></div>
+        <div class="note" style="--kc:var(--red)"><span>🔒</span><p>Defence in depth: <b>WireGuard VPN → mTLS → IP allow-list → process allow-list</b>. Trigger an attack burst and watch malicious requests bounce off the gate while trusted traffic flows through untouched.</p></div>
+      </div>
+      <div class="status" id="se-status"></div>
+    </section>
+
+    <!-- DEPLOYABILITY -->
+    <section class="view" data-view="deploy">
+      <div class="view-head"><div class="vic">🚀</div><div>
+        <h2>Deployability</h2>
+        <p>A new version can be installed on all machines <b>without ever shutting the system down</b> — a few at a time, checking each one is healthy before moving on.</p></div></div>
+      <div class="analogy"><span class="ae">📱</span><span class="at"><span class="lead">In simple words</span>Like your <b>phone updating an app in the background</b> — the new version arrives, and you keep using it without it ever closing.</span></div>
+      <div class="metrics">
+        <div class="metric"><div class="mv" id="dp-v2" style="color:var(--green)">0 / 8</div><div class="ml">On v2</div></div>
+        <div class="metric"><div class="mv" id="dp-down" style="color:var(--green)">0s</div><div class="ml">Downtime</div></div>
+        <div class="metric"><div class="mv" id="dp-serving" style="color:var(--cyan)">8 / 8</div><div class="ml">Serving traffic</div></div>
+      </div>
+      <div class="stage-wrap">
+        <div class="controls">
+          <button class="btn g" id="dp-go">🚀 Deploy v2 (rolling)</button>
+          <button class="btn" id="dp-reset">⟲ Reset to v1</button>
+        </div>
+        <div class="fleet" id="dp-fleet"></div>
+        <div class="progress"><i id="dp-prog"></i></div>
+        <div class="note" style="--kc:var(--green)"><span>🚀</span><p>Build once (Docker image), roll out gradually (canary → waves), verify health at each step, and keep enough nodes serving so users never see downtime — with instant rollback if something goes wrong.</p></div>
+      </div>
+      <div class="status" id="dp-status"></div>
+    </section>
+
+    <!-- OBSERVABILITY -->
+    <section class="view" data-view="observ">
+      <div class="view-head"><div class="vic">📊</div><div>
+        <h2>Observability</h2>
+        <p>You can watch what the whole system is doing, live. If something starts going wrong, you see it on the screen and fix it early — before users notice.</p></div></div>
+      <div class="analogy"><span class="ae">🚗</span><span class="at"><span class="lead">In simple words</span>Like a <b>car dashboard</b> — speed, fuel and warning lights are all right in front of you, so you spot a problem before the car breaks down.</span></div>
+      <div class="metrics">
+        <div class="metric"><div class="mv" id="ob-nodes" style="color:var(--green)">100</div><div class="ml">Nodes up</div></div>
+        <div class="metric"><div class="mv" id="ob-err" style="color:var(--green)">0.02%</div><div class="ml">Error rate</div></div>
+        <div class="metric"><div class="mv" id="ob-rps" style="color:var(--cyan)">—</div><div class="ml">Requests/s</div></div>
+      </div>
+      <div class="stage-wrap">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px">
+          <div class="chart"><div class="ct"><span>GPU util %</span><span id="ob-gpu2" style="color:var(--teal)">—</span></div>
+            <svg viewBox="0 0 200 80" preserveAspectRatio="none" style="width:100%;height:80px"><polyline id="ob-gpu" style="stroke:var(--teal)"/></svg></div>
+          <div class="chart"><div class="ct"><span>Latency ms</span><span id="ob-lat2" style="color:var(--cyan)">—</span></div>
+            <svg viewBox="0 0 200 80" preserveAspectRatio="none" style="width:100%;height:80px"><polyline id="ob-lat" style="stroke:var(--cyan)"/></svg></div>
+          <div class="chart"><div class="ct"><span>Requests/s</span><span id="ob-rps2" style="color:var(--violet)">—</span></div>
+            <svg viewBox="0 0 200 80" preserveAspectRatio="none" style="width:100%;height:80px"><polyline id="ob-rpsline" style="stroke:var(--violet)"/></svg></div>
+        </div>
+        <div class="chart" style="margin-top:12px;height:150px;overflow-y:auto"><div class="ct"><span>Live event log</span></div>
+          <div id="ob-log" style="font-family:'IBM Plex Mono';font-size:.66rem;line-height:1.7"></div></div>
+        <div class="note" style="--kc:var(--cyan)"><span>📊</span><p>Metrics tell you <b>what</b> is happening, logs tell you <b>why</b>, and alerts tell you <b>when</b> to act — together they turn a black box into an operable production system.</p></div>
+      </div>
+      <div class="status" id="ob-status"></div>
+    </section>
+
+    <!-- MAINTAINABILITY -->
+    <section class="view" data-view="maintain">
+      <div class="view-head"><div class="vic">🔧</div><div>
+        <h2>Maintainability</h2>
+        <p>The system is easy to keep healthy — it fixes small problems by itself, and engineers can log in remotely to update or debug any machine.</p></div></div>
+      <div class="analogy"><span class="ae">🩺</span><span class="at"><span class="lead">In simple words</span>Like a <b>smartwatch that catches small health issues early</b> — plus a doctor who can check you remotely, so nothing ever becomes a big problem.</span></div>
+      <div class="metrics">
+        <div class="metric"><div class="mv" id="mt-fixed" style="color:var(--green)">0</div><div class="ml">Issues auto-fixed</div></div>
+        <div class="metric"><div class="mv" id="mt-down" style="color:var(--green)">0s</div><div class="ml">Downtime</div></div>
+      </div>
+      <div class="stage-wrap">
+        <div class="fleet" id="mt-fleet" style="grid-template-columns:repeat(6,1fr)"></div>
+        <div class="chart" style="margin-top:14px;height:150px;overflow-y:auto"><div class="ct"><span>Auto-repair log</span></div>
+          <div id="mt-log" style="font-family:'IBM Plex Mono';font-size:.66rem;line-height:1.7"></div></div>
+        <div class="note" style="--kc:var(--magenta)"><span>🔧</span><p>A machine hiccups → the system detects it and auto-restarts or hot-patches it within seconds, while the rest keep serving. Engineers can also connect remotely to debug — no site visit needed.</p></div>
+      </div>
+      <div class="status" id="mt-status"></div>
+    </section>
+
+  </div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const SVGNS="http://www.w3.org/2000/svg";
+function rand(a,b){ return a+Math.random()*(b-a); }
+function svg(t,a){ const e=document.createElementNS(SVGNS,t); for(const k in a)e.setAttribute(k,a[k]); return e; }
+
+const TABS=[
+  {id:'ha', ic:'🛡️', name:'High Availability', short:'Runs 24/7', ac:'var(--green)',
+    desc:'Keeps running through hardware failure, network outage, even natural calamity — built as a distributed system, so if one part dies another instantly takes over.'},
+  {id:'scale', ic:'📈', name:'Scalability', short:'Handles any load', ac:'var(--violet)',
+    desc:'Whether 10 users or 10 million connect, it delivers the same speed and accuracy by automatically adding capacity as the load grows.'},
+  {id:'perf', ic:'⚡', name:'Performance', short:'Fast response', ac:'var(--cyan)',
+    desc:'Every request is answered quickly — results delivered within a tight, predictable response time.'},
+  {id:'accuracy', ic:'🎯', name:'Accuracy', short:'Always correct', ac:'var(--teal)',
+    desc:'Consistently delivers correct, validated results you can trust — right every time, not just once.'},
+  {id:'security', ic:'🔒', name:'Security', short:'Attack-resilient', ac:'var(--red)',
+    desc:'Resilient to cyber attacks — only trusted requests get in; everything suspicious is blocked at the gate.'},
+  {id:'deploy', ic:'🚀', name:'Deployability', short:'Zero-downtime updates', ac:'var(--blue)',
+    desc:'New versions install fast with zero downtime — users never see an interruption.'},
+  {id:'observ', ic:'📊', name:'Observability', short:'See everything live', ac:'var(--amber)',
+    desc:'A live view of the whole system, so problems are spotted and fixed before users ever notice.'},
+  {id:'maintain', ic:'🔧', name:'Maintainability', short:'Easy to keep healthy', ac:'var(--magenta)',
+    desc:'Easy to update, debug and service — self-healing components and remote access keep it running with minimal effort.'},
+];
+const titleMap={}; TABS.forEach(t=>titleMap[t.id]=t.name);
+function buildCards(){ const g=$('propGrid'); g.innerHTML='';
+  TABS.forEach(t=>{ const c=document.createElement('div'); c.className='prop-card'; c.style.setProperty('--ac',t.ac);
+    c.innerHTML=`<div class="pc-ic">${t.ic}</div><div class="pc-title">${t.name}</div><div class="pc-short">${t.short}</div><div class="pc-desc">${t.desc}</div><div class="pc-cta">See it live ▶</div>`;
+    c.onclick=()=>openProp(t.id); g.appendChild(c); }); }
+
+let active=null;
+function showHome(){
+  if(active&&VIEWS[active]&&VIEWS[active].stop) VIEWS[active].stop();
+  active=null;
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  $('home').classList.remove('hidden'); $('backbar').classList.remove('show');
+}
+function openProp(id){
+  $('home').classList.add('hidden'); $('backbar').classList.add('show');
+  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.dataset.view===id));
+  $('backTitle').textContent=titleMap[id]||'';
+  const V=VIEWS[id]; if(V){ if(!V.inited){ V.init(); V.inited=true; } if(V.start) V.start(); }
+  active=id;
+}
+
+/* generic packet animator with running-guard */
+function packet(svgEl, x1,y1,x2,y2,color,dur,running,cb){
+  const d=svg('circle',{r:4,cx:x1,cy:y1,fill:color}); d.style.filter='drop-shadow(0 0 4px '+color+')'; svgEl.appendChild(d);
+  const t0=performance.now();
+  (function an(now){ if(!running()){ d.remove(); return; } let t=(now-t0)/dur; if(t>=1){ d.remove(); if(cb)cb(); return; }
+    d.setAttribute('cx',x1+(x2-x1)*t); d.setAttribute('cy',y1+(y2-y1)*t); requestAnimationFrame(an); })(t0);
+}
+function poly(id,vals,maxv,W,H){ const el=$(id); if(!el)return; const n=vals.length; if(n<2){el.setAttribute('points','');return;}
+  const pts=vals.map((v,i)=>`${(i/(n-1))*W},${H-Math.min(v,maxv)/maxv*(H-6)-3}`).join(' '); el.setAttribute('points',pts); }
+
+const VIEWS={};
+
+/* ══════════ HIGH AVAILABILITY ══════════ */
+VIEWS.ha=(function(){
+  let servers=[], timers=[], running=false, req=0, drop=0, lbXY, clientsXY;
+  const svgEl=()=>$('ha-svg'), dia=()=>$('ha-diagram');
+  function layout(){
+    const box=dia(); box.querySelectorAll('.node-box').forEach(n=>n.remove()); svgEl().innerHTML='';
+    const W=box.clientWidth||760, H=box.clientHeight||320;
+    clientsXY={x:70,y:H/2}; lbXY={x:W*0.34,y:H/2};
+    add('CLIENTS','users',clientsXY,'');
+    add('LOAD BAL','round-robin',lbXY,'lb');
+    servers=[]; const n=4;
+    for(let i=0;i<n;i++){ const y=(H/(n+1))*(i+1); const xy={x:W*0.75,y}; const s={i,xy,up:true,el:null};
+      s.el=add('srv-0'+(i+1),'healthy',xy,'up'); servers.push(s);
+      const l=svg('line',{x1:lbXY.x,y1:lbXY.y,x2:xy.x,y2:xy.y,stroke:'rgba(0,212,255,.18)','stroke-width':1.3}); l.dataset.i=i; svgEl().appendChild(l);
+    }
+    svgEl().appendChild(svg('line',{x1:clientsXY.x,y1:clientsXY.y,x2:lbXY.x,y2:lbXY.y,stroke:'rgba(148,163,184,.25)','stroke-width':1.5}));
+  }
+  function add(nn,ns,xy,cls){ const d=document.createElement('div'); d.className='node-box '+cls; d.style.left=xy.x+'px'; d.style.top=xy.y+'px';
+    d.innerHTML=`<div class="nn">${nn}</div><div class="ns">${ns}</div>`; dia().appendChild(d); return d; }
+  function upServers(){ return servers.filter(s=>s.up); }
+  function render(){ const up=upServers().length; $('ha-healthy').textContent=up+' / 4';
+    $('ha-up').textContent=(up>0?100:0).toFixed(2)+'%'; $('ha-up').style.color=up>0?'var(--green)':'var(--red)';
+    $('ha-req').textContent=req; $('ha-drop').textContent=drop;
+    servers.forEach(s=>{ s.el.className='node-box '+(s.up?'up':'down'); s.el.querySelector('.ns').textContent=s.up?'healthy':'DOWN'; }); }
+  function sendReq(){ if(!running) return; const up=upServers();
+    packet(svgEl(),clientsXY.x,clientsXY.y,lbXY.x,lbXY.y,'#00d4ff',420,()=>running,()=>{
+      if(!up.length){ drop++; render(); return; }
+      const s=up[Math.floor(Math.random()*up.length)];
+      packet(svgEl(),lbXY.x,lbXY.y,s.xy.x,s.xy.y,'#22c55e',420,()=>running,()=>{ req++; render();
+        packet(svgEl(),s.xy.x,s.xy.y,lbXY.x,lbXY.y,'#00e5c7',420,()=>running); }); });
+  }
+  function kill(){ const up=upServers(); if(up.length<=1){ $('ha-status').innerHTML='<span class="a">refusing to kill the last server</span>'; return; }
+    const s=up[Math.floor(Math.random()*up.length)]; s.up=false; render();
+    $('ha-status').innerHTML=`<span class="r">srv-0${s.i+1} crashed</span> — load balancer rerouted its traffic · uptime still 100%`;
+    setTimeout(()=>{ s.up=true; render(); },6500); }
+  return { inited:false,
+    init(){ layout(); render(); $('ha-kill').onclick=kill; $('ha-reset').onclick=()=>{ servers.forEach(s=>s.up=true); drop=0; render(); };
+      window.addEventListener('resize',()=>{ if(active==='ha'){ layout(); render(); }}); },
+    start(){ running=true; $('ha-status').innerHTML='requests flowing · kill a server to test failover'; timers.push(setInterval(sendReq,520)); },
+    stop(){ running=false; timers.forEach(clearInterval); timers=[]; } };
+})();
+
+/* ══════════ SCALABILITY ══════════ */
+VIEWS.scale=(function(){
+  let timers=[], auto=true, t=0, loadHist=[], latHist=[], CAP=50;
+  function tick(){
+    t++; const load=Math.round(60+120*Math.abs(Math.sin(t/22))+40*Math.abs(Math.sin(t/7)));
+    const inst=auto?Math.max(1,Math.ceil(load/CAP)):1;
+    const util=load/(inst*CAP);
+    const lat=Math.round(30 + (util>1?(util-1)*260:util*14));
+    const acc=util>1.15?Math.max(88,98.7-(util-1.15)*26):98.7;
+    loadHist.push(load); latHist.push(lat); if(loadHist.length>60){loadHist.shift();latHist.shift();}
+    $('sc-load').textContent=load; $('sc-load2').textContent=load;
+    $('sc-inst').textContent=inst;
+    $('sc-lat').textContent=lat+' ms'; $('sc-lat').style.color=lat>100?'var(--red)':'var(--green)';
+    $('sc-lat2').textContent=lat+' ms'; $('sc-lat2').style.color=lat>100?'var(--red)':'var(--green)';
+    $('sc-latline').style.stroke=lat>100?'var(--red)':'var(--green)';
+    $('sc-acc').textContent=acc.toFixed(1)+'%'; $('sc-acc').style.color=acc<97?'var(--amber)':'var(--green)';
+    poly('sc-loadline',loadHist,260,320,110); poly('sc-latline',latHist,220,320,110);
+    const box=$('sc-instances'); box.innerHTML='';
+    for(let i=0;i<inst;i++){ const s=document.createElement('div'); s.textContent='🖥️'; s.style.fontSize='1.05rem'; box.appendChild(s); }
+    $('sc-status').innerHTML=auto?`auto-scaling <span class="g">ON</span> · ${inst} instance(s) keep p95 latency &amp; accuracy flat under ${load} req/s`
+      :`auto-scaling <span class="r">OFF</span> · single instance saturating at ${load} req/s → latency <span class="r">${lat}ms</span>, accuracy ${acc.toFixed(1)}%`;
+  }
+  return { inited:false,
+    init(){ $('sc-auto').onclick=()=>{ auto=!auto; const b=$('sc-auto'); b.textContent='⚙ Auto-scaling: '+(auto?'ON':'OFF'); b.classList.toggle('on',auto); }; },
+    start(){ timers.push(setInterval(tick,320)); },
+    stop(){ timers.forEach(clearInterval); timers=[]; } };
+})();
+
+/* ══════════ ACCURACY ══════════ */
+VIEWS.accuracy=(function(){
+  let timers=[], ok=0, bad=0;
+  function tick(){
+    const correct=Math.random()<0.965;
+    if(correct)ok++; else bad++;
+    const acc=ok/(ok+bad)*100;
+    $('ac-acc').textContent=acc.toFixed(1)+'%'; $('ac-ok').textContent=ok; $('ac-bad').textContent=bad;
+    $('ac-acc2').textContent=acc.toFixed(1)+'%'; $('ac-accbar').style.width=acc+'%';
+    const strip=$('ac-strip'); const c=document.createElement('div'); c.className='fchip '+(correct?'ok':'bad');
+    c.textContent=correct?'✓ correct':'✗ wrong'; strip.insertBefore(c,strip.firstChild);
+    while(strip.children.length>16) strip.removeChild(strip.lastChild);
+    $('ac-status').innerHTML=`${ok} correct · ${bad} wrong · accuracy <span class="g">${acc.toFixed(1)}%</span>`;
+  }
+  return { inited:false, init(){}, start(){ timers.push(setInterval(tick,600)); }, stop(){ timers.forEach(clearInterval); timers=[]; } };
+})();
+
+/* ══════════ PERFORMANCE ══════════ */
+VIEWS.perf=(function(){
+  let timers=[], running=false, frames=0, latHist=[], stage=0;
+  const stages=document.querySelectorAll('#pf-pipe .pstage');
+  function flow(){ if(!running) return; stage=0; step(); }
+  function step(){ if(!running) return; stages.forEach(s=>s.classList.remove('hot'));
+    if(stage<stages.length){ stages[stage].classList.add('hot'); stage++;
+      timers.push(setTimeout(step, stage===3?260:120)); }
+    else { stages.forEach(s=>s.classList.remove('hot')); frames++; const lat=Math.round(rand(35,48));
+      latHist.push(lat); if(latHist.length>60)latHist.shift(); poly('pf-latline',latHist,60,320,90);
+      $('pf-frames').textContent=frames; $('pf-lat2').textContent=lat+' ms';
+      $('pf-p50').textContent='38 ms'; $('pf-p95').textContent='46 ms';
+      $('pf-status').innerHTML=`frame #${frames} · ${lat}ms end-to-end · <span class="g">within 50ms budget</span> · 28 FPS sustained`; }
+  }
+  return { inited:false, init(){}, start(){ running=true; timers.push(setInterval(flow,720)); }, stop(){ running=false; timers.forEach(t=>{clearInterval(t);clearTimeout(t);}); timers=[]; } };
+})();
+
+/* ══════════ SECURITY ══════════ */
+VIEWS.security=(function(){
+  let timers=[], running=false, allow=0, block=0, gateXY, inXY, svrXY;
+  const svgEl=()=>$('se-svg'), dia=()=>$('se-diagram');
+  function layout(){ const box=dia(); box.querySelectorAll('.node-box').forEach(n=>n.remove()); svgEl().innerHTML='';
+    const W=box.clientWidth||760,H=box.clientHeight||300; inXY={x:70,y:H/2}; gateXY={x:W*0.5,y:H/2}; svrXY={x:W-90,y:H/2};
+    add('INTERNET','requests',inXY,''); add('🔒 GATE','VPN·mTLS·IP·proc',gateXY,'lb'); add('SERVICE','protected',svrXY,'up');
+    svgEl().appendChild(svg('line',{x1:inXY.x,y1:inXY.y,x2:gateXY.x,y2:gateXY.y,stroke:'rgba(148,163,184,.22)','stroke-width':1.4}));
+    svgEl().appendChild(svg('line',{x1:gateXY.x,y1:gateXY.y,x2:svrXY.x,y2:svrXY.y,stroke:'rgba(34,197,94,.25)','stroke-width':1.4})); }
+  function add(nn,ns,xy,cls){ const d=document.createElement('div'); d.className='node-box '+cls; d.style.left=xy.x+'px'; d.style.top=xy.y+'px';
+    d.innerHTML=`<div class="nn">${nn}</div><div class="ns">${ns}</div>`; dia().appendChild(d); }
+  function req(malicious){ if(!running) return; const color=malicious?'#ef4444':'#22c55e';
+    packet(svgEl(),inXY.x,inXY.y,gateXY.x,gateXY.y,color,460,()=>running,()=>{
+      if(malicious){ block++; $('se-block').textContent=block;
+        // bounce back
+        packet(svgEl(),gateXY.x,gateXY.y,inXY.x,inXY.y-14,'#ef4444',380,()=>running); }
+      else { allow++; $('se-allow').textContent=allow;
+        packet(svgEl(),gateXY.x,gateXY.y,svrXY.x,svrXY.y,'#22c55e',420,()=>running); } });
+  }
+  function loop(){ req(Math.random()<0.22); }
+  return { inited:false,
+    init(){ layout(); $('se-attack').onclick=()=>{ for(let i=0;i<8;i++) setTimeout(()=>req(true),i*120);
+      $('se-status').innerHTML='<span class="r">attack burst</span> — all malicious requests blocked at the gate · 0 breaches'; };
+      window.addEventListener('resize',()=>{ if(active==='security') layout(); }); },
+    start(){ running=true; $('se-status').innerHTML='mixed traffic · trusted passes, untrusted blocked'; timers.push(setInterval(loop,560)); },
+    stop(){ running=false; timers.forEach(clearInterval); timers=[]; } };
+})();
+
+/* ══════════ DEPLOYABILITY ══════════ */
+VIEWS.deploy=(function(){
+  let nodes=[], timers=[], N=8, rolling=false;
+  function build(){ const f=$('dp-fleet'); f.innerHTML=''; nodes=[];
+    for(let i=0;i<N;i++){ const d=document.createElement('div'); d.className='dnode v1';
+      d.innerHTML=`<div class="dn">node-${String(i+1).padStart(2,'0')}</div><div class="dv">v1.0</div>`; f.appendChild(d); nodes.push({el:d,ver:1}); }
+    update(); }
+  function update(){ const v2=nodes.filter(n=>n.ver===2).length; $('dp-v2').textContent=v2+' / '+N;
+    $('dp-serving').textContent=N+' / '+N; $('dp-prog').style.width=(v2/N*100)+'%'; }
+  function deploy(){ if(rolling) return; rolling=true; let i=0;
+    $('dp-status').innerHTML='canary first → then waves · health-checked · <span class="g">zero downtime</span>';
+    const stepN=()=>{ if(i>=N){ rolling=false; $('dp-status').innerHTML='<span class="g">rollout complete</span> · all nodes on v2.0 · 0s downtime'; return; }
+      const node=nodes[i]; node.el.className='dnode updating'; node.el.querySelector('.dv').textContent='…v2';
+      timers.push(setTimeout(()=>{ node.ver=2; node.el.className='dnode v2'; node.el.querySelector('.dv').textContent='v2.0'; update(); i++;
+        timers.push(setTimeout(stepN, i===1?700:450)); }, 650)); };
+    stepN();
+  }
+  return { inited:false, init(){ build(); $('dp-go').onclick=deploy; $('dp-reset').onclick=()=>{ if(rolling)return; build(); $('dp-status').textContent='reset · all nodes on v1.0'; }; },
+    start(){ if(!$('dp-fleet').children.length) build(); }, stop(){ timers.forEach(t=>{clearTimeout(t);}); timers=[]; rolling=false; } };
+})();
+
+/* ══════════ OBSERVABILITY ══════════ */
+VIEWS.observ=(function(){
+  let timers=[], gpu=[], lat=[], rps=[], evc=0;
+  const MSGS=[['node-42 heartbeat OK','g'],['scrape metrics · 100 targets','d'],['p95 latency 44ms','c'],['gpu-07 util 82%','d'],['detection · leopard 0.99','g'],['node-63 recovered','g']];
+  function tick(){ const g=Math.round(rand(55,88)),l=Math.round(rand(36,58)),r=Math.round(rand(240,340));
+    gpu.push(g);lat.push(l);rps.push(r); [gpu,lat,rps].forEach(a=>{if(a.length>40)a.shift();});
+    poly('ob-gpu',gpu,100,200,80); poly('ob-lat',lat,80,200,80); poly('ob-rpsline',rps,400,200,80);
+    $('ob-gpu2').textContent=g+'%'; $('ob-lat2').textContent=l+'ms'; $('ob-rps2').textContent=r; $('ob-rps').textContent=r;
+    if(Math.random()<0.6){ const m=MSGS[Math.floor(Math.random()*MSGS.length)]; const box=$('ob-log');
+      const d=document.createElement('div'); const cls={g:'var(--green)',c:'var(--cyan)',d:'var(--ink-dim)'}[m[1]];
+      d.style.color=cls; d.textContent=(new Date().toTimeString().slice(0,8))+'  '+m[0];
+      box.insertBefore(d,box.firstChild); while(box.children.length>40) box.removeChild(box.lastChild); }
+    $('ob-status').innerHTML=`100 nodes reporting · error rate <span class="g">0.02%</span> · all SLOs green`;
+  }
+  return { inited:false, init(){}, start(){ timers.push(setInterval(tick,600)); }, stop(){ timers.forEach(clearInterval); timers=[]; } };
+})();
+
+/* ══════════ MAINTAINABILITY ══════════ */
+VIEWS.maintain=(function(){
+  let nodes=[], timers=[], fixed=0;
+  function build(){ const f=$('mt-fleet'); f.innerHTML=''; nodes=[];
+    for(let i=0;i<6;i++){ const d=document.createElement('div'); d.className='dnode v2';
+      d.innerHTML=`<div class="dn">node-${String(i+1).padStart(2,'0')}</div><div class="dv">✓ healthy</div>`; f.appendChild(d); nodes.push(d); } }
+  function log(m,c){ const box=$('mt-log'); if(!box)return; const d=document.createElement('div'); d.style.color=c;
+    d.textContent=(new Date().toTimeString().slice(0,8))+'  '+m; box.insertBefore(d,box.firstChild); while(box.children.length>30)box.removeChild(box.lastChild); }
+  function tick(){ const i=Math.floor(Math.random()*nodes.length); const node=nodes[i]; if(!node||node.dataset.busy) return; node.dataset.busy='1';
+    node.className='dnode failed'; node.querySelector('.dv').textContent='⚠ error'; log(`node-0${i+1}: fault detected`, 'var(--red)');
+    $('mt-status').innerHTML=`<span class="r">node-0${i+1} hiccup</span> — auto-repair started…`;
+    timers.push(setTimeout(()=>{ node.className='dnode updating'; node.querySelector('.dv').textContent='🔧 healing'; log(`node-0${i+1}: auto-restart / hot-patch applied`, 'var(--amber)');
+      timers.push(setTimeout(()=>{ node.className='dnode v2'; node.querySelector('.dv').textContent='✓ healthy'; fixed++; $('mt-fixed').textContent=fixed;
+        log(`node-0${i+1}: healthy again ✓`, 'var(--green)'); $('mt-status').innerHTML=`<span class="g">auto-fixed</span> · ${fixed} issue(s) resolved · 0s downtime`; node.dataset.busy=''; }, 1200)); }, 1000)); }
+  return { inited:false, init(){ build(); }, start(){ if(!nodes.length) build(); timers.push(setInterval(tick,2600)); },
+    stop(){ timers.forEach(t=>{clearInterval(t);clearTimeout(t);}); timers=[]; } };
+})();
+
+buildCards();
+$('backBtn').onclick=showHome;
+showHome();
+</script>
+</body>
+</html>
