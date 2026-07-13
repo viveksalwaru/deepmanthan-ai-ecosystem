@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Multi-Hazard Early Warning System</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+:root{
+  --bg:#070B12; --panel:#0E1622; --panel2:#121C2B; --line:#1E2C3F; --line-soft:#16212F;
+  --ink:#DCE6F2; --ink-dim:#7C8CA3; --ink-faint:#3D4F63;
+  --cyan:#38E1FF; --teal:#2DD4BF; --green:#4ADE80; --amber:#FBBF24; --orange:#FB923C; --rose:#FB5E6D; --violet:#A78BFA; --blue:#5B9DFF;
+}
+html,body{ height:100%; font-family:"Sora",sans-serif; background:var(--bg); color:var(--ink); overflow:hidden; }
+
+.top-header{ height:56px; background:linear-gradient(90deg,#08101E,#0A0F1A); border-bottom:1px solid var(--line);
+  display:flex; align-items:center; padding:0 20px; gap:13px; flex-shrink:0; }
+.logo-glyph{ width:34px;height:34px;border-radius:9px; background:linear-gradient(150deg,rgba(56,225,255,.22),rgba(167,139,250,.12));
+  border:1px solid rgba(56,225,255,.45); display:grid; place-items:center; font-size:1.05rem; }
+.logo-txt b{ font-family:"Space Grotesk"; font-weight:700; font-size:1rem; }
+.logo-txt span{ display:block; font-size:.62rem; color:var(--ink-dim); letter-spacing:1.2px; text-transform:uppercase; }
+.hdr-spacer{ flex:1; }
+.home-btn{ font-family:"IBM Plex Mono"; font-size:.72rem; color:var(--cyan); text-decoration:none; border:1px solid rgba(56,225,255,.4);
+  border-radius:8px; padding:6px 13px; } .home-btn:hover{ background:rgba(56,225,255,.12); }
+
+/* tab bar */
+.tabbar{ display:flex; gap:2px; padding:0 12px; background:#0A121D; border-bottom:1px solid var(--line); overflow-x:auto; flex-shrink:0; }
+.tabbar::-webkit-scrollbar{ height:0; }
+.tab{ flex-shrink:0; display:flex; align-items:center; gap:7px; padding:11px 15px; cursor:pointer; border-bottom:2px solid transparent;
+  color:var(--ink-dim); font-size:.8rem; font-weight:500; white-space:nowrap; transition:.15s; }
+.tab:hover{ color:var(--ink); }
+.tab.active{ color:var(--ink); border-bottom-color:var(--ac,var(--cyan)); }
+.tab .ti{ font-size:1rem; }
+
+.stage{ height:calc(100% - 56px - 45px); display:flex; flex-direction:column; }
+.view-head{ display:flex; align-items:center; gap:13px; padding:14px 24px 12px; border-bottom:1px solid var(--line-soft); flex-shrink:0; }
+.view-head .vic{ font-size:1.7rem; }
+.view-head h2{ font-family:"Space Grotesk"; font-size:1.15rem; font-weight:600; }
+.view-head p{ font-size:.74rem; color:var(--ink-dim); margin-top:2px; max-width:720px; line-height:1.4; }
+.lead-pill{ margin-left:auto; font-family:"IBM Plex Mono"; font-size:.66rem; color:var(--cyan); border:1px solid rgba(56,225,255,.35);
+  background:rgba(56,225,255,.06); border-radius:20px; padding:5px 13px; white-space:nowrap; }
+
+.body{ flex:1; display:grid; grid-template-columns:1.15fr 1fr; gap:1px; background:var(--line); min-height:0; }
+.pane{ background:var(--bg); overflow-y:auto; padding:16px 22px 22px; }
+.pane-title{ font-family:"IBM Plex Mono"; font-size:.64rem; letter-spacing:1.4px; text-transform:uppercase; color:var(--ink-dim); margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+.pane-title::after{ content:""; flex:1; height:1px; background:var(--line-soft); }
+
+/* param rows */
+.param{ margin-bottom:15px; }
+.param .prow{ display:flex; align-items:baseline; gap:8px; margin-bottom:6px; }
+.param .pdot{ width:9px;height:9px;border-radius:50%; flex-shrink:0; }
+.param .plabel{ font-size:.82rem; color:var(--ink); font-weight:500; }
+.param .pval{ margin-left:auto; font-family:"IBM Plex Mono"; font-size:.78rem; font-weight:600; }
+.param .punit{ font-family:"IBM Plex Mono"; font-size:.62rem; color:var(--ink-faint); margin-left:3px; }
+.param input[type=range]{ width:100%; -webkit-appearance:none; height:5px; border-radius:4px; background:var(--line); outline:none; }
+.param input[type=range]::-webkit-slider-thumb{ -webkit-appearance:none; width:15px;height:15px;border-radius:50%; background:var(--cyan);
+  border:2px solid #06121c; cursor:pointer; box-shadow:0 0 8px -1px var(--cyan); }
+.param .prange{ display:flex; justify-content:space-between; font-family:"IBM Plex Mono"; font-size:.56rem; color:var(--ink-faint); margin-top:3px; }
+
+/* prediction panel */
+.gauge-wrap{ display:flex; flex-direction:column; align-items:center; margin-bottom:6px; }
+.gauge{ position:relative; width:200px; height:200px; }
+.gauge svg{ transform:rotate(-90deg); }
+.gauge .gtext{ position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; }
+.gauge .gpct{ font-family:"Space Grotesk"; font-size:2.4rem; font-weight:700; line-height:1; }
+.gauge .glvl{ font-family:"IBM Plex Mono"; font-size:.72rem; font-weight:600; letter-spacing:1px; text-transform:uppercase; margin-top:5px; padding:3px 12px; border-radius:20px; }
+.gsub{ font-family:"IBM Plex Mono"; font-size:.62rem; color:var(--ink-dim); margin-top:8px; }
+
+/* pipeline */
+.pipeline{ position:relative; height:86px; margin:14px 0 6px; }
+.pipeline svg{ position:absolute; inset:0; width:100%; height:100%; }
+.pnode{ position:absolute; transform:translate(-50%,-50%); background:linear-gradient(160deg,var(--panel),var(--panel2)); border:1.5px solid var(--line);
+  border-radius:10px; padding:7px 11px; text-align:center; z-index:2; }
+.pnode .pn{ font-size:.66rem; font-family:"IBM Plex Mono"; font-weight:600; } .pnode .ps{ font-size:.54rem; color:var(--ink-dim); font-family:"IBM Plex Mono"; }
+.pnode.model{ border-color:rgba(167,139,250,.5); } .pnode.model .pn{ color:var(--violet); }
+
+/* drivers + action */
+.drivers .drow{ margin-bottom:9px; }
+.drivers .dt{ display:flex; justify-content:space-between; font-size:.74rem; margin-bottom:4px; }
+.drivers .dt span:last-child{ font-family:"IBM Plex Mono"; font-size:.66rem; color:var(--ink-dim); }
+.dbar{ height:6px; border-radius:4px; background:var(--line); overflow:hidden; }
+.dbar>i{ display:block; height:100%; border-radius:4px; transition:width .3s; }
+.action{ margin-top:14px; border-radius:10px; padding:12px 14px; border:1px solid var(--line); }
+.action .al{ font-family:"IBM Plex Mono"; font-size:.6rem; letter-spacing:1px; text-transform:uppercase; color:var(--ink-dim); margin-bottom:5px; }
+.action .av{ font-family:"Space Grotesk"; font-weight:600; font-size:.95rem; }
+.action p{ font-size:.72rem; color:var(--ink-dim); margin-top:4px; line-height:1.45; }
+</style>
+</head>
+<body>
+<div class="top-header">
+  <div class="logo-glyph">🛰️</div>
+  <div class="logo-txt"><b>AI Multi-Hazard Early Warning System</b><span>Vital parameters → model → risk prediction</span></div>
+  <div class="hdr-spacer"></div>
+  <a href="index.html" class="home-btn">← Suite Home</a>
+</div>
+
+<div class="tabbar" id="tabbar"></div>
+
+<div class="stage">
+  <div class="view-head">
+    <div class="vic" id="v-icon">⛈️</div>
+    <div><h2 id="v-name">—</h2><p id="v-desc">—</p></div>
+    <div class="lead-pill" id="v-lead">—</div>
+  </div>
+  <div class="body">
+    <div class="pane">
+      <div class="pane-title">Vital Input Parameters · live sensor feed to the model</div>
+      <div id="params"></div>
+    </div>
+    <div class="pane">
+      <div class="pane-title">AI Prediction</div>
+      <div class="gauge-wrap">
+        <div class="gauge">
+          <svg width="200" height="200" viewBox="0 0 200 200">
+            <circle cx="100" cy="100" r="80" fill="none" stroke="#1E2C3F" stroke-width="15"/>
+            <circle id="gauge-arc" cx="100" cy="100" r="80" fill="none" stroke="#4ADE80" stroke-width="15" stroke-linecap="round"
+              stroke-dasharray="502.65" stroke-dashoffset="502.65"/>
+          </svg>
+          <div class="gtext"><div class="gpct" id="g-pct">0<span style="font-size:1.1rem">%</span></div>
+            <div class="glvl" id="g-lvl">—</div></div>
+        </div>
+        <div class="gsub">predicted risk probability · updates with parameters</div>
+      </div>
+
+      <div class="pipeline">
+        <svg id="pipe-svg"></svg>
+        <div class="pnode" id="pn-sensors" style="left:14%;top:50%"><div class="pn" style="color:var(--cyan)">SENSORS</div><div class="ps" id="pn-count">6 inputs</div></div>
+        <div class="pnode model" id="pn-model" style="left:50%;top:50%"><div class="pn">🧠 AI MODEL</div><div class="ps">inference</div></div>
+        <div class="pnode" id="pn-alert" style="left:86%;top:50%"><div class="pn" id="pn-alert-t" style="color:var(--green)">ALERT</div><div class="ps" id="pn-alert-s">standby</div></div>
+      </div>
+
+      <div class="pane-title" style="margin-top:16px">Top risk drivers</div>
+      <div class="drivers" id="drivers"></div>
+
+      <div class="action" id="action">
+        <div class="al">Recommended action</div>
+        <div class="av" id="act-v">—</div>
+        <p id="act-p">—</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const SVGNS="http://www.w3.org/2000/svg";
+// dir: 'up' = higher value is riskier, 'down' = lower value is riskier
+const HAZARDS=[
+  {id:'thunder', ic:'⛈️', ac:'#38E1FF', name:'Thunderstorm Prediction', lead:'Lead time: 0–3 hours (nowcast)',
+   desc:'Deep moist convection producing gusts, hail and heavy rain — driven by instability and moisture.',
+   params:[
+     {k:'cape', l:'CAPE', u:'J/kg', min:0, max:4000, v:1800, dir:'up', w:3},
+     {k:'shear', l:'Wind shear (0–6 km)', u:'m/s', min:0, max:40, v:18, dir:'up', w:2},
+     {k:'rh', l:'Mid-level humidity', u:'%', min:0, max:100, v:65, dir:'up', w:1.5},
+     {k:'li', l:'Lifted Index', u:'', min:-10, max:10, v:-3, dir:'down', w:2},
+     {k:'cin', l:'Convective Inhibition (CIN)', u:'J/kg', min:0, max:300, v:60, dir:'down', w:1.5},
+     {k:'dew', l:'Surface dew point', u:'°C', min:0, max:30, v:20, dir:'up', w:1},
+   ]},
+  {id:'lightning', ic:'⚡', ac:'#FBBF24', name:'Lightning Prediction', lead:'Lead time: 10–60 minutes',
+   desc:'Charge separation in vigorous storms — needs strong updrafts, ice and deep clouds.',
+   params:[
+     {k:'cape', l:'CAPE', u:'J/kg', min:0, max:4000, v:2000, dir:'up', w:3},
+     {k:'cth', l:'Cloud-top height', u:'km', min:5, max:18, v:12, dir:'up', w:2},
+     {k:'dbz', l:'Radar reflectivity', u:'dBZ', min:0, max:70, v:45, dir:'up', w:2},
+     {k:'graupel', l:'Graupel / ice content', u:'g/m³', min:0, max:10, v:4, dir:'up', w:2},
+     {k:'updraft', l:'Updraft speed', u:'m/s', min:0, max:40, v:20, dir:'up', w:1.5},
+     {k:'pw', l:'Precipitable water', u:'mm', min:0, max:70, v:40, dir:'up', w:1},
+   ]},
+  {id:'flashflood', ic:'🌧️', ac:'#5B9DFF', name:'Flash Flood Prediction', lead:'Lead time: 0–6 hours',
+   desc:'Rapid runoff from intense rain over small, saturated or paved catchments.',
+   params:[
+     {k:'ri', l:'Rainfall intensity', u:'mm/hr', min:0, max:150, v:45, dir:'up', w:3},
+     {k:'acc', l:'3-hr accumulation', u:'mm', min:0, max:300, v:90, dir:'up', w:2.5},
+     {k:'soil', l:'Soil saturation', u:'%', min:0, max:100, v:70, dir:'up', w:2},
+     {k:'slope', l:'Terrain slope', u:'°', min:0, max:45, v:20, dir:'up', w:1.5},
+     {k:'imperv', l:'Urban imperviousness', u:'%', min:0, max:100, v:60, dir:'up', w:1.5},
+     {k:'api', l:'Antecedent precip index', u:'', min:0, max:100, v:55, dir:'up', w:1},
+   ]},
+  {id:'riverflood', ic:'🌊', ac:'#2DD4BF', name:'River Flood Prediction', lead:'Lead time: 6–72 hours',
+   desc:'Basin-scale rise from sustained upstream rain, releases and snowmelt.',
+   params:[
+     {k:'level', l:'River level (above normal)', u:'m', min:0, max:10, v:3.5, dir:'up', w:3},
+     {k:'disch', l:'Discharge', u:'m³/s', min:0, max:5000, v:1800, dir:'up', w:2.5},
+     {k:'uprain', l:'Upstream 24-h rainfall', u:'mm', min:0, max:300, v:110, dir:'up', w:2},
+     {k:'dam', l:'Dam / reservoir release', u:'m³/s', min:0, max:3000, v:800, dir:'up', w:1.5},
+     {k:'sat', l:'Basin soil saturation', u:'%', min:0, max:100, v:72, dir:'up', w:1.5},
+     {k:'snow', l:'Snowmelt contribution', u:'%', min:0, max:100, v:15, dir:'up', w:1},
+   ]},
+  {id:'cyclone', ic:'🌪️', ac:'#A78BFA', name:'Cyclone Impact Prediction', lead:'Lead time: 24–120 hours',
+   desc:'Tropical cyclone intensity & surge — fed by warm oceans and low shear.',
+   params:[
+     {k:'sst', l:'Sea surface temperature', u:'°C', min:24, max:32, v:29, dir:'up', w:3},
+     {k:'pres', l:'Central pressure', u:'hPa', min:880, max:1010, v:960, dir:'down', w:3},
+     {k:'wind', l:'Max sustained wind', u:'km/h', min:60, max:300, v:150, dir:'up', w:3},
+     {k:'ohc', l:'Ocean heat content', u:'kJ/cm²', min:0, max:150, v:90, dir:'up', w:2},
+     {k:'shear', l:'Vertical wind shear', u:'m/s', min:0, max:30, v:8, dir:'down', w:1.5},
+     {k:'surge', l:'Storm surge', u:'m', min:0, max:10, v:3, dir:'up', w:2},
+   ]},
+  {id:'landslide', ic:'🌋', ac:'#FB923C', name:'Landslide Prediction', lead:'Lead time: 0–24 hours',
+   desc:'Slope failure from rain-saturated soils, steep terrain and weak cover.',
+   params:[
+     {k:'cum', l:'72-h cumulative rainfall', u:'mm', min:0, max:500, v:180, dir:'up', w:3},
+     {k:'ri', l:'Rainfall intensity', u:'mm/hr', min:0, max:100, v:30, dir:'up', w:2},
+     {k:'pore', l:'Soil moisture / pore pressure', u:'%', min:0, max:100, v:75, dir:'up', w:2.5},
+     {k:'slope', l:'Slope angle', u:'°', min:0, max:60, v:35, dir:'up', w:2},
+     {k:'api', l:'Antecedent rainfall index', u:'', min:0, max:100, v:60, dir:'up', w:1.5},
+     {k:'seis', l:'Seismic activity (PGA)', u:'g', min:0, max:0.5, v:0.05, dir:'up', w:1},
+     {k:'veg', l:'Vegetation cover', u:'%', min:0, max:100, v:40, dir:'down', w:1},
+   ]},
+  {id:'fire', ic:'🔥', ac:'#FB5E6D', name:'Forest Fire Prediction', lead:'Lead time: hours–days',
+   desc:'Ignition & spread potential from hot, dry, windy conditions and cured fuels.',
+   params:[
+     {k:'temp', l:'Temperature', u:'°C', min:10, max:50, v:38, dir:'up', w:2},
+     {k:'rh', l:'Relative humidity', u:'%', min:0, max:100, v:22, dir:'down', w:2.5},
+     {k:'wind', l:'Wind speed', u:'km/h', min:0, max:80, v:30, dir:'up', w:2},
+     {k:'fuel', l:'Fuel moisture content', u:'%', min:0, max:40, v:8, dir:'down', w:3},
+     {k:'kbdi', l:'Drought index (KBDI)', u:'', min:0, max:800, v:550, dir:'up', w:2},
+     {k:'dry', l:'Days since rain', u:'d', min:0, max:60, v:25, dir:'up', w:1.5},
+     {k:'lig', l:'Lightning strikes', u:'/km²', min:0, max:20, v:3, dir:'up', w:1},
+   ]},
+  {id:'heat', ic:'🌡️', ac:'#FB923C', name:'Heatwave Forecasting', lead:'Lead time: 2–7 days',
+   desc:'Prolonged extreme heat under persistent high pressure with little night relief.',
+   params:[
+     {k:'tmax', l:'Max temperature', u:'°C', min:25, max:50, v:43, dir:'up', w:3},
+     {k:'dur', l:'Duration', u:'days', min:0, max:15, v:5, dir:'up', w:2.5},
+     {k:'tmin', l:'Night min temperature', u:'°C', min:15, max:40, v:30, dir:'up', w:2},
+     {k:'hi', l:'Heat index', u:'°C', min:25, max:60, v:48, dir:'up', w:2},
+     {k:'rh', l:'Humidity', u:'%', min:0, max:100, v:45, dir:'up', w:1},
+     {k:'ridge', l:'High-pressure ridge anomaly', u:'dam', min:0, max:30, v:18, dir:'up', w:1.5},
+   ]},
+  {id:'cold', ic:'🥶', ac:'#5B9DFF', name:'Cold Wave Forecasting', lead:'Lead time: 2–7 days',
+   desc:'Persistent extreme cold from polar air advection and radiative cooling.',
+   params:[
+     {k:'tmin', l:'Min temperature', u:'°C', min:-30, max:15, v:-6, dir:'down', w:3},
+     {k:'chill', l:'Wind chill', u:'°C', min:-45, max:10, v:-14, dir:'down', w:2.5},
+     {k:'dur', l:'Duration', u:'days', min:0, max:10, v:4, dir:'up', w:2},
+     {k:'adv', l:'Cold-air advection', u:'°C/day', min:0, max:15, v:8, dir:'up', w:2},
+     {k:'snow', l:'Snow cover', u:'%', min:0, max:100, v:40, dir:'up', w:1},
+     {k:'rad', l:'Radiative cooling index', u:'', min:0, max:10, v:7, dir:'up', w:1},
+   ]},
+];
+const LEVELS=[
+  {min:0, name:'Low', color:'#4ADE80'},
+  {min:25, name:'Moderate', color:'#FBBF24'},
+  {min:50, name:'High', color:'#FB923C'},
+  {min:75, name:'Severe', color:'#FB5E6D'},
+];
+const ACTIONS={
+  Low:['Monitor','Conditions benign — routine monitoring; no action needed.'],
+  Moderate:['Advisory issued','Heightened watch — inform field teams and prepare resources.'],
+  High:['Warning · prepare','Issue public warning; pre-position responders and ready evacuation routes.'],
+  Severe:['Red alert · act now','Trigger emergency protocol — evacuate at-risk zones and dispatch response.'],
+};
+const C=502.65; // 2πr, r=80
+let cur=0, running=true;
+
+/* tabs */
+const tabbar=$('tabbar');
+HAZARDS.forEach((h,i)=>{ const t=document.createElement('div'); t.className='tab'; t.style.setProperty('--ac',h.ac);
+  t.innerHTML=`<span class="ti">${h.ic}</span><span>${h.name.replace(/ (Prediction|Forecasting|Impact Prediction)$/,'')}</span>`;
+  t.onclick=()=>select(i); tabbar.appendChild(t); });
+
+function fval(p){ let f=(p.v-p.min)/(p.max-p.min); if(p.dir==='down') f=1-f; return Math.max(0,Math.min(1,f)); }
+function levelFor(r){ let L=LEVELS[0]; for(const l of LEVELS) if(r>=l.min) L=l; return L; }
+function fmt(p){ const dec=(p.max-p.min)<=1?2:((p.max-p.min)<=20?1:0); return p.v.toFixed(dec); }
+
+function select(i){
+  cur=i; const h=HAZARDS[i];
+  document.querySelectorAll('.tab').forEach((t,k)=>t.classList.toggle('active',k===i));
+  $('v-icon').textContent=h.ic; $('v-name').textContent=h.name; $('v-desc').textContent=h.desc; $('v-lead').textContent=h.lead;
+  $('pn-count').textContent=h.params.length+' inputs';
+  // render params
+  const box=$('params'); box.innerHTML='';
+  h.params.forEach(p=>{
+    const step=((p.max-p.min)/200);
+    const row=document.createElement('div'); row.className='param';
+    row.innerHTML=`<div class="prow"><span class="pdot" id="dot-${p.k}"></span><span class="plabel">${p.l}</span>
+        <span class="pval" id="val-${p.k}">${fmt(p)}<span class="punit">${p.u}</span></span></div>
+      <input type="range" min="${p.min}" max="${p.max}" step="${step}" value="${p.v}" data-k="${p.k}">
+      <div class="prange"><span>${p.min}${p.u}</span><span>${p.max}${p.u}</span></div>`;
+    box.appendChild(row);
+    row.querySelector('input').addEventListener('input',e=>{ p.v=parseFloat(e.target.value); $('val-'+p.k).innerHTML=fmt(p)+`<span class="punit">${p.u}</span>`; recompute(); });
+  });
+  recompute();
+}
+
+function recompute(){
+  const h=HAZARDS[cur];
+  let num=0, den=0; const contribs=[];
+  h.params.forEach(p=>{ const f=fval(p); num+=p.w*f; den+=p.w; contribs.push({l:p.l, k:p.k, c:p.w*f, f}); });
+  const risk=Math.round(num/den*100);
+  const L=levelFor(risk);
+  // gauge
+  $('gauge-arc').setAttribute('stroke', L.color);
+  $('gauge-arc').setAttribute('stroke-dashoffset', C*(1-risk/100));
+  $('g-pct').innerHTML=risk+'<span style="font-size:1.1rem">%</span>'; $('g-pct').style.color=L.color;
+  const lvl=$('g-lvl'); lvl.textContent=L.name; lvl.style.color=L.color; lvl.style.background=L.color+'22';
+  // param dots (colour by contribution)
+  h.params.forEach(p=>{ const d=$('dot-'+p.k); if(d){ const f=fval(p); const c=f<.33?'#4ADE80':f<.66?'#FBBF24':'#FB5E6D'; d.style.background=c; d.style.boxShadow='0 0 6px -1px '+c; }});
+  // drivers (top 3 by contribution share)
+  contribs.sort((a,b)=>b.c-a.c);
+  const total=contribs.reduce((s,x)=>s+x.c,0)||1;
+  const box=$('drivers'); box.innerHTML='';
+  contribs.slice(0,3).forEach(d=>{ const share=Math.round(d.c/total*100); const c=d.f<.33?'#4ADE80':d.f<.66?'#FBBF24':'#FB5E6D';
+    const row=document.createElement('div'); row.className='drow';
+    row.innerHTML=`<div class="dt"><span>${d.l}</span><span>${share}%</span></div><div class="dbar"><i style="width:${share}%;background:${c}"></i></div>`;
+    box.appendChild(row); });
+  // action + alert node
+  const A=ACTIONS[L.name]; $('act-v').textContent=A[0]; $('act-v').style.color=L.color; $('act-p').textContent=A[1];
+  $('action').style.borderColor=L.color+'55'; $('action').style.background=L.color+'0d';
+  $('pn-alert-t').textContent = L.name==='Low'?'ALERT':'⚠ '+L.name.toUpperCase(); $('pn-alert-t').style.color=L.color;
+  $('pn-alert-s').textContent = L.name==='Low'?'standby':A[0];
+  window._alertColor=L.color;
+}
+
+/* pipeline animation */
+function initPipe(){
+  const svg=$('pipe-svg'); svg.innerHTML='';
+  const s=$('pn-sensors'), m=$('pn-model'), a=$('pn-alert');
+  function cx(el){ const r=el.getBoundingClientRect(), pr=svg.getBoundingClientRect(); return {x:r.left+r.width/2-pr.left, y:r.top+r.height/2-pr.top}; }
+  window._pipe={svg,cx,s,m,a};
+  // static links
+  [['s','m'],['m','a']].forEach(()=>{});
+}
+function pipePacket(from,to,color){
+  const P=window._pipe; if(!P) return; const A=P.cx(P[from]), B=P.cx(P[to]);
+  const d=document.createElementNS(SVGNS,'circle'); d.setAttribute('r','3.5'); d.setAttribute('fill',color); d.style.filter='drop-shadow(0 0 4px '+color+')';
+  P.svg.appendChild(d); const t0=performance.now(), dur=520;
+  (function an(now){ let t=(now-t0)/dur; if(t>=1){ d.remove(); return; } d.setAttribute('cx',A.x+(B.x-A.x)*t); d.setAttribute('cy',A.y+(B.y-A.y)*t); requestAnimationFrame(an); })(t0);
+}
+setInterval(()=>{ if(document.hidden) return; pipePacket('s','m','#38E1FF');
+  setTimeout(()=>{ const m=$('pn-model'); m.style.borderColor='rgba(167,139,250,.9)'; m.style.boxShadow='0 0 16px -4px #A78BFA'; setTimeout(()=>{ m.style.borderColor=''; m.style.boxShadow=''; },260);
+    pipePacket('m','a', window._alertColor||'#4ADE80'); }, 540); }, 900);
+
+window.addEventListener('load', ()=>{ setTimeout(()=>{ initPipe(); select(0); }, 40); });
+window.addEventListener('resize', ()=>{ if(window._pipe) initPipe(); });
+</script>
+</body>
+</html>
