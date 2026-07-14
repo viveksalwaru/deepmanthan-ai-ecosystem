@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Résumé · Distributed Systems Engineer</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+:root{
+  --ink:#1b2432; --ink-soft:#3f4c60; --ink-dim:#6b7789; --line:#e3e8ef;
+  --accent:#0e7c86; --accent-soft:#0e7c8615; --accent-dark:#0a5b63;
+  --sidebar:#0f2233; --sidebar-ink:#cdd9e6; --sidebar-dim:#8ea3b8; --chip:#14314722;
+  --paper:#ffffff; --bg:#eef1f5;
+}
+html,body{ background:var(--bg); font-family:"Sora",sans-serif; color:var(--ink); -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+.page{ width:100%; max-width:1280px; margin:16px auto; background:var(--paper); box-shadow:0 12px 40px -18px rgba(0,0,0,.4);
+  display:grid; grid-template-columns:300px 1fr; min-height:calc(100vh - 90px); }
+
+/* ── sidebar ── */
+.side{ background:var(--sidebar); color:var(--sidebar-ink); padding:30px 24px; }
+.name{ font-size:1.55rem; font-weight:700; color:#fff; line-height:1.12; letter-spacing:.2px; }
+.role{ font-family:"IBM Plex Mono"; font-size:.72rem; letter-spacing:1.4px; text-transform:uppercase; color:var(--accent); margin-top:7px; font-weight:600; }
+.side h3{ font-family:"IBM Plex Mono"; font-size:.66rem; letter-spacing:2px; text-transform:uppercase; color:#fff;
+  margin:26px 0 11px; padding-bottom:6px; border-bottom:1px solid #26445c; }
+.contact{ display:flex; flex-direction:column; gap:8px; font-size:.76rem; color:var(--sidebar-ink); }
+.contact a{ color:var(--sidebar-ink); text-decoration:none; }
+.contact .row{ display:flex; gap:9px; align-items:flex-start; }
+.contact .ic{ color:var(--accent); width:15px; flex-shrink:0; text-align:center; }
+.skillgrp{ margin-bottom:13px; }
+.skillgrp .lab{ font-size:.68rem; color:var(--sidebar-dim); margin-bottom:6px; font-weight:500; }
+.chips{ display:flex; flex-wrap:wrap; gap:5px; }
+.chip{ font-family:"IBM Plex Mono"; font-size:.62rem; background:var(--chip); color:#dce8f2; border:1px solid #29465e;
+  padding:3px 7px; border-radius:5px; }
+.side .edu{ font-size:.76rem; line-height:1.5; }
+.side .edu b{ color:#fff; } .side .edu span{ color:var(--sidebar-dim); font-size:.7rem; }
+.langbar{ margin-bottom:9px; }
+.langbar .lt{ display:flex; justify-content:space-between; font-size:.72rem; margin-bottom:4px; }
+.langbar .lt span:last-child{ color:var(--sidebar-dim); font-family:"IBM Plex Mono"; font-size:.62rem; }
+.bar{ height:5px; background:#17334a; border-radius:4px; overflow:hidden; }
+.bar>i{ display:block; height:100%; background:linear-gradient(90deg,var(--accent),#3bd6c6); border-radius:4px; }
+
+/* ── main ── */
+.main{ padding:30px 32px 34px; }
+.summary{ font-size:.86rem; line-height:1.6; color:var(--ink-soft); }
+.main h2{ font-size:.78rem; font-weight:700; letter-spacing:1.6px; text-transform:uppercase; color:var(--accent-dark);
+  margin:24px 0 12px; display:flex; align-items:center; gap:10px; }
+.main h2::after{ content:""; flex:1; height:2px; background:linear-gradient(90deg,var(--line),transparent); }
+.main h2:first-child{ margin-top:4px; }
+.job{ margin-bottom:16px; }
+.job-top{ display:flex; justify-content:space-between; align-items:baseline; gap:10px; flex-wrap:wrap; }
+.job-title{ font-size:.98rem; font-weight:600; color:var(--ink); }
+.job-org{ color:var(--accent-dark); font-weight:600; }
+.job-meta{ font-family:"IBM Plex Mono"; font-size:.68rem; color:var(--ink-dim); white-space:nowrap; }
+.job-sub{ font-size:.74rem; color:var(--ink-dim); margin:2px 0 9px; }
+.bullets{ list-style:none; display:flex; flex-direction:column; gap:8px; }
+.bullets li{ position:relative; padding-left:20px; font-size:.83rem; line-height:1.5; color:var(--ink-soft); }
+.bullets li::before{ content:"▹"; position:absolute; left:2px; top:0; color:var(--accent); font-size:.85rem; }
+.bullets li b{ color:var(--ink); font-weight:600; }
+.tag-inline{ font-family:"IBM Plex Mono"; font-size:.64rem; color:var(--accent-dark); background:var(--accent-soft);
+  padding:2px 7px; border-radius:5px; border:1px solid #0e7c8630; white-space:nowrap; }
+.feat-tags{ display:flex; flex-wrap:wrap; gap:6px; margin:9px 0 2px; }
+.curriculum{ display:grid; grid-template-columns:1fr 1fr; gap:7px 18px; }
+.cur-item{ font-size:.79rem; color:var(--ink-soft); position:relative; padding-left:16px; line-height:1.45; }
+.cur-item::before{ content:"✦"; position:absolute; left:0; color:var(--accent); font-size:.68rem; top:2px; }
+.cur-item b{ color:var(--ink); font-weight:600; }
+.hl-grid{ display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-top:4px; }
+.hl{ border:1px solid var(--line); border-radius:9px; padding:11px 12px; background:#fbfcfe; }
+.hl .n{ font-size:1.3rem; font-weight:700; color:var(--accent-dark); font-family:"Sora"; }
+.hl .l{ font-size:.68rem; color:var(--ink-dim); margin-top:2px; line-height:1.35; }
+.brand{ font-weight:700; text-transform:none;
+  background:linear-gradient(90deg,#7c3aed,#d6249f 48%,#0ea5b7);
+  -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; color:transparent; }
+.provider{ font-size:.92rem; font-weight:600; color:var(--ink); margin:-4px 0 9px; letter-spacing:.2px; display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.provider .brand{ font-size:1.02rem; }
+.provider .prov-tag{ font-family:"IBM Plex Mono"; font-size:.62rem; font-weight:500; color:#7c3aed; background:#7c3aed14; border:1px solid #7c3aed30; padding:2px 8px; border-radius:20px; }
+.foot{ margin-top:20px; font-family:"IBM Plex Mono"; font-size:.6rem; color:#9aa6b6; text-align:center; }
+
+.editnote{ width:100%; max-width:1280px; margin:0 auto 26px; padding:0 16px; font-family:"IBM Plex Mono"; font-size:.66rem; color:#8a94a3; text-align:center; }
+@media (max-width:720px){
+  .page{ grid-template-columns:1fr; min-height:0; }
+}
+@media print{
+  body{ background:#fff; } .editnote{ display:none; }
+  .page{ margin:0; box-shadow:none; width:100%; max-width:none; min-height:0; grid-template-columns:270px 1fr; }
+  .brand{ -webkit-text-fill-color:#7c3aed; color:#7c3aed; }
+  @page{ margin:12mm; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+  <aside class="side">
+    <div class="name">Aarav&nbsp;Deshmukh</div>
+    <div class="role">Distributed Systems Engineer</div>
+
+    <h3>Contact</h3>
+    <div class="contact">
+      <div class="row"><span class="ic">✉</span><a href="mailto:aarav.deshmukh@email.com">aarav.deshmukh@email.com</a></div>
+      <div class="row"><span class="ic">☏</span><span>+91 98XXX XXXXX</span></div>
+      <div class="row"><span class="ic">◉</span><span>Pune, Maharashtra, India</span></div>
+      <div class="row"><span class="ic">⎇</span><a href="#">github.com/aarav-dev</a></div>
+      <div class="row"><span class="ic">in</span><a href="#">linkedin.com/in/aarav-deshmukh</a></div>
+    </div>
+
+    <h3>Technical Skills</h3>
+    <div class="skillgrp"><div class="lab">Distributed Systems</div><div class="chips"><span class="chip">Consensus / Raft</span><span class="chip">Consistent Hashing</span><span class="chip">Pub/Sub</span><span class="chip">Load Balancing</span><span class="chip">High Availability</span><span class="chip">Service Discovery</span></div></div>
+    <div class="skillgrp"><div class="lab">Orchestration</div><div class="chips"><span class="chip">Kubernetes</span><span class="chip">Docker</span><span class="chip">Self-Healing</span><span class="chip">Rolling Updates</span></div></div>
+    <div class="skillgrp"><div class="lab">Languages</div><div class="chips"><span class="chip">Go</span><span class="chip">Python</span><span class="chip">Bash</span></div></div>
+    <div class="skillgrp"><div class="lab">Networking</div><div class="chips"><span class="chip">gRPC</span><span class="chip">TCP/IP</span><span class="chip">WireGuard</span></div></div>
+    <div class="skillgrp"><div class="lab">Systems</div><div class="chips"><span class="chip">Linux</span><span class="chip">systemd</span><span class="chip">Observability</span></div></div>
+
+    <h3>Proficiency</h3>
+    <div class="langbar"><div class="lt"><span>Distributed Systems</span><span>Advanced</span></div><div class="bar"><i style="width:88%"></i></div></div>
+    <div class="langbar"><div class="lt"><span>Kubernetes</span><span>Proficient</span></div><div class="bar"><i style="width:82%"></i></div></div>
+    <div class="langbar"><div class="lt"><span>Python</span><span>Advanced</span></div><div class="bar"><i style="width:88%"></i></div></div>
+    <div class="langbar"><div class="lt"><span>Networking</span><span>Proficient</span></div><div class="bar"><i style="width:80%"></i></div></div>
+
+    <h3>Education</h3>
+    <div class="edu"><b>B.E. Computer Engineering</b><br><span>[University Name] · 20XX – 20XX</span></div>
+    <div class="edu" style="margin-top:13px;"><b>Advanced AI Ecosystem — Certification</b><br><span><span class="brand">DeepManthan AI</span> · Production AI Program</span></div>
+  </aside>
+  <main class="main">
+    <p class="summary">Distributed-systems engineer building <b>fault-tolerant, horizontally-scalable</b> services — high availability, consensus and coordination across large fleets. Contributor to a live 100-node distributed edge system.</p>
+
+    <h2>Projects</h2>
+    <div class="job">
+      <div class="job-top"><div class="job-title">Leopard Detection System — <span class="job-org">Distributed &amp; Fault-Tolerant Fleet</span></div><div class="job-meta">100 nodes · live</div></div>
+      <div class="job-sub">Engineered high availability, coordination and scaling across a 100-node distributed edge system.</div>
+      <ul class="bullets"><li><b>High-availability camera failover:</b> heartbeats detect node failure and a nearest-neighbour scheduler re-homes the stream in seconds — <b>no single point of failure</b>.</li><li><b>Multi-agent coordination:</b> perception, tracking, alerting and dispatch agents coordinate over a <b>message bus</b> to turn detections into actions.</li><li><b>Scaling &amp; load distribution:</b> consistent-hashing-style placement spreads cameras / work evenly and rebalances when nodes join or leave.</li><li><b>Orchestration:</b> Kubernetes-style <b>self-healing</b> and <b>zero-downtime rolling updates</b> across the fleet.</li><li><b>Messaging backbone:</b> pub/sub topics with partitions &amp; offsets carry telemetry reliably at fleet scale.</li></ul>
+      <div class="feat-tags"><span class="tag-inline">high availability</span><span class="tag-inline">consensus / failover</span><span class="tag-inline">consistent hashing</span><span class="tag-inline">pub/sub</span><span class="tag-inline">zero-downtime rollout</span></div>
+    </div>
+
+    <h2>Reliability Engineering</h2>
+    <ul class="bullets"><li>Defined <b>SLOs</b> and wired metrics / logs / traces for fleet-wide <b>observability</b>.</li><li><b>Chaos testing:</b> killed nodes to prove automatic failover and self-healing.</li><li>Communication over <b>gRPC</b> and secure <b>WireGuard</b> overlays.</li></ul>
+
+    <h2>Advanced AI Ecosystem Training</h2>
+    <div class="provider">by <span class="brand">DeepManthan&nbsp;AI</span> <span class="prov-tag">Production AI Ecosystem Program</span></div>
+    <div class="job-sub" style="margin-top:-2px">Intensive program on building &amp; operating production AI systems — containers, orchestration, distributed systems, networking and deep learning.</div>
+    <div class="curriculum">
+      <div class="cur-item"><b>Containerisation</b> — Docker, images, isolation, OTA rollouts</div>
+      <div class="cur-item"><b>Orchestration</b> — Kubernetes, self-healing, scaling</div>
+      <div class="cur-item"><b>Distributed Systems</b> — Raft consensus, consistent hashing</div>
+      <div class="cur-item"><b>Messaging</b> — pub/sub, topics, partitions, offsets</div>
+      <div class="cur-item"><b>Concurrency</b> — multi-threading, producer–consumer</div>
+      <div class="cur-item"><b>Computer Vision</b> — CNNs, convolution, detection</div>
+      <div class="cur-item"><b>Networking</b> — TCP/IP, SSH, private overlays</div>
+      <div class="cur-item"><b>Linux &amp; Ops</b> — processes, daemons, systemd</div>
+    </div>
+
+    <h2>Impact Highlights</h2>
+    <div class="hl-grid">
+      <div class="hl"><div class="n">100</div><div class="l">nodes coordinated</div></div>
+      <div class="hl"><div class="n">99.95%</div><div class="l">availability</div></div>
+      <div class="hl"><div class="n">Zero</div><div class="l">downtime on rollouts</div></div>
+      <div class="hl"><div class="n">Auto</div><div class="l">failover &amp; self-healing</div></div>
+    </div>
+    <div class="foot">Role-targeted résumé · replace bracketed placeholders and metrics with the student's actual details before use.</div>
+  </main>
+</div>
+<div class="editnote">Tip: open in a browser and use <b>Print → Save as PDF</b>. This is the <b>Distributed Systems Engineer</b> variant — personal details are placeholders.</div>
+</body>
+</html>
