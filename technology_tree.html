@@ -277,9 +277,6 @@ domains.forEach((d,i)=>{
   tree.appendChild(node);
 });
 
-// open the first node by default
-tree.firstElementChild.classList.add('open');
-
 document.getElementById('expandAll').onclick=()=>document.querySelectorAll('.node').forEach(n=>n.classList.add('open'));
 document.getElementById('collapseAll').onclick=()=>document.querySelectorAll('.node').forEach(n=>n.classList.remove('open'));
 </script>
