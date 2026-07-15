@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>R&amp;D Lab on Existing Infrastructure</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+:root{
+  --bg:#070B12; --panel:#0E1622; --panel2:#121C2B; --line:#1E2C3F; --line-soft:#16212F;
+  --ink:#DCE6F2; --ink-dim:#7C8CA3; --ink-faint:#3D4F63;
+  --cyan:#38E1FF; --teal:#2DD4BF; --green:#4ADE80; --amber:#FBBF24; --violet:#A78BFA; --magenta:#E879F9; --rose:#FB5E6D; --orange:#FB923C; --blue:#5B9DFF;
+}
+html,body{ height:100%; font-family:"Sora",sans-serif; background:var(--bg); color:var(--ink); overflow:hidden; }
+.top-header{ height:56px; background:linear-gradient(90deg,#08101E,#0A0F1A); border-bottom:1px solid var(--line);
+  display:flex; align-items:center; padding:0 20px; gap:12px; flex-shrink:0; }
+.logo-glyph{ width:34px;height:34px;border-radius:9px; background:linear-gradient(150deg,rgba(56,225,255,.22),rgba(167,139,250,.12));
+  border:1px solid rgba(56,225,255,.45); display:grid; place-items:center; font-size:1.05rem; }
+.logo-txt b{ font-family:"Space Grotesk"; font-weight:700; font-size:1rem; }
+.logo-txt span{ display:block; font-size:.6rem; color:var(--ink-dim); letter-spacing:1.1px; text-transform:uppercase; }
+.hdr-spacer{ flex:1; }
+.home-btn{ font-family:"IBM Plex Mono"; font-size:.72rem; color:var(--cyan); text-decoration:none; border:1px solid rgba(56,225,255,.4); border-radius:8px; padding:6px 13px; } .home-btn:hover{ background:rgba(56,225,255,.12); }
+
+.body{ height:calc(100% - 56px); display:grid; grid-template-columns:minmax(0,1.25fr) minmax(0,360px); gap:1px; background:var(--line); }
+.pane{ background:var(--bg); overflow:auto; position:relative; }
+.pane::-webkit-scrollbar{ width:8px; height:8px; } .pane::-webkit-scrollbar-thumb{ background:var(--line); border-radius:8px; }
+
+/* ── LEFT: TOPOLOGY ── */
+.left{ padding:14px 20px 20px; }
+.topo{ position:relative; }
+#ov{ position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:1; }
+.node{ position:relative; z-index:2; }
+.server{ width:min(420px,86%); margin:2px auto 0; background:linear-gradient(160deg,#0e2018,var(--panel2)); border:1.5px solid rgba(74,222,128,.5);
+  border-radius:13px; padding:11px 16px; display:flex; align-items:center; gap:12px; box-shadow:0 0 26px -10px var(--green); }
+.server .sic{ font-size:1.5rem; }
+.server b{ font-family:"Space Grotesk"; font-size:.92rem; color:var(--green); } .server .ss{ font-size:.62rem; color:var(--ink-dim); font-family:"IBM Plex Mono"; margin-top:1px; }
+.server .role{ margin-left:auto; text-align:right; font-family:"IBM Plex Mono"; font-size:.58rem; color:var(--teal); }
+.trunk-lbl{ text-align:center; font-family:"IBM Plex Mono"; font-size:.58rem; color:var(--cyan); margin:5px 0; }
+.switch{ width:min(360px,80%); margin:0 auto; background:linear-gradient(160deg,var(--panel),var(--panel2)); border:1.5px solid rgba(56,225,255,.45);
+  border-radius:11px; padding:9px 14px; text-align:center; box-shadow:0 0 22px -12px var(--cyan); }
+.switch b{ font-family:"Space Grotesk"; font-size:.82rem; color:var(--cyan); } .switch span{ display:block; font-size:.6rem; color:var(--ink-dim); font-family:"IBM Plex Mono"; margin-top:2px; }
+
+.fabric{ margin:14px 0 10px; border:1px dashed rgba(251,146,60,.5); border-radius:10px; background:rgba(251,146,60,.05); padding:8px 12px; display:flex; align-items:center; gap:9px; }
+.fabric .fi{ font-size:1rem; } .fabric b{ font-family:"IBM Plex Mono"; font-size:.68rem; color:var(--orange); } .fabric span{ font-size:.62rem; color:var(--ink-dim); }
+
+.pods{ display:grid; grid-template-columns:repeat(3,1fr); gap:18px; margin-top:10px; }
+.pod{ border:1px solid var(--pc); border-top:4px solid var(--pc); border-radius:14px; padding:16px 16px 18px; background:linear-gradient(160deg,var(--panel),var(--panel2)); box-shadow:0 8px 24px -16px var(--pc); }
+.pod-head{ display:flex; align-items:center; gap:9px; margin-bottom:4px; }
+.pod-head .pi{ font-size:1.35rem; } .pod-head b{ font-family:"Space Grotesk"; font-size:.98rem; color:var(--pc); }
+.pod .vlan{ font-family:"IBM Plex Mono"; font-size:.66rem; color:var(--ink-dim); }
+.pod .purpose{ font-size:.78rem; color:var(--ink-dim); margin:9px 0 13px; line-height:1.5; min-height:52px; }
+.ws{ display:flex; gap:7px; }
+.ws .w{ flex:1; height:46px; border-radius:8px; background:var(--panel2); border:1px solid var(--line); display:grid; place-items:center; font-size:1.3rem; position:relative; }
+.ws .w .led{ position:absolute; top:4px; right:4px; width:6px;height:6px;border-radius:50%; background:var(--pc); box-shadow:0 0 6px -1px var(--pc); }
+
+/* ── RIGHT: DETAILS ── */
+.right{ padding:16px 18px 24px; }
+.rh{ font-family:"IBM Plex Mono"; font-size:.6rem; letter-spacing:1.4px; text-transform:uppercase; color:var(--ink-faint); margin:16px 0 9px; display:flex; align-items:center; gap:9px; }
+.rh:first-child{ margin-top:2px; } .rh::after{ content:""; flex:1; height:1px; background:var(--line-soft); }
+.hubcard{ background:linear-gradient(160deg,rgba(74,222,128,.06),var(--panel)); border:1px solid rgba(74,222,128,.35); border-radius:11px; padding:12px 13px; }
+.hubcard b{ font-family:"Space Grotesk"; font-size:.88rem; color:var(--green); } .hubcard p{ font-size:.72rem; color:var(--ink-dim); margin-top:5px; line-height:1.5; }
+.hubcard a{ color:var(--cyan); text-decoration:none; font-size:.7rem; font-family:"IBM Plex Mono"; }
+.labrow{ display:flex; gap:10px; align-items:flex-start; padding:8px 9px; border-radius:9px; border:1px solid var(--line-soft); margin-bottom:7px; }
+.labrow .lc{ width:11px;height:11px;border-radius:3px; flex-shrink:0; margin-top:3px; }
+.labrow .lt b{ font-size:.8rem; } .labrow .lt .lv{ font-family:"IBM Plex Mono"; font-size:.58rem; color:var(--ink-dim); } .labrow .lt span{ display:block; font-size:.68rem; color:var(--ink-dim); margin-top:2px; line-height:1.4; }
+.spark{ background:var(--panel); border:1px solid var(--line); border-radius:11px; padding:12px 13px; }
+.spark .srow{ display:flex; justify-content:space-between; font-size:.74rem; padding:4px 0; border-bottom:1px solid var(--line-soft); }
+.spark .srow:last-child{ border-bottom:none; } .spark .srow b{ color:var(--ink); font-family:"IBM Plex Mono"; }
+.netnote{ background:var(--panel); border:1px solid var(--line); border-left:3px solid var(--cyan); border-radius:9px; padding:10px 12px; margin-bottom:8px; font-size:.72rem; color:var(--ink-dim); line-height:1.5; }
+.netnote b{ color:var(--ink); }
+</style>
+</head>
+<body>
+<div class="top-header">
+  <div class="logo-glyph">🔬</div>
+  <div class="logo-txt"><b>R&amp;D Lab on Existing Infrastructure</b><span>1 AI-HPC server · 30 workstations · 6 logical pools</span></div>
+  <div class="hdr-spacer"></div>
+  <a href="index.html" class="home-btn">← Suite Home</a>
+</div>
+
+<div class="body">
+  <!-- LEFT -->
+  <div class="pane left">
+    <div class="topo" id="topo">
+      <svg id="ov"></svg>
+      <div class="node server" id="server">
+        <span class="sic">🖥️</span>
+        <div><b>AI-HPC Server</b><div class="ss">Dell PowerEdge · Xeon Gold 64c · NVIDIA L40S</div></div>
+        <div class="role">Spark driver + K8s control-plane<br>GPU · scheduler with quotas</div>
+      </div>
+      <div class="trunk-lbl">│ 10 GbE · one flat network │</div>
+      <div class="node switch" id="switch"><b>Top-of-Rack Switch</b><span>one flat subnet · 10.0.0.0/24 · all 30 nodes reachable</span></div>
+
+      <div class="fabric"><span class="fi">🧩</span><div><b>Logical pools — no VLANs</b> <span>— Kubernetes namespaces + Spark fair-scheduler pools + node labels carve the 30 nodes into 6 sub-clusters, purely in software.</span></div></div>
+
+      <div class="pods" id="pods"></div>
+    </div>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="pane right">
+    <div class="rh">The Hub</div>
+    <div class="hubcard">
+      <b>🖥️ AI-HPC Server</b>
+      <p>The powerhouse — the <b>Spark driver / master</b>, the <b>Kubernetes control-plane</b>, the <b>GPU worker</b> (NVIDIA L40S), and the <b>scheduler</b> that shares the GPU fairly across all six pools via <b>resource quotas</b>.</p>
+      <a href="ai_hpc_server.html">→ See server hardware &amp; use cases</a>
+    </div>
+
+    <div class="rh">6 Sub-Labs · logical pools (5 nodes each)</div>
+    <div id="lablist"></div>
+
+    <div class="rh">Cluster (Spark on Kubernetes)</div>
+    <div class="spark">
+      <div class="srow"><span>Runs on</span><b>Spark-on-Kubernetes</b></div>
+      <div class="srow"><span>Driver / control-plane</span><b>AI-HPC Server</b></div>
+      <div class="srow"><span>Worker nodes</span><b>30 workstations</b></div>
+      <div class="srow"><span>Isolation</span><b>namespaces · pools · quotas</b></div>
+      <div class="srow"><span>GPU sharing</span><b>quota / time-slicing</b></div>
+      <div class="srow"><span>Data layer</span><b>HDFS / MinIO on NVMe</b></div>
+    </div>
+
+    <div class="rh">How the 6 pools are carved (in software)</div>
+    <div class="netnote"><b>One flat network:</b> all 30 machines share a single subnet — simplest possible setup; every node is reachable by the Spark driver and the Kubernetes API.</div>
+    <div class="netnote" style="border-left-color:var(--green)"><b>Logical pools:</b> Kubernetes <b>namespaces</b> + Spark <b>fair-scheduler pools</b> + <b>node labels / selectors</b> split the 30 nodes into 6 sub-clusters, each with its own <b>CPU / GPU / memory quota</b> — no VLANs needed.</div>
+    <div class="netnote" style="border-left-color:var(--rose)"><b>Security caveat:</b> logical pools isolate <b>resources &amp; scheduling</b>, not the wire. Add K8s <b>NetworkPolicies</b> for pod-level firewalling — and keep the <b>Cybersecurity</b> lab on a separate VLAN / air-gap for risky work.</div>
+  </div>
+</div>
+
+<script>
+const LABS=[
+  {id:'bigdata', ic:'📊', name:'Big Data', ns:'bigdata', label:'lab=bigdata', quota:'8 vCPU · 32 GB', color:'#38E1FF', purpose:'Apache Spark jobs · HDFS / MinIO data lake · ETL'},
+  {id:'distsys', ic:'🕸️', name:'Distributed Systems', ns:'distsys', label:'lab=distsys', quota:'8 vCPU · 24 GB', color:'#A78BFA', purpose:'Consensus (Raft) · pub/sub · consistent hashing · RPC'},
+  {id:'cyber', ic:'🛡️', name:'Cybersecurity', ns:'cyber', label:'lab=cyber', quota:'6 vCPU · 16 GB', color:'#FB5E6D', purpose:'Pen-testing · IDS · malware analysis (add VLAN for hard isolation)'},
+  {id:'distml', ic:'🧠', name:'Distributed ML', ns:'distml', label:'lab=distml', quota:'8 vCPU · 32 GB · GPU', color:'#2DD4BF', purpose:'Multi-node data-parallel training · Spark MLlib'},
+  {id:'observ', ic:'📈', name:'Observability / Ops', ns:'observ', label:'lab=observ', quota:'4 vCPU · 12 GB', color:'#FBBF24', purpose:'Prometheus · Grafana · logs · metrics · alerting'},
+  {id:'k8s', ic:'☸️', name:'Kubernetes / Cloud-Native', ns:'k8s-lab', label:'lab=k8s', quota:'8 vCPU · 24 GB', color:'#4ADE80', purpose:'k8s namespaces · Docker · CI/CD · microservices'},
+];
+const $=id=>document.getElementById(id);
+const SVGNS="http://www.w3.org/2000/svg";
+
+/* build pods */
+const podsEl=$('pods');
+LABS.forEach(l=>{ const d=document.createElement('div'); d.className='pod'; d.id='pod-'+l.id; d.style.setProperty('--pc',l.color);
+  let ws=''; for(let i=0;i<5;i++) ws+=`<div class="w">💻<span class="led"></span></div>`;
+  d.innerHTML=`<div class="pod-head"><span class="pi">${l.ic}</span><b>${l.name}</b></div>
+    <div class="vlan">ns: ${l.ns} · ${l.label} · 5 nodes</div><div class="purpose">${l.purpose}</div><div class="ws">${ws}</div>`;
+  podsEl.appendChild(d); });
+
+/* build lab list (right) */
+const labEl=$('lablist');
+LABS.forEach(l=>{ const d=document.createElement('div'); d.className='labrow';
+  d.innerHTML=`<span class="lc" style="background:${l.color}"></span><div class="lt"><b>${l.ic} ${l.name}</b> <span class="lv">· ns: ${l.ns} · quota ${l.quota} · 5 nodes</span><span>${l.purpose}</span></div>`;
+  labEl.appendChild(d); });
+
+/* ── connectors + animated Spark/heartbeat flow ── */
+const ov=$('ov'), topo=$('topo');
+function rel(el){ const r=el.getBoundingClientRect(), t=topo.getBoundingClientRect(); return {r,t}; }
+function bottomC(el){ const {r,t}=rel(el); return {x:r.left+r.width/2-t.left, y:r.bottom-t.top}; }
+function topC(el){ const {r,t}=rel(el); return {x:r.left+r.width/2-t.left, y:r.top-t.top}; }
+function drawLinks(){
+  ov.innerHTML='';
+  const sv=bottomC($('server')), swT=topC($('switch')), swB=bottomC($('switch'));
+  line(sv.x,sv.y,swT.x,swT.y,'rgba(56,225,255,.35)',2,'8 5');   // 10GbE trunk
+  LABS.forEach(l=>{ const p=topC($('pod-'+l.id)); const midY=(swB.y+p.y)/2;
+    path(`M ${swB.x} ${swB.y} C ${swB.x} ${midY}, ${p.x} ${midY}, ${p.x} ${p.y}`, l.color+'44', 1.5); });
+}
+function line(x1,y1,x2,y2,stroke,w,dash){ const e=document.createElementNS(SVGNS,'line'); e.setAttribute('x1',x1);e.setAttribute('y1',y1);e.setAttribute('x2',x2);e.setAttribute('y2',y2);e.setAttribute('stroke',stroke);e.setAttribute('stroke-width',w); if(dash)e.setAttribute('stroke-dasharray',dash); ov.appendChild(e); }
+function path(d,stroke,w){ const e=document.createElementNS(SVGNS,'path'); e.setAttribute('d',d); e.setAttribute('fill','none'); e.setAttribute('stroke',stroke); e.setAttribute('stroke-width',w); ov.appendChild(e); }
+function packet(from,to,color,dur){ const d=document.createElementNS(SVGNS,'circle'); d.setAttribute('r',3.4); d.setAttribute('fill',color); d.style.filter='drop-shadow(0 0 4px '+color+')'; ov.appendChild(d);
+  const t0=performance.now(); (function an(now){ let t=(now-t0)/dur; if(t>=1){ d.remove(); return; } const e=t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2; d.setAttribute('cx',from.x+(to.x-from.x)*e); d.setAttribute('cy',from.y+(to.y-from.y)*e); requestAnimationFrame(an); })(t0); }
+
+let li=0;
+function flow(){
+  const sv=bottomC($('server')), swT=topC($('switch')), swB=bottomC($('switch'));
+  // Spark data: a pod's workstation → switch → server (driver)
+  const l=LABS[li%LABS.length]; li++;
+  const p=topC($('pod-'+l.id));
+  packet(p,swB,l.color,700);
+  setTimeout(()=>packet(swT,sv,'#4ADE80',600),720);          // up the 10GbE trunk to driver
+  setTimeout(()=>{ packet(sv,swT,'#38E1FF',600); setTimeout(()=>packet(swB,p,l.color,700),620); }, 1500); // driver → back to pod
+}
+function boot(){ drawLinks(); setInterval(flow,650); }
+window.addEventListener('resize', drawLinks);
+window.addEventListener('load', ()=> setTimeout(boot,60));
+</script>
+</body>
+</html>

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI-HPC Server · Hardware &amp; Use Cases</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+:root{
+  --bg:#070B12; --panel:#0E1622; --panel2:#121C2B; --line:#1E2C3F; --line-soft:#16212F;
+  --ink:#DCE6F2; --ink-dim:#7C8CA3; --ink-faint:#3D4F63;
+  --cyan:#38E1FF; --teal:#2DD4BF; --green:#4ADE80; --amber:#FBBF24; --violet:#A78BFA; --magenta:#E879F9; --rose:#FB5E6D; --orange:#FB923C; --blue:#5B9DFF;
+}
+html,body{ height:100%; font-family:"Sora",sans-serif; background:var(--bg); color:var(--ink); overflow:hidden; }
+
+.top-header{ height:56px; background:linear-gradient(90deg,#08101E,#0A0F1A); border-bottom:1px solid var(--line);
+  display:flex; align-items:center; padding:0 20px; gap:12px; flex-shrink:0; }
+.logo-glyph{ width:34px;height:34px;border-radius:9px; background:linear-gradient(150deg,rgba(74,222,128,.22),rgba(56,225,255,.12));
+  border:1px solid rgba(74,222,128,.45); display:grid; place-items:center; font-size:1.05rem; }
+.logo-txt b{ font-family:"Space Grotesk"; font-weight:700; font-size:1rem; }
+.logo-txt span{ display:block; font-size:.6rem; color:var(--ink-dim); letter-spacing:1.1px; text-transform:uppercase; }
+.hdr-spacer{ flex:1; }
+.chip-live{ font-family:"IBM Plex Mono"; font-size:.68rem; color:var(--green); border:1px solid rgba(74,222,128,.35); background:rgba(74,222,128,.06); border-radius:20px; padding:5px 12px; display:flex; align-items:center; gap:7px; }
+.dot{ width:8px;height:8px;border-radius:50%; background:var(--green); box-shadow:0 0 8px var(--green); animation:blink 1.6s ease infinite; }
+@keyframes blink{ 0%,100%{opacity:1} 50%{opacity:.4} }
+.home-btn{ font-family:"IBM Plex Mono"; font-size:.72rem; color:var(--cyan); text-decoration:none; border:1px solid rgba(56,225,255,.4); border-radius:8px; padding:6px 13px; } .home-btn:hover{ background:rgba(56,225,255,.12); }
+
+.body{ height:calc(100% - 56px); display:grid; grid-template-columns:minmax(0,410px) minmax(0,1fr); gap:1px; background:var(--line); }
+.pane{ background:var(--bg); overflow-y:auto; }
+.pane::-webkit-scrollbar{ width:8px; } .pane::-webkit-scrollbar-thumb{ background:var(--line); border-radius:8px; }
+
+/* LEFT: hardware */
+.left{ padding:18px 20px 24px; }
+.htitle{ font-family:"Space Grotesk"; font-size:1.15rem; font-weight:700; }
+.hsub{ font-size:.72rem; color:var(--ink-dim); margin-top:2px; margin-bottom:14px; }
+.server-wrap{ display:flex; gap:14px; align-items:center; margin-bottom:16px; }
+.server-svg{ width:150px; flex-shrink:0; filter:drop-shadow(0 0 22px rgba(74,222,128,.25)); }
+.headline-specs{ flex:1; display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.hspec{ background:linear-gradient(160deg,var(--panel),var(--panel2)); border:1px solid var(--line); border-radius:10px; padding:9px 11px; }
+.hspec .v{ font-family:"Space Grotesk"; font-weight:700; font-size:1.05rem; color:var(--cyan); line-height:1; }
+.hspec .l{ font-size:.58rem; color:var(--ink-dim); margin-top:4px; letter-spacing:.4px; text-transform:uppercase; }
+
+.spec-title{ font-family:"IBM Plex Mono"; font-size:.6rem; letter-spacing:1.4px; text-transform:uppercase; color:var(--ink-faint); margin:6px 0 10px; }
+.spec{ display:flex; gap:12px; align-items:flex-start; padding:10px 11px; border-radius:10px; border:1px solid var(--line-soft); margin-bottom:8px; background:var(--panel); transition:.15s; }
+.spec:hover{ border-color:var(--line); }
+.spec .si{ width:34px;height:34px;border-radius:9px; display:grid; place-items:center; font-size:1.1rem; flex-shrink:0; background:var(--panel2); border:1px solid var(--line); }
+.spec .st b{ font-size:.86rem; font-weight:600; } .spec .st span{ display:block; font-size:.74rem; color:var(--ink-dim); margin-top:2px; line-height:1.4; font-family:"IBM Plex Mono"; }
+.spec.star{ border-color:rgba(74,222,128,.5); background:linear-gradient(160deg,rgba(74,222,128,.07),var(--panel)); box-shadow:0 0 22px -10px var(--green); }
+.spec.star .si{ background:rgba(74,222,128,.12); border-color:rgba(74,222,128,.4); }
+.spec.star .st b{ color:var(--green); }
+.spec .tag{ margin-left:auto; font-family:"IBM Plex Mono"; font-size:.54rem; color:var(--green); border:1px solid rgba(74,222,128,.4); border-radius:5px; padding:2px 6px; align-self:center; }
+
+/* RIGHT: use cases */
+.right{ padding:18px 22px 26px; }
+.rtitle{ font-family:"Space Grotesk"; font-size:1.15rem; font-weight:700; }
+.rsub{ font-size:.75rem; color:var(--ink-dim); margin:3px 0 16px; }
+.cat-grid{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.cat{ background:linear-gradient(160deg,var(--panel),var(--panel2)); border:1px solid var(--line); border-top:3px solid var(--ac,var(--cyan)); border-radius:14px; padding:14px 15px; }
+.cat-head{ display:flex; align-items:center; gap:10px; margin-bottom:11px; }
+.cat-head .cic{ width:34px;height:34px;border-radius:9px; display:grid; place-items:center; font-size:1.15rem; background:rgba(255,255,255,.03); border:1px solid var(--ac,var(--cyan)); }
+.cat-head h3{ font-family:"Space Grotesk"; font-size:.94rem; font-weight:600; color:var(--ac,var(--cyan)); }
+.uc{ display:flex; gap:9px; align-items:flex-start; padding:7px 8px; border-radius:9px; transition:.15s; }
+.uc:hover{ background:rgba(255,255,255,.03); }
+.uc .ui{ font-size:.95rem; flex-shrink:0; width:20px; text-align:center; }
+.uc .ut{ font-size:.82rem; line-height:1.4; } .uc .ut b{ color:var(--ink); font-weight:600; } .uc .ut span{ color:var(--ink-dim); }
+.uc.hl{ background:rgba(251,191,36,.08); border:1px solid rgba(251,191,36,.3); }
+.uc.hl .ut b{ color:var(--amber); }
+.tagrow{ display:flex; flex-wrap:wrap; gap:5px; margin-top:6px; }
+.mtag{ font-family:"IBM Plex Mono"; font-size:.6rem; color:var(--ac,var(--cyan)); background:rgba(255,255,255,.03); border:1px solid var(--line); border-radius:5px; padding:2px 7px; }
+.cat.wide{ grid-column:1 / -1; }
+</style>
+</head>
+<body>
+<div class="top-header">
+  <div class="logo-glyph">🖥️</div>
+  <div class="logo-txt"><b>AI-HPC Server</b><span>Data-centre-grade compute for the campus</span></div>
+  <div class="hdr-spacer"></div>
+  <div class="chip-live"><span class="dot"></span>ONLINE</div>
+  <a href="index.html" class="home-btn">← Suite Home</a>
+</div>
+
+<div class="body">
+  <!-- ══════ LEFT: HARDWARE ══════ -->
+  <div class="pane left">
+    <div class="htitle">Data-Centre-Grade AI-HPC Server</div>
+    <div class="hsub">Dell PowerEdge · Intel Xeon Gold · NVIDIA L40S</div>
+
+    <div class="server-wrap">
+      <svg class="server-svg" viewBox="0 0 150 300" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="unit" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#182338"/><stop offset="1" stop-color="#0c1220"/></linearGradient>
+        </defs>
+        <!-- cabinet -->
+        <rect x="8" y="6" width="134" height="288" rx="12" fill="#0a1018" stroke="#1E2C3F" stroke-width="1.5"/>
+        <rect x="8" y="6" width="134" height="288" rx="12" fill="none" stroke="rgba(56,225,255,.08)" stroke-width="6"/>
+        <!-- 4 rack units -->
+        <g>
+          <!-- unit template repeated; the 2nd is highlighted -->
+          <g transform="translate(18,20)">
+            <rect width="114" height="52" rx="7" fill="url(#unit)" stroke="#243349"/>
+            <rect x="8" y="10" width="8" height="32" rx="2" fill="#0e1826" stroke="#2a3a52"/><rect x="19" y="10" width="8" height="32" rx="2" fill="#0e1826" stroke="#2a3a52"/><rect x="30" y="10" width="8" height="32" rx="2" fill="#0e1826" stroke="#2a3a52"/>
+            <rect x="48" y="12" width="46" height="28" rx="3" fill="#0b1420" stroke="#243349"/>
+            <circle cx="102" cy="16" r="2.4" fill="#4ADE80"/><circle cx="102" cy="24" r="2.4" fill="#334155"/>
+          </g>
+          <!-- highlighted AI-HPC unit -->
+          <g transform="translate(18,84)">
+            <rect width="114" height="60" rx="7" fill="#0e2018" stroke="#4ADE80" stroke-width="1.6" filter="drop-shadow(0 0 10px rgba(74,222,128,.5))"/>
+            <rect x="8" y="10" width="8" height="40" rx="2" fill="#0e2618" stroke="#2f6b45"/><rect x="19" y="10" width="8" height="40" rx="2" fill="#0e2618" stroke="#2f6b45"/><rect x="30" y="10" width="8" height="40" rx="2" fill="#0e2618" stroke="#2f6b45"/>
+            <rect x="48" y="14" width="46" height="32" rx="3" fill="#0c2417" stroke="#4ADE80"/>
+            <text x="71" y="34" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="#4ADE80" font-weight="600">L40S</text>
+            <circle cx="102" cy="18" r="2.6" fill="#4ADE80"><animate attributeName="opacity" values="1;.3;1" dur="1.4s" repeatCount="indefinite"/></circle>
+            <circle cx="102" cy="28" r="2.6" fill="#38E1FF"/>
+          </g>
+          <g transform="translate(18,156)">
+            <rect width="114" height="52" rx="7" fill="url(#unit)" stroke="#243349"/>
+            <rect x="8" y="10" width="8" height="32" rx="2" fill="#0e1826" stroke="#2a3a52"/><rect x="19" y="10" width="8" height="32" rx="2" fill="#0e1826" stroke="#2a3a52"/><rect x="30" y="10" width="8" height="32" rx="2" fill="#0e1826" stroke="#2a3a52"/>
+            <rect x="48" y="12" width="46" height="28" rx="3" fill="#0b1420" stroke="#243349"/>
+            <circle cx="102" cy="16" r="2.4" fill="#4ADE80"/><circle cx="102" cy="24" r="2.4" fill="#334155"/>
+          </g>
+          <g transform="translate(18,220)">
+            <rect width="114" height="52" rx="7" fill="url(#unit)" stroke="#243349"/>
+            <rect x="8" y="10" width="8" height="32" rx="2" fill="#0e1826" stroke="#2a3a52"/><rect x="19" y="10" width="8" height="32" rx="2" fill="#0e1826" stroke="#2a3a52"/><rect x="30" y="10" width="8" height="32" rx="2" fill="#0e1826" stroke="#2a3a52"/>
+            <rect x="48" y="12" width="46" height="28" rx="3" fill="#0b1420" stroke="#243349"/>
+            <circle cx="102" cy="16" r="2.4" fill="#FBBF24"/><circle cx="102" cy="24" r="2.4" fill="#334155"/>
+          </g>
+        </g>
+        <text x="75" y="288" text-anchor="middle" font-family="Space Grotesk" font-size="8" fill="#7C8CA3" font-weight="600" letter-spacing="1">DELL POWEREDGE</text>
+      </svg>
+
+      <div class="headline-specs">
+        <div class="hspec"><div class="v">64</div><div class="l">Xeon Gold Cores</div></div>
+        <div class="hspec"><div class="v" style="color:var(--green)">~13K</div><div class="l">CUDA Cores</div></div>
+        <div class="hspec"><div class="v" style="color:var(--green)">48 GB</div><div class="l">GPU VRAM</div></div>
+        <div class="hspec"><div class="v" style="color:var(--teal)">10 GbE</div><div class="l">Network</div></div>
+      </div>
+    </div>
+
+    <div class="spec-title">Hardware Configuration</div>
+    <div class="spec"><span class="si">🗄️</span><span class="st"><b>Dell PowerEdge Server</b><span>data-centre-grade chassis</span></span></div>
+    <div class="spec"><span class="si">🧠</span><span class="st"><b>Intel Xeon Gold</b><span>64 cores · server-class CPU</span></span></div>
+    <div class="spec star"><span class="si">🎮</span><span class="st"><b>NVIDIA L40S GPU</b><span>~13,000 CUDA · ~700 Tensor cores · 48 GB VRAM</span></span><span class="tag">★ STAR</span></div>
+    <div class="spec"><span class="si">🧬</span><span class="st"><b>NUMA Architecture</b><span>optimised for HPC computing</span></span></div>
+    <div class="spec"><span class="si">⚡</span><span class="st"><b>Primary Storage</b><span>NVMe SSD · high-speed</span></span></div>
+    <div class="spec"><span class="si">💾</span><span class="st"><b>Secondary Storage</b><span>SATA SSD · bulk capacity</span></span></div>
+    <div class="spec"><span class="si">🌐</span><span class="st"><b>Network Interface</b><span>10 Gigabit Ethernet</span></span></div>
+  </div>
+
+  <!-- ══════ RIGHT: USE CASES ══════ -->
+  <div class="pane right">
+    <div class="rtitle">What students &amp; departments can build on it</div>
+    <div class="rsub">One server, many possibilities — grouped by what they're for.</div>
+
+    <div class="cat-grid">
+
+      <div class="cat" style="--ac:var(--cyan)">
+        <div class="cat-head"><span class="cic">🧠</span><h3>LLMs &amp; Generative AI</h3></div>
+        <div class="uc"><span class="ui">🦙</span><span class="ut"><b>Locally-hosted open-source LLMs</b> <span>— Llama 3, Mistral for private on-prem reasoning.</span></span></div>
+        <div class="uc"><span class="ui">⚡</span><span class="ut"><b>vLLM inference server</b> <span>— high-throughput serving of open LLMs.</span></span></div>
+        <div class="uc"><span class="ui">🕸️</span><span class="ut"><b>Advanced AI systems</b> <span>— Multi-Agent Systems, RAG, MCP, LangGraph.</span></span></div>
+      </div>
+
+      <div class="cat" style="--ac:var(--violet)">
+        <div class="cat-head"><span class="cic">🔬</span><h3>AI Application Development</h3></div>
+        <div class="uc"><span class="ui">📊</span><span class="ut"><b>Classical ML</b> <span>— predictive models, regression, classification.</span></span></div>
+        <div class="uc"><span class="ui">👁️</span><span class="ut"><b>Computer Vision</b> <span>— detection, segmentation, image analysis.</span></span></div>
+        <div class="uc"><span class="ui">🧪</span><span class="ut"><b>AI app platform</b> <span>— build &amp; ship end-to-end AI applications.</span></span></div>
+      </div>
+
+      <div class="cat" style="--ac:var(--teal)">
+        <div class="cat-head"><span class="cic">🏗️</span><h3>Model Training &amp; MLOps</h3></div>
+        <div class="uc"><span class="ui">🚀</span><span class="ut"><b>Large-scale training pipelines</b> <span>— multi-GPU data pipelines.</span></span></div>
+        <div class="uc"><span class="ui">⚙️</span><span class="ut"><b>Training optimization</b> <span>— mixed precision, DataLoader tuning, profiling.</span></span></div>
+      </div>
+
+      <div class="cat" style="--ac:var(--green)">
+        <div class="cat-head"><span class="cic">🚀</span><h3>Platform, DevOps &amp; Hosting</h3></div>
+        <div class="uc"><span class="ui">🐳</span><span class="ut"><b>Dockerised application development</b></span></div>
+        <div class="uc"><span class="ui">☸️</span><span class="ut"><b>Minikube (Kubernetes) deployment</b></span></div>
+        <div class="uc"><span class="ui">📓</span><span class="ut"><b>JupyterHub</b> <span>— browser-based notebooks for everyone.</span></span></div>
+        <div class="uc"><span class="ui">🌍</span><span class="ut"><b>Web hosting</b> <span>— college apps &amp; student projects.</span></span></div>
+      </div>
+
+      <div class="cat wide" style="--ac:var(--amber)">
+        <div class="cat-head"><span class="cic">🎓</span><h3>Multi-Department Access</h3></div>
+        <div class="uc"><span class="ui">🏫</span><span class="ut"><b>Shared across all engineering streams</b> <span>— Mechanical, Chemical, Electrical &amp; more; each builds domain-specific AI.</span></span></div>
+        <div class="uc hl"><span class="ui">⚡</span><span class="ut"><b>Example — Electrical Dept:</b> <span>Electrical Transformer Failure Prediction.</span></span></div>
+        <div class="tagrow"><span class="mtag">⚙️ Mechanical</span><span class="mtag">🧪 Chemical</span><span class="mtag">⚡ Electrical</span><span class="mtag">🤖 Robotics</span><span class="mtag">🏗️ Civil</span></div>
+      </div>
+
+      <div class="cat wide" style="--ac:var(--rose)">
+        <div class="cat-head"><span class="cic">🛡️</span><h3>Operations, Security &amp; the AI Ecosystem</h3></div>
+        <div class="uc"><span class="ui">📈</span><span class="ut"><b>Server observability</b> <span>— live CPU / GPU / memory / storage usage.</span></span></div>
+        <div class="uc"><span class="ui">🔒</span><span class="ut"><b>Network security monitoring</b> <span>&amp; hands-on cybersecurity practice.</span></span></div>
+        <div class="uc"><span class="ui">🌐</span><span class="ut"><b>Production-Grade AI Ecosystem platform</b> <span>— AI + Linux + technology domains (Edge/Cloud Computing, Big Data, Cybersecurity, Distributed Systems).</span></span></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+</body>
+</html>
