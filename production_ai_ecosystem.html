@@ -227,8 +227,6 @@ document.getElementById('combineBtn').onclick=doCombine;
 document.getElementById('resetBtn').onclick=()=>{ reset(); };
 // staggered reveal of the items in each card
 document.querySelectorAll('.card').forEach(card=>{ card.querySelectorAll('.item').forEach((el,i)=>{ el.style.animationDelay=(0.1+i*0.09)+'s'; }); });
-// auto-run once so the point is self-explanatory
-setTimeout(doCombine, 1900);
 </script>
 </body>
 </html>
