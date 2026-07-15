@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Production-Grade AI Ecosystem · Explained</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+:root{
+  --bg:#070B12; --panel:#0E1622; --panel2:#121C2B; --line:#1E2C3F; --line-soft:#16212F;
+  --ink:#DCE6F2; --ink-dim:#7C8CA3; --ink-faint:#3D4F63;
+  --cyan:#38E1FF; --teal:#2DD4BF; --green:#4ADE80; --amber:#FBBF24; --violet:#A78BFA; --magenta:#E879F9; --rose:#FB5E6D; --orange:#FB923C; --gold:#FCD34D;
+}
+html,body{ height:100%; font-family:"Sora",sans-serif; background:var(--bg); color:var(--ink); overflow:hidden; }
+
+.top-header{ height:54px; background:linear-gradient(90deg,#08101E,#0A0F1A); border-bottom:1px solid var(--line);
+  display:flex; align-items:center; padding:0 20px; gap:12px; flex-shrink:0; }
+.logo-glyph{ width:32px;height:32px;border-radius:9px; background:linear-gradient(150deg,rgba(74,222,128,.22),rgba(56,225,255,.12));
+  border:1px solid rgba(74,222,128,.45); display:grid; place-items:center; font-size:1rem; }
+.logo-txt b{ font-family:"Space Grotesk"; font-weight:700; font-size:.98rem; }
+.logo-txt span{ display:block; font-size:.6rem; color:var(--ink-dim); letter-spacing:1.1px; text-transform:uppercase; }
+.hdr-spacer{ flex:1; }
+.home-btn{ font-family:"IBM Plex Mono"; font-size:.72rem; color:var(--cyan); text-decoration:none; border:1px solid rgba(56,225,255,.4);
+  border-radius:8px; padding:6px 13px; } .home-btn:hover{ background:rgba(56,225,255,.12); }
+
+.stage{ height:calc(100% - 54px); display:flex; flex-direction:column; padding:16px 24px 12px; overflow:hidden; }
+
+/* formula headline */
+.formula{ display:flex; align-items:center; justify-content:center; gap:14px; flex-wrap:wrap; margin-bottom:12px; flex-shrink:0; }
+.ftok{ font-family:"Space Grotesk"; font-weight:600; font-size:1rem; padding:8px 16px; border-radius:10px; border:1px solid var(--line); display:flex; align-items:center; gap:8px; }
+.ftok.pg{ color:var(--cyan); border-color:rgba(56,225,255,.4); background:rgba(56,225,255,.05); }
+.ftok.ai{ color:var(--violet); border-color:rgba(167,139,250,.4); background:rgba(167,139,250,.05); }
+.ftok.res{ color:var(--gold); border-color:rgba(252,211,77,.35); background:rgba(252,211,77,.05); opacity:.4; transition:opacity .5s, box-shadow .5s; }
+.ftok.res.lit{ opacity:1; box-shadow:0 0 22px -6px var(--gold); }
+.fop{ font-family:"Space Grotesk"; font-size:1.4rem; font-weight:700; color:var(--ink-dim); }
+.fop.eq{ color:var(--gold); }
+
+/* main two-panel stage */
+.combine{ flex:1; display:grid; grid-template-columns:1fr 120px 1fr; gap:0; align-items:stretch; min-height:0; position:relative; }
+.card{ background:linear-gradient(160deg,var(--panel),var(--panel2)); border:1px solid var(--line); border-radius:16px; padding:18px 20px;
+  overflow-y:auto; transition:transform .6s cubic-bezier(.4,0,.2,1), box-shadow .5s, border-color .5s; }
+.card.pg{ border-top:3px solid var(--cyan); }
+.card.ai{ border-top:3px solid var(--violet); }
+.combine.on .card.pg{ transform:translateX(26px) scale(.97); border-color:rgba(56,225,255,.55); box-shadow:0 0 30px -12px var(--cyan); }
+.combine.on .card.ai{ transform:translateX(-26px) scale(.97); border-color:rgba(167,139,250,.55); box-shadow:0 0 30px -12px var(--violet); }
+
+.card-head{ display:flex; align-items:center; gap:11px; margin-bottom:4px; }
+.card-head .ci{ font-size:1.7rem; }
+.card-head h2{ font-family:"Space Grotesk"; font-size:1.35rem; font-weight:700; letter-spacing:.2px; }
+.card.pg h2{ background:linear-gradient(90deg,var(--cyan),var(--teal)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+.card.ai h2{ background:linear-gradient(90deg,var(--violet),var(--magenta)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+.card-tag{ font-size:.92rem; color:var(--ink-dim); margin-bottom:16px; padding-left:41px; line-height:1.55; }
+
+.item{ display:flex; gap:14px; align-items:flex-start; padding:12px 12px; border-radius:12px; border:1px solid transparent; transition:.2s;
+  opacity:0; transform:translateY(10px); animation:itemIn .5s ease forwards; }
+.item:hover{ background:rgba(255,255,255,.035); border-color:var(--line); transform:translateX(5px); }
+.item .ii{ width:40px;height:40px;border-radius:11px; display:grid; place-items:center; font-size:1.25rem; flex-shrink:0; transition:.2s; }
+.card.pg .item .ii{ background:rgba(56,225,255,.10); border:1px solid rgba(56,225,255,.34); }
+.card.ai .item .ii{ background:rgba(167,139,250,.10); border:1px solid rgba(167,139,250,.34); }
+.card.pg .item:hover .ii{ box-shadow:0 0 16px -3px var(--cyan); transform:scale(1.06); }
+.card.ai .item:hover .ii{ box-shadow:0 0 16px -3px var(--violet); transform:scale(1.06); }
+@keyframes itemIn{ to{ opacity:1; transform:none; } }
+.item .it b{ font-size:1.02rem; font-weight:600; }
+.item .it span{ display:block; font-size:.88rem; color:var(--ink-dim); margin-top:4px; line-height:1.5; }
+.item .it .sub2{ font-family:"IBM Plex Mono"; font-size:.74rem; color:var(--teal); margin-top:6px; }
+.card.ai .item .it .sub2{ color:var(--violet); }
+
+.examples{ margin-top:14px; }
+.examples .el{ font-family:"IBM Plex Mono"; font-size:.6rem; letter-spacing:1px; text-transform:uppercase; color:var(--ink-faint); margin-bottom:8px; }
+.ex-chips{ display:flex; flex-wrap:wrap; gap:8px; }
+.ex{ display:flex; align-items:center; gap:6px; font-size:.84rem; background:rgba(56,225,255,.06); border:1px solid rgba(56,225,255,.25); border-radius:20px; padding:6px 14px; transition:.2s; }
+.ex:hover{ background:rgba(56,225,255,.14); transform:translateY(-2px); }
+.examples .note{ font-size:.82rem; color:var(--ink-dim); margin-top:10px; font-style:italic; line-height:1.5; }
+
+/* stack look for AI layers */
+.layer{ border-left:3px solid var(--violet); }
+
+/* center combine zone */
+.center{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px; position:relative; }
+.plus{ font-family:"Space Grotesk"; font-size:2.4rem; font-weight:700; color:var(--ink-dim); transition:opacity .4s, transform .5s; }
+.combine.on .plus{ opacity:0; transform:scale(.4); }
+.core{ position:absolute; width:96px; height:96px; border-radius:50%; display:grid; place-items:center; font-size:2rem;
+  background:radial-gradient(circle at 40% 35%, rgba(252,211,77,.35), rgba(74,222,128,.12)); border:2px solid var(--gold);
+  opacity:0; transform:scale(.3); transition:opacity .5s, transform .6s cubic-bezier(.34,1.6,.64,1); box-shadow:0 0 0 rgba(252,211,77,0); }
+.combine.on .core{ opacity:1; transform:scale(1); box-shadow:0 0 40px -6px var(--gold); }
+.core::before{ content:""; position:absolute; inset:-8px; border-radius:50%; border:2px dashed rgba(252,211,77,.5); animation:spin 6s linear infinite; }
+@keyframes spin{ to{ transform:rotate(360deg) } }
+#particles{ position:absolute; inset:0; pointer-events:none; z-index:5; }
+
+.combine-btn{ position:absolute; bottom:2px; left:50%; transform:translateX(-50%); white-space:nowrap;
+  font-family:"Space Grotesk"; font-weight:600; font-size:.82rem; color:var(--bg); border:none; border-radius:10px; padding:10px 18px; cursor:pointer;
+  background:linear-gradient(90deg,var(--cyan),var(--violet)); box-shadow:0 8px 22px -10px var(--violet); animation:pulse 1.6s ease infinite; }
+@keyframes pulse{ 0%,100%{ box-shadow:0 8px 22px -10px var(--violet) } 50%{ box-shadow:0 8px 30px -6px var(--violet) } }
+.combine.on .combine-btn{ display:none; }
+
+/* result banner */
+.result{ flex-shrink:0; margin-top:12px; max-height:0; opacity:0; overflow:hidden; transition:max-height .6s ease, opacity .5s ease; }
+.result.show{ max-height:250px; opacity:1; }
+.result-inner{ background:linear-gradient(120deg, rgba(74,222,128,.10), rgba(252,211,77,.06), rgba(167,139,250,.08));
+  border:1px solid rgba(252,211,77,.4); border-radius:16px; padding:16px 22px; display:flex; align-items:center; gap:20px; box-shadow:0 0 34px -14px var(--gold); }
+.result-inner .ri-ic{ font-size:2.6rem; flex-shrink:0; }
+.result-inner .rt b{ font-family:"Space Grotesk"; font-size:1.25rem; font-weight:700;
+  background:linear-gradient(90deg,var(--green),var(--gold) 55%,var(--violet)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+.result-inner .rt p{ font-size:.94rem; color:var(--ink-dim); margin-top:7px; line-height:1.55; max-width:660px; }
+.result-inner .rt p b{ color:var(--ink); -webkit-text-fill-color:var(--ink); }
+.checks{ display:flex; gap:7px; flex-wrap:wrap; margin-left:auto; flex-shrink:0; max-width:220px; justify-content:flex-end; }
+.chk{ font-family:"IBM Plex Mono"; font-size:.62rem; color:var(--green); border:1px solid rgba(74,222,128,.4); background:rgba(74,222,128,.08); border-radius:20px; padding:3px 9px; }
+
+.controls{ display:flex; justify-content:center; gap:10px; margin-top:10px; flex-shrink:0; }
+.cbtn{ font-family:"Space Grotesk"; font-weight:600; font-size:.76rem; border-radius:9px; padding:8px 16px; cursor:pointer; border:1px solid var(--line); background:var(--panel2); color:var(--ink); }
+.cbtn:hover{ border-color:var(--ink-dim); }
+</style>
+</head>
+<body>
+<div class="top-header">
+  <div class="logo-glyph">🏭</div>
+  <div class="logo-txt"><b>Production-Grade AI Ecosystem</b><span>The idea behind the whole program</span></div>
+  <div class="hdr-spacer"></div>
+  <a href="index.html" class="home-btn">← Suite Home</a>
+</div>
+
+<div class="stage">
+
+  <div class="formula">
+    <span class="ftok pg">⚙️ Production Grade</span>
+    <span class="fop">+</span>
+    <span class="ftok ai">🧠 AI Ecosystem</span>
+    <span class="fop eq">=</span>
+    <span class="ftok res" id="ftok-res">🏭 Perfect Production System</span>
+  </div>
+
+  <div class="combine" id="combine">
+    <!-- LEFT: PRODUCTION GRADE -->
+    <div class="card pg">
+      <div class="card-head"><span class="ci">⚙️</span><h2>Production Grade</h2></div>
+      <div class="card-tag">Not just working once — working <b style="color:var(--ink)">flawlessly, all the time</b>. These are the promises a real system must keep:</div>
+      <div class="item"><span class="ii">🛡️</span><span class="it"><b>High Availability</b><span>Runs 24/7 — never goes down, even during failures.</span></span></div>
+      <div class="item"><span class="ii">📈</span><span class="it"><b>Scalability</b><span>Handles any workload — from 10 users to 10 million.</span></span></div>
+      <div class="item"><span class="ii">⚡</span><span class="it"><b>Performance</b><span>Responds quickly, every single time.</span></span></div>
+      <div class="item"><span class="ii">🎯</span><span class="it"><b>Accuracy</b><span>Delivers correct results — always.</span></span></div>
+      <div class="item"><span class="ii">🔒</span><span class="it"><b>Security</b><span>Resilient to cyber attacks.</span></span></div>
+      <div class="examples">
+        <div class="el">You already trust systems like these</div>
+        <div class="ex-chips"><span class="ex">🏦 BSE</span><span class="ex">🏛️ Banking</span><span class="ex">📘 Facebook</span><span class="ex">💬 WhatsApp</span></div>
+        <div class="note">Billions of users. Always on. Never wrong. Never breached. That's production grade.</div>
+      </div>
+    </div>
+
+    <!-- CENTER -->
+    <div class="center">
+      <div class="plus">+</div>
+      <div class="core">🏭</div>
+      <svg id="particles"></svg>
+      <button class="combine-btn" id="combineBtn">▶ Combine them</button>
+    </div>
+
+    <!-- RIGHT: AI ECOSYSTEM -->
+    <div class="card ai">
+      <div class="card-head"><span class="ci">🧠</span><h2>AI Ecosystem</h2></div>
+      <div class="card-tag">Everything you need to build intelligent software — the <b style="color:var(--ink)">brains + the machinery</b>, stacked together:</div>
+      <div class="item layer"><span class="ii">🧠</span><span class="it"><b>AI</b><span>The intelligence that makes decisions.</span><span class="sub2">LLMs · Multi-Agent Systems · RAG</span></span></div>
+      <div class="item layer"><span class="ii">🐧</span><span class="it"><b>Linux</b><span>The operating-system foundation it all runs on.</span><span class="sub2">processes · files · networking · systemd</span></span></div>
+      <div class="item layer"><span class="ii">🎛️</span><span class="it"><b>GPU</b><span>The hardware muscle that makes AI fast.</span><span class="sub2">CUDA / Tensor cores · TensorRT · memory &amp; kernel optimization</span></span></div>
+      <div class="item layer"><span class="ii">🌐</span><span class="it"><b>Technology Domain</b><span>Where and how the system is built.</span><span class="sub2">Edge / Cloud Computing · Cybersecurity · Distributed Systems</span></span></div>
+      <div class="item layer"><span class="ii">🚀</span><span class="it"><b>Deployment</b><span>How it ships and runs everywhere, reliably.</span><span class="sub2">Docker · Kubernetes</span></span></div>
+    </div>
+  </div>
+
+  <!-- RESULT -->
+  <div class="result" id="result">
+    <div class="result-inner">
+      <div class="ri-ic">🏭</div>
+      <div class="rt">
+        <b>Production-Grade AI Ecosystem</b>
+        <p><b>AI Ecosystem</b> gives the system its <b>power</b> — the intelligence and the machinery. <b>Production Grade</b> gives it <b>trust</b> — it never fails, scales to anyone, stays fast, accurate and secure. Combine both, and you get software the <b>real world can depend on</b>, just like BSE, banking and WhatsApp.</p>
+      </div>
+      <div class="checks">
+        <span class="chk">✓ 24/7</span><span class="chk">✓ Scales</span><span class="chk">✓ Fast</span><span class="chk">✓ Accurate</span><span class="chk">✓ Secure</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="controls">
+    <button class="cbtn" id="resetBtn">↺ Replay</button>
+  </div>
+</div>
+
+<script>
+const combine=document.getElementById('combine');
+const svg=document.getElementById('particles');
+const SVGNS="http://www.w3.org/2000/svg";
+let running=false;
+
+function centerXY(){ const c=document.querySelector('.core').getBoundingClientRect(), s=svg.getBoundingClientRect();
+  return {x:c.left+c.width/2-s.left, y:c.top+c.height/2-s.top}; }
+function edgeXY(sel, side){ const r=document.querySelector(sel).getBoundingClientRect(), s=svg.getBoundingClientRect();
+  return {x:(side==='left'? r.right : r.left)-s.left, y:r.top+r.height/2-s.top}; }
+
+function spawnParticles(){
+  const C=centerXY(); const from=[edgeXY('.card.pg','left','r'), edgeXY('.card.ai','right')];
+  const colors=['#38E1FF','#A78BFA'];
+  for(let k=0;k<20;k++){
+    const side=k%2; const A={x:from[side].x, y:from[side].y + (Math.random()*120-60)};
+    const dot=document.createElementNS(SVGNS,'circle'); dot.setAttribute('r', 2.5+Math.random()*2);
+    dot.setAttribute('fill', colors[side]); dot.style.filter='drop-shadow(0 0 4px '+colors[side]+')';
+    svg.appendChild(dot);
+    const delay=k*35, t0=performance.now()+delay, dur=560+Math.random()*260;
+    (function an(now){ if(now<t0){ requestAnimationFrame(an); return; } let t=(now-t0)/dur; if(t>=1){ dot.remove(); return; }
+      const e=t*t; dot.setAttribute('cx', A.x+(C.x-A.x)*e); dot.setAttribute('cy', A.y+(C.y-A.y)*e); dot.setAttribute('opacity', 1-t*0.3); requestAnimationFrame(an); })(performance.now());
+  }
+}
+
+function doCombine(){
+  if(running) return; running=true;
+  combine.classList.add('on');
+  spawnParticles();
+  setTimeout(()=>{ document.getElementById('ftok-res').classList.add('lit'); }, 500);
+  setTimeout(()=>{ document.getElementById('result').classList.add('show'); }, 750);
+}
+function reset(){
+  running=false; combine.classList.remove('on'); svg.innerHTML='';
+  document.getElementById('ftok-res').classList.remove('lit');
+  document.getElementById('result').classList.remove('show');
+}
+document.getElementById('combineBtn').onclick=doCombine;
+document.getElementById('resetBtn').onclick=()=>{ reset(); };
+// staggered reveal of the items in each card
+document.querySelectorAll('.card').forEach(card=>{ card.querySelectorAll('.item').forEach((el,i)=>{ el.style.animationDelay=(0.1+i*0.09)+'s'; }); });
+// auto-run once so the point is self-explanatory
+setTimeout(doCombine, 1900);
+</script>
+</body>
+</html>
