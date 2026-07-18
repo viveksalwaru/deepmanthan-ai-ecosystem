@@ -187,7 +187,7 @@ button.rst:hover{border-color:var(--red);color:var(--red);background:#120408;}
         <circle cx="-30" cy="-10" r="3" fill="#22D3EE" opacity=".6" style="animation:pulse 1.8s infinite;"/>
         <text x="-18" y="-5" font-family="IBM Plex Mono" font-size="7" fill="#22D3EE">storage-01</text>
         <text y="20" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#22D3EE" font-weight="700">AI SERVER</text>
-        <text y="35" text-anchor="middle" font-family="Sora" font-size="8" fill="#3A6080">HDFC ML Platform</text>
+        <text y="35" text-anchor="middle" font-family="Sora" font-size="8" fill="#3A6080">ML Platform</text>
         <!-- STATUS label -->
         <text id="srv-status" y="52" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="#22C55E">● ONLINE</text>
       </g>
@@ -269,7 +269,7 @@ button.rst:hover{border-color:var(--red);color:var(--red);background:#120408;}
       </g>
 
       <!-- Label: node name under server -->
-      <text x="385" y="390" text-anchor="middle" font-family="IBM Plex Mono" font-size="7.5" fill="#0D1E2A" letter-spacing=".12em">AI / ML INFRASTRUCTURE — HDFC BANK</text>
+      <text x="385" y="390" text-anchor="middle" font-family="IBM Plex Mono" font-size="7.5" fill="#0D1E2A" letter-spacing=".12em">AI / ML INFRASTRUCTURE — BANK</text>
 
     </svg>
 
@@ -503,7 +503,7 @@ function stageCrypto(){
   s('pipe-fill').style.width='40px';
   s('pipe-fill').setAttribute('fill','#22D3EE');
 
-  s('snote').innerHTML=`<span style="color:var(--amber)">REAL CASE: .dhpcd Cryptominer on HDFC AI Server</span><br><br>
+  s('snote').innerHTML=`<span style="color:var(--amber)">REAL CASE: .dhpcd Cryptominer on AI Server</span><br><br>
 A cryptominer disguised as <code style="color:var(--violet)">dhcpd</code> (DHCP daemon) was found on our AI training server. The leading dot (<code style="color:var(--red)">.dhpcd</code>) hid it from casual <code>ls</code> listings.<br><br>
 It added itself to <span style="color:var(--amber)">crontab</span> for persistence — surviving reboots. It used <span style="color:var(--red)">89% CPU</span>, delaying model training from hours to days.`;
 
@@ -678,7 +678,7 @@ function stageReset(){
   setMet('LOW','—','22%','SECURE');
   pill('System SECURE','secure');
   s('snote').innerHTML=`Cybersecurity is the practice of defending servers, networks, and data from attackers.<br><br>
-HDFC Bank's AI servers process sensitive financial data and run critical ML pipelines — making them high-value targets.<br><br>
+Bank's AI servers process sensitive financial data and run critical ML pipelines — making them high-value targets.<br><br>
 Press <span style="color:var(--cyan)">🔍 Attack Types</span> for an overview of major threats, then walk through each stage to see how attacks work and how to stop them.`;
   s('b1').disabled=false;s('b2').disabled=true;s('b3').disabled=true;s('b4').disabled=true;s('b5').disabled=true;
 }
