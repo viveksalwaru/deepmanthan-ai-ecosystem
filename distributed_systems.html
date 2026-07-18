@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>BSE Distributed System</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#060A11;--panel:#0D1520;--panel2:#101B28;
+  --line:#1A2840;--inkd:#7C8CA3;--inkf:#2E3F55;
+  --ink:#DCE6F2;--cyan:#38E1FF;--teal:#2DD4BF;
+  --green:#4ADE80;--amber:#FBBF24;--violet:#A78BFA;
+  --rose:#FB5E6D;--orange:#FB923C;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;background:var(--bg);}
+body{font-family:"Sora",sans-serif;color:var(--ink);display:flex;flex-direction:column;}
+
+/* ── BSE Ticker ────────────────────────────────── */
+.ticker{
+  position:absolute;
+  bottom:0;
+  left:0;
+  right:0;
+  height:40px;
+  background:#0A1828;
+  border-top:3px solid #FBBF24;
+  border-bottom:none;
+  display:flex;
+  align-items:center;
+  overflow:hidden;
+  z-index:20;
+  box-shadow:0 -4px 24px rgba(251,191,36,.18);
+}
+.tk-lbl{font-family:"IBM Plex Mono",monospace;font-size:.68rem;letter-spacing:.16em;font-weight:700;
+  color:#FBBF24;padding:0 14px;flex-shrink:0;border-right:2px solid #FBBF2444;white-space:nowrap;}
+.tk-time{font-family:"IBM Plex Mono",monospace;font-size:.72rem;color:#FB5E6D;font-weight:600;
+  padding:0 12px;flex-shrink:0;border-right:1px solid #1E3050;white-space:nowrap;}
+.tk-scroll{flex:1;overflow:hidden;min-width:0;height:40px;}
+.tk-inner{display:inline-flex;gap:0;white-space:nowrap;animation:scroll 40s linear infinite;}
+@keyframes scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.tk-item{display:inline-flex;align-items:center;gap:9px;padding:0 16px;
+  border-right:1px solid #1A3050;font-family:"IBM Plex Mono",monospace;font-size:.74rem;
+  height:40px;line-height:40px;}
+.tk-item .nm{color:#8FA8C8;letter-spacing:.05em;}
+.tk-item .prc{color:#D8E8FF;font-weight:600;}
+.tk-item .up{color:#4ADE80;}
+.tk-item .dn{color:#FB5E6D;}
+.tk-item .sep{color:#1E3050;margin:0 2px;}
+
+/* ── Header ────────────────────────────────────── */
+.hdr{height:48px;background:linear-gradient(90deg,#0D1A2E,#0F1E32);
+  border-bottom:1px solid var(--line);display:flex;align-items:center;
+  padding:0 16px;gap:12px;flex-shrink:0;}
+.hdr-ico{width:32px;height:32px;border-radius:8px;display:grid;place-items:center;
+  font-size:16px;background:linear-gradient(135deg,rgba(251,94,109,.2),rgba(251,191,36,.12));
+  border:1px solid rgba(251,94,109,.3);flex-shrink:0;}
+.hdr-title{font-family:"Space Grotesk",sans-serif;font-weight:700;font-size:.9rem;
+  background:linear-gradient(90deg,#FB5E6D,#FBBF24 60%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;}
+.hdr-sub{font-size:.63rem;color:var(--inkd);margin-top:1px;}
+.pill{display:flex;align-items:center;gap:6px;font-family:"IBM Plex Mono",monospace;
+  font-size:.63rem;letter-spacing:.09em;text-transform:uppercase;padding:5px 11px;
+  border-radius:999px;border:1px solid rgba(74,222,128,.3);background:rgba(74,222,128,.07);
+  color:var(--green);transition:all .6s;margin-left:auto;flex-shrink:0;}
+.pill .dot{width:7px;height:7px;border-radius:50%;background:var(--green);
+  box-shadow:0 0 7px var(--green);animation:pb 1.8s infinite;flex-shrink:0;}
+.pill.danger{border-color:rgba(251,94,109,.4);background:rgba(251,94,109,.1);color:var(--rose);}
+.pill.danger .dot{background:var(--rose);box-shadow:0 0 7px var(--rose);animation:blink .4s infinite;}
+.pill.warn{border-color:rgba(251,191,36,.4);background:rgba(251,191,36,.08);color:var(--amber);}
+.pill.warn .dot{background:var(--amber);box-shadow:0 0 7px var(--amber);}
+@keyframes pb{50%{opacity:.3;}}@keyframes blink{50%{opacity:0;}}
+
+/* ── Main ──────────────────────────────────────── */
+.main{flex:1;display:flex;overflow:hidden;}
+.map-wrap{flex:1;position:relative;overflow:hidden;
+  background:radial-gradient(ellipse 60% 70% at 42% 50%,rgba(56,225,255,.025),transparent);}
+#msv{width:100%;height:100%;}
+.rp{width:272px;flex-shrink:0;border-left:1px solid var(--line);
+  display:flex;flex-direction:column;background:var(--panel);overflow:hidden;}
+
+/* ── Right panel ───────────────────────────────── */
+.rp-hdr{padding:9px 13px;border-bottom:1px solid var(--line);font-family:"IBM Plex Mono",monospace;
+  font-size:.64rem;letter-spacing:.1em;text-transform:uppercase;color:var(--inkd);}
+.rp-body{flex:1;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:8px;}
+.card{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:9px 12px;}
+.card-lbl{font-family:"IBM Plex Mono",monospace;font-size:.63rem;color:var(--inkd);
+  text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px;}
+.site-name{font-family:"Space Grotesk",sans-serif;font-weight:700;font-size:.98rem;}
+.site-role{display:inline-block;font-family:"IBM Plex Mono",monospace;font-size:.6rem;
+  letter-spacing:.08em;text-transform:uppercase;padding:2px 7px;border-radius:4px;margin-top:3px;
+  background:rgba(74,222,128,.1);color:var(--green);transition:all .5s;}
+.site-role.fail{background:rgba(251,94,109,.1);color:var(--rose);}
+.site-role.fo{background:rgba(56,225,255,.1);color:var(--cyan);}
+.site-card{border-left:3px solid var(--green);transition:border-color .5s;}
+.site-card.danger{border-color:var(--rose);}
+.site-card.fo{border-color:var(--cyan);}
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.mc{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;}
+.mc .ml{font-family:"IBM Plex Mono",monospace;font-size:.6rem;color:var(--inkd);text-transform:uppercase;}
+.mc .mv{font-family:"Space Grotesk",sans-serif;font-size:.92rem;font-weight:700;margin-top:2px;}
+.rep-row{display:flex;align-items:center;gap:7px;padding:5px 8px;
+  background:var(--panel2);border:1px solid var(--line);border-radius:7px;
+  font-size:.7rem;transition:all .4s;}
+.rdot{width:8px;height:8px;border-radius:50%;flex-shrink:0;transition:all .4s;}
+.rsite{flex:1;font-family:"IBM Plex Mono",monospace;color:var(--inkd);}
+.rtype{font-family:"IBM Plex Mono",monospace;font-size:.58rem;letter-spacing:.07em;
+  text-transform:uppercase;padding:2px 5px;border-radius:3px;flex-shrink:0;}
+.rlag{font-family:"IBM Plex Mono",monospace;font-size:.65rem;color:var(--inkf);}
+.note{font-size:.7rem;color:var(--inkd);line-height:1.65;}
+
+/* Controls */
+.ctrls{display:flex;gap:6px;padding:8px 12px;border-top:1px solid var(--line);
+  background:#09121E;flex-wrap:wrap;flex-shrink:0;}
+.btn{padding:6px 12px;border-radius:7px;cursor:pointer;font-family:"IBM Plex Mono",monospace;
+  font-size:.68rem;letter-spacing:.04em;border:1px solid var(--line);
+  background:var(--panel);color:var(--inkd);transition:all .2s;}
+.btn:hover{background:var(--line);color:var(--ink);}
+.btn.c{border-color:rgba(56,225,255,.3);background:rgba(56,225,255,.07);color:var(--cyan);}
+.btn.r{border-color:rgba(251,94,109,.35);background:rgba(251,94,109,.08);color:var(--rose);}
+.btn.g{border-color:rgba(74,222,128,.3);background:rgba(74,222,128,.07);color:var(--green);}
+.btn:disabled{opacity:.3;cursor:not-allowed;}
+
+/* Log */
+.log{height:108px;border-top:1px solid var(--line);overflow-y:auto;
+  padding:5px 10px;background:#040810;flex-shrink:0;}
+.le{font-family:"IBM Plex Mono",monospace;font-size:.67rem;padding:2px 0;
+  border-bottom:1px solid #0c1620;display:flex;gap:7px;align-items:baseline;}
+.lt{color:var(--inkf);flex-shrink:0;}
+.lm{flex:1;}
+.lm.ok{color:var(--green);}.lm.err{color:var(--rose);}
+.lm.warn{color:var(--amber);}.lm.inf{color:var(--cyan);}
+
+/* Flash */
+#flash{position:fixed;inset:0;pointer-events:none;opacity:0;z-index:99;
+  background:rgba(251,94,109,.2);transition:opacity .15s;}
+</style>
+</head>
+<body>
+
+
+
+<!-- Header -->
+<div class="hdr">
+  <div class="hdr-ico">🏦</div>
+  <div>
+    <div class="hdr-title">BSE — Bombay Stock Exchange · Distributed Production System</div>
+    <div class="hdr-sub">4 Data Centers · Primary / Standby Architecture · Real-time Replication · Disaster Recovery</div>
+  </div>
+  <div class="pill" id="mpill"><div class="dot"></div><span id="ptxt">Mumbai PRIMARY</span></div>
+</div>
+
+<!-- Main -->
+<div class="main">
+  <div class="map-wrap" id="mwrap">
+    <svg id="msv" viewBox="0 0 560 490" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <filter id="glow-a"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <filter id="glow-c"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <filter id="glow-g"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <filter id="glow-v"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <filter id="glow-p"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <filter id="shadow"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000" flood-opacity=".5"/></filter>
+        <!-- Arrow markers -->
+        <marker id="arr-g" viewBox="0 0 8 8" refX="6" refY="4" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L8,4 L0,8Z" fill="#4ADE80" opacity=".8"/></marker>
+        <marker id="arr-c" viewBox="0 0 8 8" refX="6" refY="4" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L8,4 L0,8Z" fill="#38E1FF" opacity=".8"/></marker>
+        <marker id="arr-v" viewBox="0 0 8 8" refX="6" refY="4" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L8,4 L0,8Z" fill="#A78BFA" opacity=".8"/></marker>
+        <marker id="arr-a" viewBox="0 0 8 8" refX="6" refY="4" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0 L8,4 L0,8Z" fill="#FBBF24" opacity=".8"/></marker>
+        <!-- Gradient for user zone -->
+        <radialGradient id="user-grad" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#FBBF24" stop-opacity=".15"/>
+          <stop offset="100%" stop-color="#FBBF24" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+
+      <!-- ── India outline (faint background) ── -->
+      <g transform="translate(5,8) scale(1.42,1.08)" opacity=".5">
+        <path d="M 158,24 L 182,16 L 208,22 L 238,32 L 268,40
+          L 298,50 L 322,62 L 342,80 L 352,100 L 356,122
+          L 356,145 L 348,168 L 332,188
+          L 346,200 L 358,220 L 360,240
+          L 350,256 L 338,268 L 328,280
+          L 318,296 L 304,314 L 288,336
+          L 272,356 L 255,376 L 238,396
+          L 222,416 L 208,434 L 196,445
+          L 184,434 L 170,416 L 155,396
+          L 138,374 L 120,352 L 103,328
+          L 86,302 L 72,276 L 60,250
+          L 50,224 L 40,196 L 34,168
+          L 30,140 L 32,114 L 40,90
+          L 55,68 L 75,50 L 100,38
+          L 128,28 L 158,24 Z"
+          fill="none" stroke="#1A2840" stroke-width=".8"/>
+      </g>
+
+      <!-- Grid lines (subtle) -->
+      <line x1="0" y1="200" x2="560" y2="200" stroke="#0E1A28" stroke-width=".5"/>
+      <line x1="0" y1="350" x2="560" y2="350" stroke="#0E1A28" stroke-width=".5"/>
+      <line x1="180" y1="0" x2="180" y2="490" stroke="#0E1A28" stroke-width=".5"/>
+      <line x1="360" y1="0" x2="360" y2="490" stroke="#0E1A28" stroke-width=".5"/>
+
+      <!-- ── USER ZONE (top center) ── -->
+      <g id="user-zone">
+        <ellipse cx="82" cy="90" rx="52" ry="24" fill="url(#user-grad)" stroke="#FBBF2444" stroke-width="1"/>
+        <text x="82" y="85" text-anchor="middle" font-size="18">👤👤👤</text>
+        <text x="82" y="107" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#FBBF24" letter-spacing=".08em">INVESTORS / TRADERS</text>
+      </g>
+
+      <!-- ── Replication lines (Mumbai → others) ── -->
+      <path id="rl-mum-blr" d="M 136,335 Q 140,368 218,397" stroke="#4ADE80"
+        stroke-width="2" fill="none" stroke-dasharray="10 6" opacity=".85"
+        marker-end="url(#arr-g)" style="animation:dash 1.1s linear infinite;"/>
+      <path id="rl-mum-che" d="M 146,330 Q 240,352 390,374" stroke="#38E1FF"
+        stroke-width="2" fill="none" stroke-dasharray="10 6" opacity=".85"
+        marker-end="url(#arr-c)" style="animation:dash 1.1s linear infinite;animation-delay:.3s;"/>
+      <path id="rl-mum-del" d="M 140,296 Q 220,200 322,152" stroke="#A78BFA"
+        stroke-width="2" fill="none" stroke-dasharray="10 6" opacity=".85"
+        marker-end="url(#arr-v)" style="animation:dash 1.1s linear infinite;animation-delay:.6s;"/>
+
+      <!-- ── Failover replication lines (Chennai → others) hidden initially ── -->
+      <path id="rl-che-blr" d="M 390,374 Q 340,398 246,400" stroke="#4ADE80"
+        stroke-width="2" fill="none" stroke-dasharray="10 6" opacity="0"
+        marker-end="url(#arr-g)" style="animation:dash 1.1s linear infinite;"/>
+      <path id="rl-che-del" d="M 400,370 Q 400,250 344,152" stroke="#A78BFA"
+        stroke-width="2" fill="none" stroke-dasharray="10 6" opacity="0"
+        marker-end="url(#arr-v)" style="animation:dash 1.1s linear infinite;"/>
+
+      <!-- User → active site lines (dashed, hidden until animated) -->
+      <line id="ul-mum" x1="82" y1="111" x2="143" y2="304" stroke="#FBBF24"
+        stroke-width="1" stroke-dasharray="6 5" opacity=".45" marker-end="url(#arr-a)"/>
+      <line id="ul-che" x1="82" y1="111" x2="400" y2="368" stroke="#FBBF24"
+        stroke-width="1" stroke-dasharray="6 5" opacity="0" marker-end="url(#arr-a)"/>
+
+      <!-- ── DELHI server rack ── -->
+      <g id="rack-delhi" class="rack" transform="translate(340,136)">
+        <!-- glow aura -->
+        <ellipse cx="0" cy="6" rx="32" ry="14" fill="#A78BFA" opacity=".08" filter="url(#glow-v)"/>
+        <!-- chassis -->
+        <rect x="-24" y="-36" width="48" height="72" rx="5" fill="#09101E" stroke="#A78BFA" stroke-width="1.5" id="chassis-delhi"/>
+        <!-- blades -->
+        <rect x="-20" y="-32" width="40" height="14" rx="2" fill="#0c1628" stroke="#A78BFA33" stroke-width=".5"/>
+        <rect x="-20" y="-15" width="40" height="14" rx="2" fill="#0c1628" stroke="#A78BFA33" stroke-width=".5"/>
+        <rect x="-20" y="2" width="40" height="14" rx="2" fill="#0c1628" stroke="#A78BFA33" stroke-width=".5"/>
+        <!-- LEDs -->
+        <circle cx="-14" cy="-25" r="3" fill="#A78BFA" id="led-d1" opacity=".9"/>
+        <circle cx="-14" cy="-8" r="3" fill="#A78BFA" id="led-d2" opacity=".9"/>
+        <circle cx="-14" cy="9" r="3" fill="#A78BFA" id="led-d3" opacity=".9"/>
+        <!-- drive bars -->
+        <rect x="-5" y="-30" width="22" height="3" rx="1" fill="#1a2840" opacity=".7"/>
+        <rect x="-5" y="-13" width="22" height="3" rx="1" fill="#1a2840" opacity=".7"/>
+        <rect x="-5" y="4" width="22" height="3" rx="1" fill="#1a2840" opacity=".7"/>
+        <!-- label -->
+        <text y="-44" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#A78BFA" font-weight="600">DELHI</text>
+        <text y="48" text-anchor="middle" font-family="Sora" font-size="9" fill="#7C8CA3" id="role-delhi">STANDBY</text>
+      </g>
+
+      <!-- ── MUMBAI server rack (PRIMARY — larger) ── -->
+      <g id="rack-mumbai" class="rack" transform="translate(142,322)">
+        <ellipse cx="0" cy="8" rx="42" ry="18" fill="#FBBF24" opacity=".1" filter="url(#glow-a)" id="aura-mum"/>
+        <!-- chassis (wider for primary) -->
+        <rect x="-30" y="-44" width="60" height="88" rx="6" fill="#0E1408" stroke="#FBBF24" stroke-width="2" id="chassis-mum" filter="url(#glow-a)"/>
+        <!-- 4 blades (primary has more) -->
+        <rect x="-25" y="-39" width="50" height="14" rx="2" fill="#121e04" stroke="#FBBF2444" stroke-width=".5"/>
+        <rect x="-25" y="-22" width="50" height="14" rx="2" fill="#121e04" stroke="#FBBF2444" stroke-width=".5"/>
+        <rect x="-25" y="-5" width="50" height="14" rx="2" fill="#121e04" stroke="#FBBF2444" stroke-width=".5"/>
+        <rect x="-25" y="12" width="50" height="14" rx="2" fill="#121e04" stroke="#FBBF2444" stroke-width=".5"/>
+        <!-- LEDs -->
+        <circle cx="-18" cy="-32" r="3.5" fill="#FBBF24" id="led-m1"/>
+        <circle cx="-18" cy="-15" r="3.5" fill="#FBBF24" id="led-m2"/>
+        <circle cx="-18" cy="2" r="3.5" fill="#FBBF24" id="led-m3"/>
+        <circle cx="-18" cy="19" r="3.5" fill="#4ADE80" id="led-m4"/>
+        <!-- drive bars -->
+        <rect x="-7" y="-37" width="28" height="4" rx="1" fill="#1e2c04" opacity=".8"/>
+        <rect x="-7" y="-20" width="28" height="4" rx="1" fill="#1e2c04" opacity=".8"/>
+        <rect x="-7" y="-3" width="28" height="4" rx="1" fill="#1e2c04" opacity=".8"/>
+        <rect x="-7" y="14" width="28" height="4" rx="1" fill="#1e2c04" opacity=".8"/>
+        <!-- label -->
+        <text y="-54" text-anchor="middle" font-family="IBM Plex Mono" font-size="12.5" fill="#FBBF24" font-weight="700" id="lbl-mum">MUMBAI</text>
+        <text y="58" text-anchor="middle" font-family="Sora" font-size="10" fill="#FBBF24" font-weight="600" id="role-mum">PRIMARY ★</text>
+        <!-- DB indicator -->
+        <rect x="-30" y="76" width="60" height="18" rx="3" fill="#0E1408" stroke="#FBBF2444" stroke-width="1" id="db-mum"/>
+        <text y="88" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="#FBBF2488" id="db-txt-mum">💾 LOCAL DB</text>
+      </g>
+
+      <!-- ── BANGALORE server rack ── -->
+      <g id="rack-bangalore" class="rack" transform="translate(232,405)">
+        <ellipse cx="0" cy="6" rx="32" ry="14" fill="#4ADE80" opacity=".07" filter="url(#glow-g)"/>
+        <rect x="-24" y="-36" width="48" height="72" rx="5" fill="#091409" stroke="#4ADE80" stroke-width="1.5" id="chassis-blr"/>
+        <rect x="-20" y="-32" width="40" height="14" rx="2" fill="#0c1e0c" stroke="#4ADE8033" stroke-width=".5"/>
+        <rect x="-20" y="-15" width="40" height="14" rx="2" fill="#0c1e0c" stroke="#4ADE8033" stroke-width=".5"/>
+        <rect x="-20" y="2" width="40" height="14" rx="2" fill="#0c1e0c" stroke="#4ADE8033" stroke-width=".5"/>
+        <circle cx="-14" cy="-25" r="3" fill="#4ADE80" id="led-b1" opacity=".9"/>
+        <circle cx="-14" cy="-8" r="3" fill="#4ADE80" id="led-b2" opacity=".9"/>
+        <circle cx="-14" cy="9" r="3" fill="#4ADE80" id="led-b3" opacity=".9"/>
+        <rect x="-5" y="-30" width="22" height="3" rx="1" fill="#122e12" opacity=".7"/>
+        <rect x="-5" y="-13" width="22" height="3" rx="1" fill="#122e12" opacity=".7"/>
+        <rect x="-5" y="4" width="22" height="3" rx="1" fill="#122e12" opacity=".7"/>
+        <text y="-44" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#4ADE80" font-weight="600">BANGALORE</text>
+        <text y="48" text-anchor="middle" font-family="Sora" font-size="9" fill="#7C8CA3" id="role-blr">STANDBY</text>
+      </g>
+
+      <!-- ── CHENNAI server rack ── -->
+      <g id="rack-chennai" class="rack" transform="translate(408,382)">
+        <ellipse cx="0" cy="6" rx="32" ry="14" fill="#38E1FF" opacity=".07" filter="url(#glow-c)" id="aura-che"/>
+        <rect x="-24" y="-36" width="48" height="72" rx="5" fill="#061418" stroke="#38E1FF" stroke-width="1.5" id="chassis-che"/>
+        <rect x="-20" y="-32" width="40" height="14" rx="2" fill="#091e24" stroke="#38E1FF33" stroke-width=".5"/>
+        <rect x="-20" y="-15" width="40" height="14" rx="2" fill="#091e24" stroke="#38E1FF33" stroke-width=".5"/>
+        <rect x="-20" y="2" width="40" height="14" rx="2" fill="#091e24" stroke="#38E1FF33" stroke-width=".5"/>
+        <circle cx="-14" cy="-25" r="3" fill="#38E1FF" id="led-c1" opacity=".9"/>
+        <circle cx="-14" cy="-8" r="3" fill="#38E1FF" id="led-c2" opacity=".9"/>
+        <circle cx="-14" cy="9" r="3" fill="#38E1FF" id="led-c3" opacity=".9"/>
+        <rect x="-5" y="-30" width="22" height="3" rx="1" fill="#0e2830" opacity=".7"/>
+        <rect x="-5" y="-13" width="22" height="3" rx="1" fill="#0e2830" opacity=".7"/>
+        <rect x="-5" y="4" width="22" height="3" rx="1" fill="#0e2830" opacity=".7"/>
+        <text y="-44" text-anchor="middle" font-family="IBM Plex Mono" font-size="10.5" fill="#38E1FF" font-weight="600" id="lbl-che">CHENNAI</text>
+        <text y="48" text-anchor="middle" font-family="Sora" font-size="9" fill="#7C8CA3" id="role-che">STANDBY</text>
+        <!-- DB (hidden until failover) -->
+        <rect x="-24" y="52" width="48" height="18" rx="3" fill="#061418" stroke="#38E1FF44" stroke-width="1" id="db-che" opacity="0"/>
+        <text y="64" text-anchor="middle" font-family="IBM Plex Mono" font-size="7.5" fill="#38E1FF88" id="db-txt-che" opacity="0">💾 LOCAL DB</text>
+      </g>
+
+
+
+    </svg>
+  <!-- Ticker -->
+<div class="ticker">
+  <div class="tk-lbl">BSE&nbsp;LIVE</div>
+  <div class="tk-time" id="mkt-time">IST&nbsp;09:30:00</div>
+  <div class="tk-scroll"><div class="tk-inner" id="tk">
+    <span class="tk-item" style="background:rgba(251,191,36,.06);border-left:2px solid #FBBF2466;"><span class="nm">SENSEX</span><span class="prc">72,456.89</span><span class="up">▲ 123.45 (1.23%)</span></span>
+    <span class="tk-item"><span class="nm">NIFTY 50</span><span class="prc">21,982.70</span><span class="up">▲ 68.30 (0.31%)</span></span>
+    <span class="tk-item"><span class="nm">RELIANCE</span><span class="prc">2,847.50</span><span class="up">▲ 22.30 (0.79%)</span></span>
+    <span class="tk-item"><span class="nm">TCS</span><span class="prc">4,123.80</span><span class="dn">▼ 12.50 (-0.30%)</span></span>
+    <span class="tk-item"><span class="nm">INFOSYS</span><span class="prc">1,654.30</span><span class="up">▲ 18.10 (1.11%)</span></span>
+    <span class="tk-item"><span class="nm">HDFC BANK</span><span class="prc">1,876.20</span><span class="up">▲ 11.40 (0.61%)</span></span>
+    <span class="tk-item"><span class="nm">WIPRO</span><span class="prc">562.40</span><span class="dn">▼ 1.20 (-0.21%)</span></span>
+    <span class="tk-item"><span class="nm">ICICI BANK</span><span class="prc">1,245.75</span><span class="up">▲ 11.15 (0.90%)</span></span>
+    <span class="tk-item"><span class="nm">BAJAJ FIN</span><span class="prc">7,834.00</span><span class="up">▲ 108.40 (1.40%)</span></span>
+    <span class="tk-item"><span class="nm">MARUTI</span><span class="prc">11,250.60</span><span class="up">▲ 95.30 (0.85%)</span></span>
+    <span class="tk-item"><span class="nm">SBI</span><span class="prc">828.15</span><span class="up">▲ 4.85 (0.59%)</span></span>
+    <span class="tk-item"><span class="nm">TATA STEEL</span><span class="prc">175.80</span><span class="dn">▼ 0.95 (-0.54%)</span></span>
+    <!-- duplicate for seamless loop -->
+    <span class="tk-item"><span class="nm">SENSEX</span><span class="prc">72,456.89</span><span class="up">▲ 123.45 (1.23%)</span></span>
+    <span class="tk-item"><span class="nm">NIFTY 50</span><span class="prc">21,982.70</span><span class="up">▲ 68.30 (0.31%)</span></span>
+    <span class="tk-item"><span class="nm">RELIANCE</span><span class="prc">2,847.50</span><span class="up">▲ 22.30 (0.79%)</span></span>
+    <span class="tk-item"><span class="nm">TCS</span><span class="prc">4,123.80</span><span class="dn">▼ 12.50 (-0.30%)</span></span>
+    <span class="tk-item"><span class="nm">INFOSYS</span><span class="prc">1,654.30</span><span class="up">▲ 18.10 (1.11%)</span></span>
+    <span class="tk-item"><span class="nm">HDFC BANK</span><span class="prc">1,876.20</span><span class="up">▲ 11.40 (0.61%)</span></span>
+    <span class="tk-item"><span class="nm">WIPRO</span><span class="prc">562.40</span><span class="dn">▼ 1.20 (-0.21%)</span></span>
+    <span class="tk-item"><span class="nm">ICICI BANK</span><span class="prc">1,245.75</span><span class="up">▲ 11.15 (0.90%)</span></span>
+    <span class="tk-item"><span class="nm">BAJAJ FIN</span><span class="prc">7,834.00</span><span class="up">▲ 108.40 (1.40%)</span></span>
+    <span class="tk-item"><span class="nm">MARUTI</span><span class="prc">11,250.60</span><span class="up">▲ 95.30 (0.85%)</span></span>
+    <span class="tk-item"><span class="nm">SBI</span><span class="prc">828.15</span><span class="up">▲ 4.85 (0.59%)</span></span>
+    <span class="tk-item"><span class="nm">TATA STEEL</span><span class="prc">175.80</span><span class="dn">▼ 0.95 (-0.54%)</span></span>
+  </div></div>
+</div>
+  </div>
+
+  <!-- Right panel -->
+  <div class="rp">
+    <div class="rp-hdr">System Dashboard</div>
+    <div class="rp-body">
+
+      <div class="card site-card" id="sc">
+        <div class="card-lbl">Active Site</div>
+        <div class="site-name" id="sn">🏦 Mumbai</div>
+        <div><span class="site-role" id="sr">PRIMARY</span></div>
+        <div style="font-family:'IBM Plex Mono',monospace;font-size:.68rem;color:var(--inkf);margin-top:6px;" id="sip">10.0.0.1 · DC-MUM-01</div>
+      </div>
+
+      <div class="metrics">
+        <div class="mc"><div class="ml">Requests/s</div><div class="mv" id="mrps" style="color:var(--amber)">12,430</div></div>
+        <div class="mc"><div class="ml">DB Writes/s</div><div class="mv" id="mdps" style="color:var(--cyan)">847</div></div>
+        <div class="mc"><div class="ml">Latency</div><div class="mv" id="mlat" style="color:var(--green)">2.1ms</div></div>
+        <div class="mc"><div class="ml">Uptime</div><div class="mv" id="mupt" style="color:var(--violet)">99.97%</div></div>
+      </div>
+
+      <div class="card">
+        <div class="card-lbl">Replication Status</div>
+        <div style="display:flex;flex-direction:column;gap:5px;margin-top:5px;" id="reprows">
+          <div class="rep-row"><div class="rdot" style="background:#4ADE80;box-shadow:0 0 5px #4ADE80;"></div><span class="rsite">Bangalore</span><span class="rtype" style="background:rgba(74,222,128,.1);color:var(--green);">SYNC</span><span class="rlag" id="lb">2ms</span></div>
+          <div class="rep-row"><div class="rdot" style="background:#38E1FF;box-shadow:0 0 5px #38E1FF;"></div><span class="rsite">Chennai</span><span class="rtype" style="background:rgba(56,225,255,.08);color:var(--cyan);">ASYNC</span><span class="rlag" id="lc">45ms</span></div>
+          <div class="rep-row"><div class="rdot" style="background:#A78BFA;box-shadow:0 0 5px #A78BFA;"></div><span class="rsite">Delhi</span><span class="rtype" style="background:rgba(167,139,250,.08);color:var(--violet);">ASYNC</span><span class="rlag" id="ld">38ms</span></div>
+        </div>
+      </div>
+
+      <div class="card" style="border-color:#18304A;">
+        <div class="card-lbl">How It Works</div>
+        <div class="note" id="note">
+          Mumbai is the <span style="color:var(--amber)">primary site</span> — all 12,000+ requests/sec land here. Each trade write goes to local DB first, then replicates.<br><br>
+          <span style="color:var(--green)">Bangalore</span>: <b>synchronous</b> — trade confirmed only after both sites write (zero data loss).<br>
+          <span style="color:var(--cyan)">Chennai/Delhi</span>: <b>asynchronous</b> — write confirmed locally, replicated ~45ms later.
+        </div>
+      </div>
+
+    </div>
+    <div class="ctrls">
+      <button class="btn c" onclick="go(1)" id="bn">▶ Normal Op</button>
+      <button class="btn r" onclick="go(2)" id="bc" disabled>💥 Calamity</button>
+      <button class="btn g" onclick="go(3)" id="bf" disabled>🔄 Failover</button>
+      <button class="btn" onclick="demo()">⚡ Full Demo</button>
+      <button class="btn" onclick="reset()">↺ Reset</button>
+    </div>
+  </div>
+</div>
+
+<!-- Log -->
+<div class="log" id="log"></div>
+<div id="flash"></div>
+
+<style>
+@keyframes dash{to{stroke-dashoffset:-32;}}
+@keyframes led-blink{0%,100%{opacity:.9;}50%{opacity:.15;}}
+</style>
+
+<script>
+// ── Config ────────────────────────────────────────────────────
+const CITIES = {
+  mum:  {x:142, y:322, col:'#FBBF24', filt:'glow-a'},
+  che:  {x:408, y:432, col:'#38E1FF', filt:'glow-c'},
+  blr:  {x:232, y:460, col:'#4ADE80', filt:'glow-g'},
+  del:  {x:340, y:96,  col:'#A78BFA', filt:'glow-v'},
+};
+const USERS = {x:82, y:90};
+
+// ── IST clock ────────────────────────────────────────────────
+setInterval(() => {
+  const d = new Date();
+  const ist = new Date(d.getTime() + (5.5*3600000 - d.getTimezoneOffset()*60000));
+  const ts = [ist.getHours(),ist.getMinutes(),ist.getSeconds()].map(n=>String(n).padStart(2,'0')).join(':');
+  document.getElementById('mkt-time').textContent = 'IST ' + ts;
+}, 1000);
+
+// ── Log ──────────────────────────────────────────────────────
+function log(msg, t='ok') {
+  const lg = document.getElementById('log');
+  const d = new Date();
+  const ts = [d.getHours(),d.getMinutes(),d.getSeconds()].map(n=>String(n).padStart(2,'0')).join(':');
+  const e = Object.assign(document.createElement('div'),{className:'le'});
+  e.innerHTML = `<span class="lt">${ts}</span><span class="lm ${t}">${msg}</span>`;
+  lg.insertBefore(e, lg.firstChild);
+}
+
+// ── Pill ──────────────────────────────────────────────────────
+function pill(txt, type='') {
+  const p = document.getElementById('mpill');
+  p.className = 'pill' + (type ? ' '+type : '');
+  document.getElementById('ptxt').textContent = txt;
+}
+
+// ── SVG helpers ───────────────────────────────────────────────
+function s(id){ return document.getElementById(id); }
+function setLine(id, op, play) {
+  const el = s(id); if(!el) return;
+  el.style.opacity = op;
+  el.style.animationPlayState = play ? 'running' : 'paused';
+}
+
+// ── Packet spawner ────────────────────────────────────────────
+// Spawns a glowing circle in the SVG that travels from (x1,y1) to (x2,y2)
+function spawnPkt(x1, y1, x2, y2, col, delay) {
+  const ns = 'http://www.w3.org/2000/svg';
+  const svg = s('msv');
+  const c = document.createElementNS(ns,'circle');
+  c.setAttribute('r','6');
+  c.setAttribute('cx', x1);
+  c.setAttribute('cy', y1);
+  c.setAttribute('fill', col);
+  c.style.cssText = `filter:url(#glow-p);opacity:0;
+    transition:transform 1.4s cubic-bezier(.4,0,.2,1),opacity .3s ease;`;
+  svg.appendChild(c);
+  setTimeout(() => {
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      c.style.opacity = '1';
+      c.style.transform = `translate(${x2-x1}px,${y2-y1}px)`;
+    }));
+    setTimeout(() => {
+      c.style.opacity = '0';
+      setTimeout(() => c.remove(), 400);
+    }, 1300);
+  }, delay || 0);
+}
+
+// ── Packet spawn loop ─────────────────────────────────────────
+let pktInterval = null;
+let activeTarget = null; // {x,y,col}
+
+function startPackets(tgt) {
+  stopPackets();
+  activeTarget = tgt;
+  const spawn = () => {
+    if(!activeTarget) return;
+    spawnPkt(USERS.x-10, USERS.y+5, activeTarget.x, activeTarget.y-45, activeTarget.col, 0);
+    spawnPkt(USERS.x+10, USERS.y+5, activeTarget.x, activeTarget.y-45, activeTarget.col, 500);
+    spawnPkt(USERS.x, USERS.y+5, activeTarget.x, activeTarget.y-45, activeTarget.col, 950);
+  };
+  spawn();
+  pktInterval = setInterval(spawn, 1800);
+}
+function stopPackets() {
+  clearInterval(pktInterval); pktInterval = null; activeTarget = null;
+}
+
+// ── Metrics jitter ────────────────────────────────────────────
+let mxInt = null;
+function startMetrics() {
+  mxInt && clearInterval(mxInt);
+  mxInt = setInterval(() => {
+    s('mrps').textContent = (12200 + Math.round(Math.random()*500)).toLocaleString();
+    s('mdps').textContent = (820 + Math.round(Math.random()*60)).toLocaleString();
+    s('mlat').textContent = (1.7 + Math.random()*.8).toFixed(1) + 'ms';
+    const lb = s('lb'), lc = s('lc'), ld = s('ld');
+    if(lb) lb.textContent = (2+Math.round(Math.random()*3))+'ms';
+    if(lc) lc.textContent = (42+Math.round(Math.random()*8))+'ms';
+    if(ld) ld.textContent = (35+Math.round(Math.random()*8))+'ms';
+  }, 1200);
+}
+function stopMetrics() { clearInterval(mxInt); mxInt = null; }
+
+// ── LED animation ─────────────────────────────────────────────
+function ledBlink(id, state) {
+  const el = s(id); if(!el) return;
+  el.style.animation = state === 'dead' ? 'none' : '';
+  el.setAttribute('fill', state === 'dead' ? '#1A2840' :
+    state === 'warn' ? '#FBBF24' : el.getAttribute('fill'));
+}
+
+// ── STAGE 1: Normal Operation ─────────────────────────────────
+function go1() {
+  log('BSE Mumbai ACTIVE — 12,400+ req/s · All replication healthy', 'ok');
+  log('Bangalore (SYNC 2ms), Chennai (ASYNC 45ms), Delhi (ASYNC 38ms)', 'inf');
+  pill('Mumbai PRIMARY');
+  // Restore Mumbai chassis
+  s('chassis-mum').setAttribute('stroke','#FBBF24');
+  s('chassis-mum').setAttribute('fill','#0E1408');
+  s('lbl-mum').setAttribute('fill','#FBBF24');
+  s('role-mum').textContent = 'PRIMARY ★'; s('role-mum').setAttribute('fill','#FBBF24');
+  s('aura-mum').setAttribute('fill','#FBBF24'); s('aura-mum').setAttribute('opacity','.1');
+  ['led-m1','led-m2','led-m3'].forEach(i => { const el=s(i); el && el.setAttribute('fill','#FBBF24'); });
+  // Show DB
+  s('db-mum').setAttribute('opacity','1'); s('db-txt-mum').setAttribute('opacity','1');
+  // Chennai DB hidden
+  s('db-che').setAttribute('opacity','0'); s('db-txt-che').setAttribute('opacity','0');
+  // Replication lines
+  setLine('rl-mum-blr','0.88',true); setLine('rl-mum-che','0.88',true); setLine('rl-mum-del','0.88',true);
+  setLine('rl-che-blr','0',false); setLine('rl-che-del','0',false);
+  // User lines
+  s('ul-mum').style.opacity = '0.5'; s('ul-che').style.opacity = '0';
+  // Packets to Mumbai
+  startPackets(CITIES.mum);
+  // Metrics
+  s('mrps').style.color='var(--amber)';
+  s('mrps').textContent='12,430'; s('mdps').textContent='847';
+  s('mlat').textContent='2.1ms'; s('mupt').textContent='99.97%';
+  startMetrics();
+  // Site card
+  s('sc').className='card site-card'; s('sc').style.borderColor='';
+  s('sn').textContent='🏦 Mumbai';
+  s('sr').className='site-role'; s('sr').textContent='PRIMARY';
+  s('sip').textContent='10.0.0.1 · DC-MUM-01';
+  // Standby roles
+  s('role-che').textContent='STANDBY'; s('role-che').setAttribute('fill','#7C8CA3');
+  s('role-blr').textContent='STANDBY'; s('role-blr').setAttribute('fill','#7C8CA3');
+  s('role-delhi').textContent='STANDBY'; s('role-delhi').setAttribute('fill','#7C8CA3');
+  // Rep rows
+  s('reprows').innerHTML = `
+    <div class="rep-row"><div class="rdot" style="background:#4ADE80;box-shadow:0 0 5px #4ADE80;"></div><span class="rsite">Bangalore</span><span class="rtype" style="background:rgba(74,222,128,.1);color:var(--green);">SYNC</span><span class="rlag" id="lb">2ms</span></div>
+    <div class="rep-row"><div class="rdot" style="background:#38E1FF;box-shadow:0 0 5px #38E1FF;"></div><span class="rsite">Chennai</span><span class="rtype" style="background:rgba(56,225,255,.08);color:var(--cyan);">ASYNC</span><span class="rlag" id="lc">45ms</span></div>
+    <div class="rep-row"><div class="rdot" style="background:#A78BFA;box-shadow:0 0 5px #A78BFA;"></div><span class="rsite">Delhi</span><span class="rtype" style="background:rgba(167,139,250,.08);color:var(--violet);">ASYNC</span><span class="rlag" id="ld">38ms</span></div>`;
+  s('note').innerHTML = `Mumbai is the <span style="color:var(--amber)">primary site</span> — all 12,000+ req/s land here. Each trade write goes to local DB first, then replicates.<br><br><span style="color:var(--green)">Bangalore</span>: <b>synchronous</b> — trade confirmed only after both sites write.<br><span style="color:var(--cyan)">Chennai/Delhi</span>: <b>asynchronous</b> — confirmed locally, replicated ~45ms later.`;
+  s('bn').disabled=true; s('bc').disabled=false; s('bf').disabled=true;
+}
+
+// ── STAGE 2: Calamity ─────────────────────────────────────────
+function go2() {
+  stopMetrics(); stopPackets();
+  log('⚠ ALERT: Mumbai network health-check failed — attempt 1/3', 'warn');
+  const fl = s('flash');
+  let n=0; const fi=setInterval(()=>{fl.style.opacity=n%2?'0':'1';if(++n>=8){clearInterval(fi);fl.style.opacity='0';}},170);
+  setTimeout(()=>{
+    log('🔴 CRITICAL: Mumbai site UNREACHABLE — power/network failure!', 'err');
+    log('Halting all replication. Initiating DR health checks...', 'warn');
+    pill('Mumbai DOWN', 'danger');
+    // Dim Mumbai rack
+    const c=s('chassis-mum');
+    c.setAttribute('stroke','#FB5E6D55'); c.setAttribute('fill','#180808');
+    s('lbl-mum').setAttribute('fill','#FB5E6D');
+    s('role-mum').textContent='OFFLINE ✗'; s('role-mum').setAttribute('fill','#FB5E6D');
+    s('aura-mum').setAttribute('fill','#FB5E6D'); s('aura-mum').setAttribute('opacity','.06');
+    ['led-m1','led-m2','led-m3','led-m4'].forEach(id=>{
+      const el=s(id); if(el){el.setAttribute('fill','#1A2840'); el.style.animation='none';}
+    });
+    s('db-mum').setAttribute('opacity','.2'); s('db-txt-mum').setAttribute('opacity','.2');
+    // Stop lines
+    setLine('rl-mum-blr','0.08',false); setLine('rl-mum-che','0.08',false); setLine('rl-mum-del','0.08',false);
+    s('ul-mum').style.opacity='0';
+    // Metrics
+    s('mrps').textContent='0'; s('mrps').style.color='var(--rose)';
+    s('mdps').textContent='0'; s('mlat').textContent='—';
+    s('sc').className='card site-card danger';
+    s('sn').textContent='🔴 Mumbai — DOWN';
+    s('sr').className='site-role fail'; s('sr').textContent='OFFLINE';
+    s('reprows').innerHTML = `
+      <div class="rep-row" style="opacity:.3"><div class="rdot" style="background:#3D4F63;"></div><span class="rsite">Bangalore</span><span class="rtype" style="color:#3D4F63;background:#111;">FAILED</span><span class="rlag">—</span></div>
+      <div class="rep-row" style="opacity:.3"><div class="rdot" style="background:#3D4F63;"></div><span class="rsite">Chennai</span><span class="rtype" style="color:#3D4F63;background:#111;">FAILED</span><span class="rlag">—</span></div>
+      <div class="rep-row" style="opacity:.3"><div class="rdot" style="background:#3D4F63;"></div><span class="rsite">Delhi</span><span class="rtype" style="color:#3D4F63;background:#111;">FAILED</span><span class="rlag">—</span></div>`;
+    s('note').innerHTML = `<span style="color:var(--rose)">⚠ Mumbai site is unreachable.</span> All user traffic is dropping.<br><br>DR system has detected 3 consecutive health-check failures. Standby sites hold replicated data up to the last sync point.<br><br>Initiating <span style="color:var(--cyan)">failover to Chennai</span>. Chennai has last 45ms of async data — WAL replay will recover any gap.`;
+    s('bn').disabled=true; s('bc').disabled=true; s('bf').disabled=false;
+  }, 700);
+}
+
+// ── STAGE 3: Failover ─────────────────────────────────────────
+function go3() {
+  log('🔄 DNS failover: redirecting all traffic to Chennai DC...', 'inf');
+  log('Chennai: loading BSE app from latest snapshot + WAL replay...', 'inf');
+  pill('Failover in progress', 'warn');
+  setTimeout(()=>{
+    log('✅ Chennai BSE application UP — accepting live orders', 'ok');
+    log('RTO met: ~2.8 min | RPO: ~45ms async lag from Mumbai', 'ok');
+    pill('Chennai PRIMARY', '');
+    // Activate Chennai rack
+    s('chassis-che').setAttribute('stroke','#38E1FF'); s('chassis-che').setAttribute('fill','#060E14');
+    s('lbl-che').setAttribute('fill','#38E1FF');
+    s('role-che').textContent='PRIMARY ★'; s('role-che').setAttribute('fill','#38E1FF');
+    s('aura-che').setAttribute('fill','#38E1FF'); s('aura-che').setAttribute('opacity','.12');
+    // Chennai DB
+    s('db-che').setAttribute('opacity','1'); s('db-txt-che').setAttribute('opacity','1');
+    // User line to Chennai
+    s('ul-che').style.opacity='0.5';
+    // Replication from Chennai
+    setLine('rl-che-blr','0.88',true); setLine('rl-che-del','0.88',true);
+    // Mumbai lines stay dead
+    setLine('rl-mum-blr','0.06',false); setLine('rl-mum-che','0.06',false); setLine('rl-mum-del','0.06',false);
+    // Packets to Chennai
+    startPackets(CITIES.che);
+    // Metrics
+    s('mrps').style.color='var(--cyan)';
+    startMetrics();
+    s('mupt').textContent='~99.85%';
+    s('sc').className='card site-card fo'; s('sc').style.borderColor='var(--cyan)';
+    s('sn').textContent='🏦 Chennai';
+    s('sr').className='site-role fo'; s('sr').textContent='PRIMARY (FAILOVER)';
+    s('sip').textContent='10.0.2.1 · DC-CHE-01';
+    s('reprows').innerHTML = `
+      <div class="rep-row" style="opacity:.3"><div class="rdot" style="background:#3D4F63;"></div><span class="rsite">Mumbai</span><span class="rtype" style="color:#3D4F63;background:#111;">OFFLINE</span><span class="rlag">—</span></div>
+      <div class="rep-row"><div class="rdot" style="background:#4ADE80;box-shadow:0 0 5px #4ADE80;"></div><span class="rsite">Bangalore</span><span class="rtype" style="background:rgba(74,222,128,.1);color:var(--green);">ASYNC</span><span class="rlag" id="lb">8ms</span></div>
+      <div class="rep-row"><div class="rdot" style="background:#A78BFA;box-shadow:0 0 5px #A78BFA;"></div><span class="rsite">Delhi</span><span class="rtype" style="background:rgba(167,139,250,.08);color:var(--violet);">ASYNC</span><span class="rlag" id="ld">52ms</span></div>`;
+    s('note').innerHTML = `<span style="color:var(--cyan)">Chennai is now PRIMARY.</span> DNS TTL expired — browsers auto-resolve to Chennai IP.<br><br>All 12,000+ req/s now served from Chennai. Replicating to Bangalore and Delhi.<br><br>Mumbai will be restored separately. Once online, it will <span style="color:var(--amber)">re-sync from Chennai</span> and rejoin as standby.`;
+    s('bf').disabled=true;
+  }, 2800);
+}
+
+function go(n){ if(n===1)go1(); else if(n===2)go2(); else go3(); }
+
+function demo() {
+  reset();
+  setTimeout(go1, 400);
+  setTimeout(go2, 7000);
+  setTimeout(go3, 11000);
+}
+
+function reset() {
+  stopMetrics(); stopPackets();
+  document.getElementById('log').innerHTML = '';
+  // Remove any lingering packet circles
+  document.querySelectorAll('#msv circle[style*="glow-p"]').forEach(e=>e.remove());
+  pill('Mumbai PRIMARY');
+  // Restore Mumbai
+  const c=s('chassis-mum');
+  c.setAttribute('stroke','#FBBF24'); c.setAttribute('fill','#0E1408');
+  s('lbl-mum').setAttribute('fill','#FBBF24');
+  s('role-mum').textContent='PRIMARY ★'; s('role-mum').setAttribute('fill','#FBBF24');
+  s('aura-mum').setAttribute('fill','#FBBF24'); s('aura-mum').setAttribute('opacity','.1');
+  ['led-m1','led-m2','led-m3'].forEach(id=>{const el=s(id);if(el){el.setAttribute('fill','#FBBF24');el.style.animation='';}});
+  s('led-m4').setAttribute('fill','#4ADE80');
+  s('db-mum').setAttribute('opacity','1'); s('db-txt-mum').setAttribute('opacity','1');
+  // Chennai back to standby
+  s('chassis-che').setAttribute('stroke','#38E1FF'); s('chassis-che').setAttribute('fill','#061418');
+  s('lbl-che').setAttribute('fill','#38E1FF');
+  s('role-che').textContent='STANDBY'; s('role-che').setAttribute('fill','#7C8CA3');
+  s('aura-che').setAttribute('fill','#38E1FF'); s('aura-che').setAttribute('opacity','.07');
+  s('db-che').setAttribute('opacity','0'); s('db-txt-che').setAttribute('opacity','0');
+  // Lines
+  setLine('rl-mum-blr','0.85',true); setLine('rl-mum-che','0.85',true); setLine('rl-mum-del','0.85',true);
+  setLine('rl-che-blr','0',false); setLine('rl-che-del','0',false);
+  s('ul-mum').style.opacity='0.45'; s('ul-che').style.opacity='0';
+  // Metrics
+  s('mrps').textContent='12,430'; s('mrps').style.color='var(--amber)';
+  s('mdps').textContent='847'; s('mlat').textContent='2.1ms'; s('mupt').textContent='99.97%';
+  // Card
+  s('sc').className='card site-card'; s('sc').style.borderColor='';
+  s('sn').textContent='🏦 Mumbai'; s('sr').className='site-role'; s('sr').textContent='PRIMARY';
+  s('sip').textContent='10.0.0.1 · DC-MUM-01';
+  s('role-blr').textContent='STANDBY'; s('role-blr').setAttribute('fill','#7C8CA3');
+  s('role-delhi').textContent='STANDBY'; s('role-delhi').setAttribute('fill','#7C8CA3');
+  s('reprows').innerHTML = `
+    <div class="rep-row"><div class="rdot" style="background:#4ADE80;box-shadow:0 0 5px #4ADE80;"></div><span class="rsite">Bangalore</span><span class="rtype" style="background:rgba(74,222,128,.1);color:var(--green);">SYNC</span><span class="rlag" id="lb">2ms</span></div>
+    <div class="rep-row"><div class="rdot" style="background:#38E1FF;box-shadow:0 0 5px #38E1FF;"></div><span class="rsite">Chennai</span><span class="rtype" style="background:rgba(56,225,255,.08);color:var(--cyan);">ASYNC</span><span class="rlag" id="lc">45ms</span></div>
+    <div class="rep-row"><div class="rdot" style="background:#A78BFA;box-shadow:0 0 5px #A78BFA;"></div><span class="rsite">Delhi</span><span class="rtype" style="background:rgba(167,139,250,.08);color:var(--violet);">ASYNC</span><span class="rlag" id="ld">38ms</span></div>`;
+  s('note').innerHTML = `Mumbai is the <span style="color:var(--amber)">primary site</span> — all 12,000+ req/s land here. Each trade write goes to local DB first, then replicates.<br><br><span style="color:var(--green)">Bangalore</span>: <b>synchronous</b> — trade confirmed only after both sites write.<br><span style="color:var(--cyan)">Chennai/Delhi</span>: <b>asynchronous</b> — confirmed locally, replicated ~45ms later.`;
+  s('bn').disabled=false; s('bc').disabled=true; s('bf').disabled=true;
+}
+
+window.onload = () => setTimeout(reset, 150);
+</script>
+</body>
+</html>

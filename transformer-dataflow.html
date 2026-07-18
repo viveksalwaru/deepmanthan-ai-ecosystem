@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Transformer — Data Flow Through Every Block</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+:root{
+  --bg:#07080c;--surface:#0d0f16;--surface2:#111420;--border:#20263a;
+  --cyan:#00d4ff;--violet:#a78bfa;--green:#22c55e;--amber:#f59e0b;
+  --magenta:#e879f9;--red:#ef4444;--teal:#00e5c7;
+  --ink:#eef2f8;--ink-dim:#a9b4c6;--ink-faint:#6b7689;
+}
+body{background:var(--bg);color:var(--ink);font-family:'IBM Plex Mono',monospace;font-size:12px;display:flex;flex-direction:column;height:100vh;overflow:hidden}
+.hdr{flex-shrink:0;background:var(--surface);border-bottom:1px solid var(--border);padding:9px 20px;display:flex;align-items:center;gap:10px}
+.htitle{font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:700;letter-spacing:-.01em}
+.hsub{font-size:11px;color:var(--ink-dim);margin-top:2px}
+.badge{margin-left:auto;font-size:11px;padding:3px 12px;border-radius:20px;border:1px solid;white-space:nowrap}
+.tabs{flex-shrink:0;background:var(--bg);border-bottom:1px solid var(--border);display:flex;gap:2px;padding:0 18px}
+.tab{font-size:11px;padding:7px 15px;color:var(--ink-dim);text-decoration:none;border-bottom:2px solid transparent;cursor:pointer;transition:color .2s,border-color .2s}
+.tab:hover{color:var(--ink)}
+.tab.active{color:var(--cyan);border-bottom-color:var(--cyan);font-weight:600}
+.ctrlbar{flex-shrink:0;background:var(--surface);border-bottom:1px solid var(--border);padding:8px 20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.cbtn{padding:6px 13px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--ink);font-family:inherit;font-size:11px;cursor:pointer;transition:border-color .2s,color .2s}
+.cbtn:hover{border-color:var(--cyan);color:var(--cyan)}
+.cbtn.big{font-weight:600;padding:6px 18px}
+.slabel{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--ink-dim)}
+input[type=range]{-webkit-appearance:none;appearance:none;height:4px;width:90px;background:var(--border);border-radius:2px;outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--cyan);cursor:pointer;box-shadow:0 0 8px rgba(0,212,255,.5)}
+.pill{font-size:10px;color:var(--ink-dim);background:rgba(255,255,255,.05);border:1px solid var(--border);padding:3px 10px;border-radius:10px}
+.pill b{color:var(--ink)}
+/* architecture map */
+.map{flex-shrink:0;background:var(--surface);border-bottom:1px solid var(--border);padding:9px 16px 11px;position:relative;overflow-x:auto}
+.mapflow{display:flex;align-items:stretch;gap:5px;min-width:min-content}
+.mstep{position:relative;flex:0 0 auto;min-width:70px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 8px;text-align:center;transition:border-color .3s,box-shadow .3s,opacity .3s;opacity:.7}
+.mstep .mn{font-size:9.5px;font-weight:600;color:var(--ink-dim);white-space:nowrap}
+.mstep .mnum{font-size:7.5px;color:var(--ink-faint);margin-top:1px}
+.mstep.active{opacity:1;border-color:var(--sc,var(--cyan));box-shadow:0 0 15px var(--sg,rgba(0,212,255,.28))}
+.mstep.active .mn{color:var(--sc,var(--cyan))}
+.marrow{align-self:center;color:var(--ink-faint);font-size:11px;flex:0 0 auto}
+.blockwrap{position:relative;display:flex;align-items:stretch;gap:5px;padding:14px 10px 6px;margin:0 2px;border:1px dashed rgba(167,139,250,.4);border-radius:10px;background:rgba(167,139,250,.04)}
+.blocktag{position:absolute;top:-9px;left:10px;font-size:8.5px;letter-spacing:.06em;color:var(--violet);background:var(--surface);padding:0 7px;font-weight:600}
+.blockcount{position:absolute;top:-9px;right:10px;font-size:8.5px;color:var(--violet);background:var(--surface);padding:0 7px;font-weight:600}
+/* main work grid */
+.work{flex:1;min-height:0;display:grid;grid-template-columns:196px 264px 1fr;gap:12px;padding:11px 16px;overflow:hidden;position:relative}
+.bgcanvas{position:absolute;inset:0;z-index:0;pointer-events:none}
+.col{position:relative;z-index:1;min-height:0;display:flex;flex-direction:column;gap:10px;overflow:hidden}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:9px 12px;min-height:0}
+.card h3{font-family:'Space Grotesk',sans-serif;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.09em;color:var(--ink-faint);margin-bottom:8px}
+/* input tokens */
+.tokrow{display:flex;flex-wrap:wrap;gap:5px}
+.tokchip{font-size:11px;padding:3px 8px;border-radius:6px;border:1px solid rgba(0,212,255,.35);background:rgba(0,212,255,.1);color:var(--cyan)}
+.tokid{font-size:8px;color:var(--ink-faint);text-align:center;margin-top:2px}
+/* block ladder */
+.ladder{display:flex;flex-direction:column;gap:4px}
+.rung{display:flex;align-items:center;gap:8px;font-size:10px;color:var(--ink-dim);border:1px solid var(--border);border-radius:6px;padding:5px 8px;transition:border-color .3s,background .3s,color .3s}
+.rung .rn{width:16px;height:16px;border-radius:50%;border:1px solid var(--border);font-size:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.rung.done{color:var(--ink-dim);border-color:rgba(34,197,94,.3)}
+.rung.done .rn{border-color:var(--green);color:var(--green)}
+.rung.cur{color:var(--violet);border-color:var(--violet);background:rgba(167,139,250,.08)}
+.rung.cur .rn{border-color:var(--violet);color:var(--violet)}
+.depthbar{height:5px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:7px}
+.depthfill{height:100%;width:0;background:var(--violet);border-radius:3px;transition:width .4s}
+/* residual stream */
+.streamwrap{flex:1;min-height:0;display:flex;flex-direction:column}
+.streamhead{display:flex;justify-content:space-between;font-size:9px;color:var(--ink-faint);margin-bottom:5px}
+#stream{width:100%;height:100%;flex:1;min-height:0}
+.streamcap{font-size:9px;color:var(--ink-dim);text-align:center;margin-top:6px;line-height:1.4}
+.streamcap b{color:var(--teal)}
+/* operation panel */
+.op{flex:1;min-height:0;display:flex;flex-direction:column}
+#opsvg{width:100%;height:100%;flex:1;min-height:0}
+.opnote{font-size:9.5px;color:var(--ink-faint);text-align:center;margin-top:4px}
+/* explanation */
+.explain .st{font-family:'Space Grotesk',sans-serif;font-size:14px;font-weight:700;color:var(--sc,var(--cyan))}
+.explain .cap{font-family:'Sora',sans-serif;font-size:11.5px;line-height:1.5;color:var(--ink-dim);margin-top:5px}
+.chg{margin-top:9px;font-size:10px;color:var(--ink-dim)}
+.chg .cl{font-size:8px;text-transform:uppercase;letter-spacing:.09em;color:var(--ink-faint)}
+.chg b{color:var(--teal)}
+.shape{margin-top:9px;display:flex;align-items:center;gap:7px;font-size:11px}
+.shape .sb{font-family:'IBM Plex Mono',monospace;padding:2px 8px;border-radius:6px;background:var(--surface2);border:1px solid var(--border);color:var(--ink)}
+.shape .sarr{color:var(--teal)}
+.cstrip{flex-shrink:0;background:var(--surface);border-top:1px solid var(--border);padding:7px 16px;display:flex;gap:0}
+.csi{flex:1;padding:0 14px}
+.csi:first-child{padding-left:0}
+.csi:not(:last-child){border-right:1px solid var(--border)}
+.csl{font-size:8px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.1em;margin-bottom:3px}
+.csv{font-size:10px;color:var(--ink-dim);line-height:1.45}
+.tag{font-size:8px;padding:1px 5px;border-radius:3px;background:rgba(167,139,250,.16);color:var(--violet);border:1px solid rgba(167,139,250,.28)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block;animation:pulse 1.4s ease-in-out infinite;margin-right:2px}
+@keyframes opin{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.opin{animation:opin .45s cubic-bezier(.34,1.4,.64,1)}
+@media (prefers-reduced-motion:reduce){.dot,.opin{animation:none}}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div>
+    <div class="htitle">Transformer — Data Flow Through Every Block</div>
+    <div class="hsub">Follow a 4-token prompt as it becomes vectors, flows through N identical blocks that read &amp; rewrite one shared residual stream, and ends as a next-token prediction.</div>
+  </div>
+  <span class="badge" id="badge" style="border-color:var(--green);color:var(--green)"><span class="dot"></span>at rest</span>
+</div>
+
+<div class="ctrlbar">
+  <button class="cbtn big" id="btn-play" onclick="togglePlay()">▶ Play</button>
+  <button class="cbtn" onclick="step(-1)">◀ Step</button>
+  <button class="cbtn" onclick="step(1)">Step ▶</button>
+  <button class="cbtn" onclick="resetAll()">↺ Reset</button>
+  <label class="slabel">speed<input type="range" id="speed" min="1" max="10" value="6" oninput="speed=+this.value"></label>
+  <span class="pill">block <b id="blkc">–</b> / <b id="blkn">6</b></span>
+  <span class="pill" id="stagepill">idle · press Play</span>
+</div>
+
+<div class="map"><div class="mapflow" id="mapflow"></div></div>
+
+<div class="work" id="work">
+  <canvas class="bgcanvas" id="bg"></canvas>
+  <div class="col">
+    <div class="card"><h3>Input prompt</h3><div class="tokrow" id="tokrow"></div></div>
+    <div class="card" style="flex:1"><h3>Block stack (depth)</h3><div class="ladder" id="ladder"></div><div class="depthbar"><div class="depthfill" id="depthfill"></div></div>
+      <div style="font-size:9px;color:var(--ink-faint);margin-top:7px;line-height:1.4">Every block has the <b style="color:var(--violet)">same structure</b> and its own learned weights. Depth = how many times the stream is refined.</div></div>
+  </div>
+  <div class="col">
+    <div class="card streamwrap"><h3>Residual stream — the data</h3>
+      <div class="streamhead"><span>4 tokens →</span><span id="dimlbl">d_model = 6</span></div>
+      <svg id="stream" viewBox="0 0 260 190" preserveAspectRatio="xMidYMid meet"></svg>
+      <div class="streamcap" id="streamcap"></div>
+    </div>
+  </div>
+  <div class="col">
+    <div class="card op"><h3 id="optitle">Operation</h3><svg id="opsvg" viewBox="0 0 340 210" preserveAspectRatio="xMidYMid meet"></svg><div class="opnote" id="opnote"></div></div>
+    <div class="card explain" id="explain">
+      <div class="st" id="exst">–</div>
+      <div class="cap" id="excap"></div>
+      <div class="chg"><span class="cl">what changes</span><div id="exchg" style="margin-top:2px"></div></div>
+      <div class="shape" id="exshape"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const TEAL='#00e5c7',CY='#00d4ff',VI='#a78bfa',AM='#f59e0b',GR='#22c55e',MA='#e879f9',DIM='#6b7689',GRID='#20263a';
+const N_BLOCKS=6, NT=4, D=6;
+const TOKENS=['The','cat','sat','on'], TOKIDS=[1996,4937,2938,2006];
+const VOCAB=[['mat',0.44],['floor',0.19],['sofa',0.12],['couch',0.10],['roof',0.08],['chair',0.07]];
+/* stage list. block-internal = indices 3..8 */
+const ST=[
+ {k:'tok',  n:'Tokenize',     ac:CY, cap:'The raw text is split into tokens (sub-word pieces) and each maps to an integer ID from the vocabulary.', chg:'text → <b>token IDs</b>', sh:['"The cat sat on"','[4 ids]']},
+ {k:'emb',  n:'Embedding',    ac:CY, cap:'Each token ID looks up a learned dense vector. Similar tokens get similar vectors.', chg:'ids → <b>dense vectors</b>', sh:['[4 ids]','[4 × d]']},
+ {k:'pos',  n:'Positional',   ac:VI, cap:'A position signal (sinusoids or learned) is added so the model knows token order — attention itself is order-blind.', chg:'vectors <b>+= position</b>', sh:['[4 × d]','[4 × d]']},
+ {k:'ln1',  n:'LayerNorm',    ac:TEAL, cap:'Each token vector is normalized to mean 0 / variance 1. Stabilises the numbers before attention (pre-norm).', chg:'per-vector <b>normalize</b>', sh:['[4 × d]','[4 × d]']},
+ {k:'attn', n:'Self-Attention',ac:AM, cap:'Each token forms Query, Key, Value. Q·Kᵀ gives attention scores, softmax turns them to weights, and each token becomes a weighted blend of all Values. This is the ONLY step where tokens talk to each other.', chg:'each vector ← <b>context blend</b> of all tokens', sh:['[4 × d]','Q,K,V → [4 × d]']},
+ {k:'res1', n:'Add residual',  ac:GR, cap:'The attention output is added back onto the stream (a residual/skip connection), so information is never lost — only augmented.', chg:'stream <b>+= attention</b>', sh:['[4 × d]','[4 × d]']},
+ {k:'ln2',  n:'LayerNorm',    ac:TEAL, cap:'Normalize again before the feed-forward network.', chg:'per-vector <b>normalize</b>', sh:['[4 × d]','[4 × d]']},
+ {k:'ffn',  n:'Feed-Forward', ac:AM, cap:'A 2-layer MLP applied to each token independently: expand to a wider hidden size (≈4×d), apply GELU nonlinearity, then contract back. This is where most learned "knowledge" lives.', chg:'d → <b>4d → GELU → d</b>', sh:['[4 × d]','[4 × 4d] → [4 × d]']},
+ {k:'res2', n:'Add residual',  ac:GR, cap:'The feed-forward output is added back onto the stream.', chg:'stream <b>+= FFN</b>', sh:['[4 × d]','[4 × d]']},
+ {k:'lnf',  n:'Final LayerNorm',ac:TEAL, cap:'After all N blocks, one final normalization prepares the stream for the output projection.', chg:'per-vector <b>normalize</b>', sh:['[4 × d]','[4 × d]']},
+ {k:'unemb',n:'Unembed / LM head',ac:CY, cap:'The LAST token vector is multiplied by the output matrix to produce one logit per vocabulary word.', chg:'vector → <b>logits over vocab</b>', sh:['[d]','[vocab]']},
+ {k:'soft', n:'Softmax → token',ac:MA, cap:'Logits become probabilities via softmax; the highest-probability word is the predicted next token.', chg:'logits → <b>probabilities → next token</b>', sh:['[vocab]','1 token']},
+];
+const BSTART=3, BEND=8;
+const accG={[CY]:'rgba(0,212,255,.28)',[VI]:'rgba(167,139,250,.28)',[TEAL]:'rgba(0,229,199,.28)',[AM]:'rgba(245,158,11,.28)',[GR]:'rgba(34,197,94,.28)',[MA]:'rgba(232,121,249,.28)'};
+
+/* ---- state ---- */
+let cur=0, blockPass=1, playing=false, speed=6, stageT=0, raf=null, lastTs=0, started=false;
+let M=[];              // NT x D activation matrix
+const rng=mul(99);
+function mul(s){return ()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+const clamp=(v,a,b)=>v<a?a:v>b?b:v,lerp=(a,b,k)=>a+(b-a)*k;
+function pace(){ // per-stage seconds; repeats of the block run faster
+  const base={tok:1.6,emb:1.8,pos:1.6,ln1:1.0,attn:3.0,res1:1.0,ln2:1.0,ffn:2.6,res2:1.0,lnf:1.4,unemb:2.0,soft:2.2}[ST[cur].k];
+  const inBlock=cur>=BSTART&&cur<=BEND;
+  return inBlock&&blockPass>1? base*0.34 : base;
+}
+
+/* ---- matrices ---- */
+function zeros(){return Array.from({length:NT},()=>Array(D).fill(0));}
+function randM(sc){return Array.from({length:NT},()=>Array.from({length:D},()=>(rng()*2-1)*sc));}
+function normCols(m){return m.map(v=>{const mn=v.reduce((a,b)=>a+b,0)/D,sd=Math.sqrt(v.reduce((a,b)=>a+(b-mn)**2,0)/D)||1;return v.map(x=>(x-mn)/sd*0.6);});}
+function addPos(m){return m.map((v,t)=>v.map((x,d)=>clamp(x+Math.sin((t+1)/(1+d*0.7))*0.5,-1.2,1.2)));}
+function attnMix(m){ // each token = blend of tokens (causal-ish weights)
+  const out=zeros();
+  for(let i=0;i<NT;i++){const w=[];let s=0;for(let j=0;j<NT;j++){const a=j<=i?Math.exp(-(i-j)*0.5+ (rng()*0.3)):0.02;w.push(a);s+=a;}
+    for(let d=0;d<D;d++){let acc=0;for(let j=0;j<NT;j++)acc+=w[j]/s*m[j][d];out[i][d]=acc;}}
+  return out;
+}
+function gelu(x){return 0.5*x*(1+Math.tanh(0.7978*(x+0.044715*x*x*x)));}
+function ffnT(m){return m.map(v=>v.map(x=>clamp(gelu(x*1.6)*0.9+(rng()*0.2-0.1),-1.2,1.2)));}
+function addM(a,b,k){return a.map((v,t)=>v.map((x,d)=>clamp(x+b[t][d]*(k||1),-1.3,1.3)));}
+let lastDelta=zeros();
+
+/* apply the transform that ENTERS stage `i` (sets target M) */
+function applyStage(i){
+  const k=ST[i].k;
+  if(k==='tok'){ M=zeros(); }
+  else if(k==='emb'){ M=randM(0.85); }
+  else if(k==='pos'){ M=addPos(M); }
+  else if(k==='ln1'||k==='ln2'||k==='lnf'){ M=normCols(M); }
+  else if(k==='attn'){ lastDelta=attnMix(M); }
+  else if(k==='res1'){ M=addM(M,lastDelta,0.9); }
+  else if(k==='ffn'){ lastDelta=ffnT(M); }
+  else if(k==='res2'){ M=addM(M,lastDelta,0.7); }
+  // unemb/soft leave M; visualized in op panel
+}
+
+/* ---- build static DOM ---- */
+function build(){
+  // map flow with block bracket
+  const mf=document.getElementById('mapflow'); let html='';
+  for(let i=0;i<BSTART;i++){ html+=stepHTML(i); if(i<BSTART-1)html+=arrow(); }
+  html+=arrow();
+  html+='<div class="blockwrap"><span class="blocktag">one Transformer block</span><span class="blockcount" id="bcTag">repeats × '+N_BLOCKS+'</span>';
+  for(let i=BSTART;i<=BEND;i++){ html+=stepHTML(i); if(i<BEND)html+=arrow(); }
+  html+='</div>';
+  html+=arrow();
+  for(let i=BEND+1;i<ST.length;i++){ html+=stepHTML(i); if(i<ST.length-1)html+=arrow(); }
+  mf.innerHTML=html;
+  // input tokens
+  document.getElementById('tokrow').innerHTML=TOKENS.map((t,i)=>`<div><div class="tokchip">${t}</div><div class="tokid">${TOKIDS[i]}</div></div>`).join('');
+  // ladder
+  document.getElementById('ladder').innerHTML=Array.from({length:N_BLOCKS},(_,i)=>`<div class="rung" id="rung${i}"><span class="rn">${i+1}</span>block ${i+1}</div>`).join('');
+  document.getElementById('blkn').textContent=N_BLOCKS;
+  buildStream();
+}
+function stepHTML(i){const s=ST[i];return `<div class="mstep" id="ms${i}" style="--sc:${s.ac};--sg:${accG[s.ac]}"><div class="mn">${s.n}</div><div class="mnum">${i+1}</div></div>`;}
+function arrow(){return '<span class="marrow">→</span>';}
+function buildStream(){
+  const sv=document.getElementById('stream'); let h='';
+  const x0=42,y0=14,cw=46,gap=6,ch=(160-(D-1)*3)/D;
+  for(let t=0;t<NT;t++){ h+=`<text x="${x0+t*(cw+gap)+cw/2}" y="10" fill="${DIM}" font-size="8.5" font-family="IBM Plex Mono" text-anchor="middle">${TOKENS[t]}</text>`; }
+  for(let d=0;d<D;d++){ h+=`<text x="34" y="${y0+d*(ch+3)+ch/2+3}" fill="${DIM}" font-size="7" text-anchor="end" font-family="IBM Plex Mono">d${d}</text>`; }
+  for(let t=0;t<NT;t++)for(let d=0;d<D;d++){ h+=`<rect id="c_${t}_${d}" x="${x0+t*(cw+gap)}" y="${y0+d*(ch+3)}" width="${cw}" height="${ch}" rx="2" fill="#0d0f16" stroke="${GRID}" stroke-width=".5" style="transition:fill .5s"/>`; }
+  sv.innerHTML=h;
+}
+function colr(v){ const a=Math.min(1,Math.abs(v)); if(v>=0) return `rgba(245,158,11,${(0.12+0.8*a).toFixed(2)})`; return `rgba(0,212,255,${(0.12+0.8*a).toFixed(2)})`; }
+function paintStream(){ for(let t=0;t<NT;t++)for(let d=0;d<D;d++){ const el=document.getElementById(`c_${t}_${d}`); if(el)el.setAttribute('fill',colr(M[t][d]||0)); } }
+
+/* ---- op diagrams ---- */
+function drawOp(){
+  const k=ST[cur].k, ac=ST[cur].ac; let h='';
+  const T=(x,y,s,c,sz,an)=>`<text x="${x}" y="${y}" fill="${c||DIM}" font-size="${sz||9}" font-family="IBM Plex Mono" text-anchor="${an||'middle'}">${s}</text>`;
+  const box=(x,y,w,hh,c,lbl)=>`<rect x="${x}" y="${y}" width="${w}" height="${hh}" rx="4" fill="none" stroke="${c}" stroke-width="1.2"/>`+ (lbl?T(x+w/2,y+hh/2+3,lbl,c,9):'');
+  if(k==='tok'){ h+=T(170,20,'split text → sub-word tokens',DIM,9.5); const w=['The','cat','sat','on']; w.forEach((t,i)=>{h+=box(20+i*80,60,64,34,CY)+T(52+i*80,81,t,CY,11)+T(52+i*80,112,'id '+TOKIDS[i],DIM,8);}); h+=T(170,150,'vocabulary lookup → integer IDs',DIM,9); }
+  else if(k==='emb'){ h+=T(170,18,'ID → row of the embedding table',DIM,9.5); for(let i=0;i<4;i++){h+=box(18,40+i*40,40,30,CY,'id')+T(38,58+i*40,''+TOKIDS[i],CY,8);h+=`<path d="M60 ${55+i*40} L120 ${55+i*40}" stroke="${ac}" stroke-width="1.2" marker-end="url(#a)"/>`; for(let d=0;d<D;d++)h+=`<rect x="${126+d*30}" y="${42+i*40}" width="26" height="26" rx="2" fill="${colr((rng()*2-1))}"/>`;} h+=arrowDef(ac); }
+  else if(k==='pos'){ h+=T(170,18,'add a positional wave to each vector',DIM,9.5); let p='M20 150'; for(let x=0;x<=300;x+=6)p+=` L${20+x} ${110+Math.sin(x/22)*30}`; h+=`<path d="${p}" fill="none" stroke="${VI}" stroke-width="1.5"/>`; h+=T(170,40,'pos 0    pos 1    pos 2    pos 3',DIM,8); for(let i=0;i<4;i++)h+=`<circle cx="${55+i*75}" cy="${110+Math.sin((55+i*75-20)/22)*30}" r="4" fill="${VI}"/>`; h+=T(170,180,'same word, different position → different vector',DIM,8.5); }
+  else if(k==='ln1'||k==='ln2'||k==='lnf'){ h+=T(170,20,'rescale each vector → mean 0, variance 1',DIM,9.5);
+    h+=T(120,44,'before',AM,9)+T(250,44,'after',TEAL,9);
+    h+=`<line x1="120" y1="52" x2="120" y2="176" stroke="${GRID}"/>`+`<line x1="250" y1="52" x2="250" y2="176" stroke="${GRID}"/>`;
+    for(let d=0;d<D;d++){ const b=(rng()*2-1), w=b*42; h+=`<rect x="${(b>=0?120:120+w).toFixed(1)}" y="${60+d*19}" width="${Math.abs(w).toFixed(1)}" height="12" rx="1.5" fill="${colr(b)}"/>`;
+      const a=(rng()*2-1)*0.55, wa=a*42; h+=`<rect x="${(a>=0?250:250+wa).toFixed(1)}" y="${60+d*19}" width="${Math.abs(wa).toFixed(1)}" height="12" rx="1.5" fill="rgba(0,229,199,.6)"/>`; }
+    h+=T(120,194,'uneven spread',AM,8)+T(250,194,'centered, unit scale',TEAL,8); }
+  else if(k==='attn'){ h+=T(170,14,'Q·Kᵀ → softmax → weighted sum of V',DIM,9.5);
+    // left: token nodes blending (earlier → later)
+    for(let i=0;i<NT;i++){ h+=`<circle cx="30" cy="${54+i*34}" r="10" fill="none" stroke="${AM}" stroke-width="1.2"/>`+T(30,57+i*34,TOKENS[i].slice(0,3),AM,7); }
+    for(let i=0;i<NT;i++)for(let j=0;j<=i;j++) h+=`<path d="M40 ${54+j*34} Q 84 ${54+i*34} 126 ${54+i*34}" fill="none" stroke="${AM}" stroke-width="${(0.4+(1-(i-j)/4)).toFixed(1)}" opacity=".3"/>`;
+    h+=T(80,200,'each token blends earlier ones',DIM,8);
+    // right: attention-weight grid (clear label zones)
+    const gx=214,gy=52,cs=25;
+    h+=T(gx+2*cs,40,'keys →',DIM,8)+T(gx-34,44,'queries',DIM,8,'middle');
+    for(let i=0;i<NT;i++)for(let j=0;j<NT;j++){const w=j<=i?Math.exp(-(i-j)*0.6):0.03;h+=`<rect x="${gx+j*cs}" y="${gy+i*cs}" width="${cs-2}" height="${cs-2}" rx="2" fill="rgba(245,158,11,${(0.1+0.85*Math.min(1,w)).toFixed(2)})"/>`;}
+    for(let i=0;i<NT;i++){ h+=T(gx-6,gy+i*cs+cs/2+3,TOKENS[i].slice(0,3),DIM,7,'end'); h+=T(gx+i*cs+cs/2,gy+NT*cs+11,TOKENS[i].slice(0,3),DIM,7); }
+    h+=T(gx+2*cs,gy+NT*cs+26,'bright = strong attention',DIM,7.5); }
+  else if(k==='res1'||k==='res2'){ const src=k==='res1'?'attention':'feed-forward'; h+=T(170,26,'residual / skip connection',DIM,9.5);
+    h+=box(30,80,90,46,TEAL,'stream')+box(220,80,90,46,ac,src); h+=`<circle cx="170" cy="103" r="18" fill="none" stroke="${GR}" stroke-width="1.5"/>`+T(170,109,'+',GR,20); h+=`<path d="M120 103 L150 103" stroke="${TEAL}" stroke-width="1.4" marker-end="url(#a)"/><path d="M220 103 L190 103" stroke="${ac}" stroke-width="1.4" marker-end="url(#a)"/>`; h+=`<path d="M170 121 L170 160" stroke="${GR}" stroke-width="1.4" marker-end="url(#a)"/>`+T(170,178,'updated stream',GR,8.5)+arrowDef(GR); }
+  else if(k==='ffn'){ h+=T(170,16,'per token: expand → GELU → contract',DIM,9.5);
+    for(let d=0;d<D;d++)h+=`<rect x="24" y="${34+d*22}" width="22" height="16" rx="2" fill="${colr(rng()*2-1)}"/>`; h+=T(35,196,'d = '+D,DIM,8);
+    for(let d=0;d<16;d++)h+=`<rect x="120" y="${30+d*10}" width="20" height="7" rx="1.5" fill="rgba(245,158,11,.5)"/>`; h+=T(130,196,'4d (GELU)',AM,8);
+    // gelu curve
+    let p='M170 120'; for(let x=0;x<=60;x+=3){const xv=(x-30)/12;p+=` L${170+x} ${120-gelu(xv)*14}`;} h+=`<path d="${p}" fill="none" stroke="${AM}" stroke-width="1.3"/>`+T(200,60,'GELU',AM,8);
+    for(let d=0;d<D;d++)h+=`<rect x="292" y="${34+d*22}" width="22" height="16" rx="2" fill="rgba(0,229,199,.55)"/>`; h+=T(303,196,'d = '+D,TEAL,8);
+    h+=`<path d="M48 110 L118 110" stroke="${ac}" stroke-width="1.2" marker-end="url(#a)"/><path d="M142 110 L288 110" stroke="${TEAL}" stroke-width="1.2" marker-end="url(#a)"/>`+arrowDef(TEAL); }
+  else if(k==='unemb'){ h+=T(170,16,'last token vector → one score per word',DIM,9.5);
+    for(let d=0;d<D;d++)h+=`<rect x="24" y="${40+d*22}" width="22" height="16" rx="2" fill="${colr(rng()*2-1)}"/>`; h+=T(35,196,'"on" vector',DIM,8);
+    h+=`<path d="M50 100 L96 100" stroke="${CY}" stroke-width="1.3" marker-end="url(#a)"/>`+box(96,40,40,120,CY,'')+T(116,104,'Wᵤ',CY,11);
+    VOCAB.forEach((v,i)=>{h+=T(160,52+i*24,v[0],DIM,9,'start')+`<rect x="196" y="${44+i*24}" width="${v[1]*230}" height="13" rx="2" fill="rgba(0,212,255,.5)"/>`+T(196+v[1]*230+6,54+i*24,v[1].toFixed(2),CY,8,'start');}); h+=arrowDef(CY); }
+  else if(k==='soft'){ h+=T(170,16,'softmax → probabilities → pick the top',DIM,9.5);
+    VOCAB.forEach((v,i)=>{const top=i===0;h+=T(60,52+i*24,v[0],top?MA:DIM,top?10:9,'start')+`<rect x="96" y="${44+i*24}" width="${v[1]*200}" height="14" rx="2" fill="${top?'rgba(232,121,249,.75)':'rgba(167,139,250,.4)'}"/>`+T(96+v[1]*200+6,55+i*24,(v[1]*100).toFixed(0)+'%',top?MA:DIM,8,'start');});
+    h+=`<rect x="60" y="176" width="120" height="26" rx="6" fill="rgba(232,121,249,.14)" stroke="${MA}"/>`+T(120,193,'next token: "mat"',MA,10); }
+  document.getElementById('opsvg').innerHTML=h;
+  const os=document.getElementById('opsvg'); os.classList.remove('opin'); void os.offsetWidth; os.classList.add('opin');
+}
+function arrowDef(c){return `<defs><marker id="a" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0 L7 3.5 L0 7 z" fill="${c}"/></marker></defs>`;}
+
+/* ---- render current stage ---- */
+function renderStage(){
+  const s=ST[cur];
+  document.querySelectorAll('.mstep').forEach((e,i)=>e.classList.toggle('active',i===cur));
+  const ms=document.getElementById('ms'+cur); if(ms) ms.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'});
+  // ladder
+  for(let i=0;i<N_BLOCKS;i++){const r=document.getElementById('rung'+i);const inBlk=cur>=BSTART&&cur<=BEND;
+    r.classList.toggle('cur',inBlk&&i===blockPass-1); r.classList.toggle('done', i<blockPass-1 || (cur>BEND && true) );}
+  document.getElementById('depthfill').style.width=((cur>BEND?N_BLOCKS:(cur<BSTART?0:blockPass))/N_BLOCKS*100)+'%';
+  document.getElementById('blkc').textContent=(cur<BSTART)?'0':(cur>BEND?N_BLOCKS:blockPass);
+  document.getElementById('stagepill').textContent=(cur+1)+' / '+ST.length+' · '+s.n;
+  // badge
+  const b=document.getElementById('badge'); b.innerHTML=(!started?'<span class="dot"></span>at rest':'● '+s.n); b.style.borderColor=s.ac; b.style.color=s.ac;
+  // explanation
+  const ex=document.getElementById('explain'); ex.style.setProperty('--sc',s.ac);
+  document.getElementById('exst').textContent=(cur+1)+'. '+s.n;
+  document.getElementById('excap').innerHTML=s.cap;
+  document.getElementById('exchg').innerHTML=s.chg;
+  document.getElementById('exshape').innerHTML=`<span class="sb">${s.sh[0]}</span><span class="sarr">→</span><span class="sb">${s.sh[1]}</span>`;
+  document.getElementById('optitle').textContent=s.n;
+  document.getElementById('streamcap').innerHTML = cur<1?'waiting for vectors…' : cur>=10? 'reading the <b>last</b> token vector to predict the next word' : 'the same <b>[4 × d]</b> stream, rewritten in place';
+  paintStream(); drawOp();
+}
+
+/* ---- flow ---- */
+function goStage(i){ cur=clamp(i,0,ST.length-1); applyStage(cur); renderStage(); }
+function step(dir){ started=true; playing=false; document.getElementById('btn-play').textContent='▶ Play';
+  if(dir>0){
+    if(cur===BEND && blockPass<N_BLOCKS){ blockPass++; goStage(BSTART); return; }
+    if(cur<ST.length-1) goStage(cur+1);
+  } else {
+    if(cur===BSTART && blockPass>1){ blockPass--; goStage(BEND); return; }
+    if(cur>0) goStage(cur-1);
+  }
+}
+function advance(){ // play auto-advance
+  if(cur===BEND){ if(blockPass<N_BLOCKS){ blockPass++; goStage(BSTART); return; } else { goStage(BEND+1); return; } }
+  if(cur<ST.length-1){ goStage(cur+1); }
+  else { playing=false; document.getElementById('btn-play').textContent='↺ Replay'; }
+}
+function togglePlay(){ if(playing){ playing=false; document.getElementById('btn-play').textContent='▶ Play'; return; }
+  if(cur>=ST.length-1){ resetAll(); }
+  started=true; playing=true; stageT=0; document.getElementById('btn-play').textContent='⏸ Pause'; }
+function resetAll(){ playing=false; started=false; cur=0; blockPass=1; stageT=0; document.getElementById('btn-play').textContent='▶ Play'; goStage(0); }
+
+/* ---- persistent rAF: timing + ambient ---- */
+const bg=document.getElementById('bg'); let bx=0,bw=0,bh=0,parts=[];
+function sizeBG(){ const w=document.getElementById('work'); bw=w.clientWidth; bh=w.clientHeight; bg.width=bw; bg.height=bh;
+  if(!parts.length) parts=Array.from({length:26},()=>({x:Math.random()*bw,y:Math.random()*bh,ph:Math.random()*6.28,sp:.1+Math.random()*.25,a:6+Math.random()*16,r:1+Math.random()*2})); }
+function frame(ts){ const dt=Math.min(.05,(ts-lastTs)/1000); lastTs=ts; const ns=ts/1000;
+  if(playing){ stageT+=dt*(speed/5); if(stageT>=pace()){ stageT=0; advance(); } }
+  // ambient particles
+  const ctx=bg.getContext('2d'); ctx.clearRect(0,0,bw,bh);
+  for(const p of parts){ const x=p.x+Math.sin(ns*p.sp+p.ph)*p.a, y=p.y+Math.cos(ns*p.sp*.9+p.ph)*p.a;
+    ctx.beginPath(); ctx.arc(x,y,p.r,0,6.2832); ctx.fillStyle='rgba(120,140,180,'+(0.05+0.05*(1+Math.sin(ns+p.ph))).toFixed(3)+')'; ctx.fill(); }
+  raf=requestAnimationFrame(frame);
+}
+
+/* ---- init ---- */
+function init(){ build(); goStage(0); sizeBG(); lastTs=performance.now(); raf=requestAnimationFrame(frame); }
+window.addEventListener('resize',sizeBG);
+document.addEventListener('visibilitychange',()=>{ if(document.hidden&&raf){cancelAnimationFrame(raf);raf=null;} else if(!document.hidden&&!raf){lastTs=performance.now();raf=requestAnimationFrame(frame);} });
+init();
+</script>
+</body>
+</html>
+                                                                                                            

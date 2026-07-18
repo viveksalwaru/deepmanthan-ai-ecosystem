@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Big Data — Bank Analytics</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#060A11;--panel:#0D1520;--panel2:#101B28;
+  --line:#1A2840;--inkd:#7C8CA3;--inkf:#2E3F55;
+  --ink:#DCE6F2;--cyan:#38E1FF;--teal:#2DD4BF;
+  --green:#4ADE80;--amber:#FBBF24;--violet:#A78BFA;
+  --rose:#FB5E6D;--orange:#FB923C;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;overflow:hidden;background:var(--bg);}
+body{font-family:"Sora",sans-serif;color:var(--ink);display:flex;flex-direction:column;}
+
+/* Header */
+.hdr{height:46px;background:linear-gradient(90deg,#0A1428,#0C1830);border-bottom:1px solid var(--line);
+  display:flex;align-items:center;padding:0 16px;gap:12px;flex-shrink:0;}
+.hdr-ico{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;font-size:16px;
+  background:linear-gradient(135deg,rgba(56,225,255,.18),rgba(167,139,250,.12));
+  border:1px solid rgba(56,225,255,.3);flex-shrink:0;}
+.hdr-title{font-family:"Space Grotesk",sans-serif;font-weight:700;font-size:.88rem;
+  background:linear-gradient(90deg,#38E1FF,#A78BFA 60%);
+  -webkit-background-clip:text;background-clip:text;color:#DCE6F2;}
+.hdr-sub{font-size:.62rem;color:var(--inkd);margin-top:1px;}
+.pill{display:flex;align-items:center;gap:5px;font-family:"IBM Plex Mono",monospace;
+  font-size:.6rem;letter-spacing:.09em;text-transform:uppercase;padding:4px 10px;
+  border-radius:999px;border:1px solid rgba(74,222,128,.3);background:rgba(74,222,128,.07);
+  color:var(--green);transition:all .5s;margin-left:auto;flex-shrink:0;}
+.pill .dot{width:6px;height:6px;border-radius:50%;background:var(--green);
+  box-shadow:0 0 6px var(--green);animation:pb 1.8s infinite;}
+.pill.proc{border-color:rgba(56,225,255,.35);background:rgba(56,225,255,.08);color:var(--cyan);}
+.pill.proc .dot{background:var(--cyan);box-shadow:0 0 6px var(--cyan);animation:pb .7s infinite;}
+.pill.alert{border-color:rgba(251,94,109,.4);background:rgba(251,94,109,.1);color:var(--rose);}
+.pill.alert .dot{background:var(--rose);box-shadow:0 0 6px var(--rose);animation:blink .4s infinite;}
+@keyframes pb{50%{opacity:.3;}}@keyframes blink{50%{opacity:0;}}
+
+/* Layout */
+.main{flex:1;display:flex;overflow:hidden;min-height:0;}
+.viz{flex:1;position:relative;overflow:hidden;
+  background:radial-gradient(ellipse 70% 60% at 50% 45%,rgba(56,225,255,.025),transparent);}
+#bsv{width:100%;height:100%;}
+.rp{width:268px;flex-shrink:0;border-left:1px solid var(--line);display:flex;flex-direction:column;background:var(--panel);}
+
+/* Right panel */
+.rp-hdr{padding:8px 13px;border-bottom:1px solid var(--line);font-family:"IBM Plex Mono",monospace;
+  font-size:.62rem;letter-spacing:.1em;text-transform:uppercase;color:var(--inkd);}
+.rp-body{flex:1;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:8px;}
+.card{background:var(--panel2);border:1px solid var(--line);border-radius:9px;padding:9px 12px;}
+.card-lbl{font-family:"IBM Plex Mono",monospace;font-size:.6rem;color:var(--inkd);
+  text-transform:uppercase;letter-spacing:.07em;margin-bottom:5px;}
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:6px;}
+.mc{background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;}
+.mc .ml{font-family:"IBM Plex Mono",monospace;font-size:.58rem;color:var(--inkd);text-transform:uppercase;}
+.mc .mv{font-family:"Space Grotesk",sans-serif;font-size:.88rem;font-weight:700;margin-top:2px;}
+.note{font-size:.7rem;color:var(--inkd);line-height:1.65;}
+
+/* Controls */
+.ctrls{display:flex;gap:6px;padding:8px 12px;border-top:1px solid var(--line);
+  background:#09121E;flex-wrap:wrap;flex-shrink:0;}
+.btn{padding:6px 11px;border-radius:7px;cursor:pointer;font-family:"IBM Plex Mono",monospace;
+  font-size:.66rem;letter-spacing:.03em;border:1px solid var(--line);
+  background:var(--panel);color:var(--inkd);transition:all .2s;}
+.btn:hover:not(:disabled){background:var(--line);color:var(--ink);}
+.btn.c{border-color:rgba(56,225,255,.3);background:rgba(56,225,255,.07);color:var(--cyan);}
+.btn.g{border-color:rgba(74,222,128,.3);background:rgba(74,222,128,.07);color:var(--green);}
+.btn.v{border-color:rgba(167,139,250,.3);background:rgba(167,139,250,.07);color:var(--violet);}
+.btn.r{border-color:rgba(251,94,109,.35);background:rgba(251,94,109,.08);color:var(--rose);}
+.btn.a{border-color:rgba(251,191,36,.3);background:rgba(251,191,36,.07);color:var(--amber);}
+.btn:disabled{opacity:.3;cursor:not-allowed;}
+
+/* Log */
+.log{height:100px;border-top:1px solid var(--line);overflow-y:auto;
+  padding:5px 10px;background:#040810;flex-shrink:0;}
+.le{font-family:"IBM Plex Mono",monospace;font-size:.66rem;padding:2px 0;
+  border-bottom:1px solid #0c1620;display:flex;gap:6px;}
+.lt{color:var(--inkf);flex-shrink:0;}
+.lm.ok{color:var(--green);}.lm.err{color:var(--rose);}
+.lm.warn{color:var(--amber);}.lm.inf{color:var(--cyan);}
+
+/* Fraud result banner inside SVG overlay */
+.fraud-banner{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  background:#0A0510;border:2px solid #FB5E6D;border-radius:12px;
+  padding:16px 24px;text-align:center;z-index:20;display:none;
+  box-shadow:0 0 40px rgba(251,94,109,.3);}
+.fb-title{font-family:"Space Grotesk",sans-serif;font-size:1.1rem;font-weight:700;color:var(--rose);}
+.fb-stat{font-family:"IBM Plex Mono",monospace;font-size:.78rem;color:var(--inkd);margin-top:6px;}
+.fb-highlight{color:var(--amber);font-weight:600;}
+.fb-speed{font-family:"Space Grotesk",sans-serif;font-size:.8rem;color:var(--green);margin-top:8px;}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-ico">📊</div>
+  <div>
+    <div class="hdr-title">Big Data — Distributed Bank Analytics</div>
+    <div class="hdr-sub">HDFC Bank · 5 Data Nodes · 847M Transactions · Parallel Processing · Fraud Detection</div>
+  </div>
+  <div class="pill" id="mpill"><div class="dot"></div><span id="ptxt">Cluster READY</span></div>
+</div>
+
+<div class="main">
+  <div class="viz" id="viz">
+    <svg id="bsv" viewBox="0 -50 580 468" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <filter id="glow-c"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <filter id="glow-g"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <filter id="glow-r"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <filter id="glow-v"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <filter id="glow-a"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <marker id="arr-c" viewBox="0 0 8 8" refX="6" refY="4" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0L8,4L0,8Z" fill="#38E1FF" opacity=".8"/></marker>
+        <marker id="arr-g" viewBox="0 0 8 8" refX="6" refY="4" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0L8,4L0,8Z" fill="#4ADE80" opacity=".8"/></marker>
+        <marker id="arr-r" viewBox="0 0 8 8" refX="6" refY="4" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0L8,4L0,8Z" fill="#FB5E6D" opacity=".9"/></marker>
+        <marker id="arr-v" viewBox="0 0 8 8" refX="6" refY="4" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0L8,4L0,8Z" fill="#A78BFA" opacity=".8"/></marker>
+      </defs>
+
+      <!-- ── HDFC BANK HORIZONTAL TRANSACTION SOURCES ── -->
+      <!-- Enclosing label -->
+      <rect x="10" y="8" width="560" height="76" rx="8" fill="#060E1A" stroke="#1E3A50" stroke-width="1" stroke-dasharray="4 4" opacity=".7"/>
+      <text x="290" y="20" text-anchor="middle" font-family="Sora" font-size="8" fill="#ffffff" letter-spacing=".15em">HDFC BANK — TRANSACTION SOURCES (HORIZONTAL SCALING)</text>
+
+      <!-- Source 1: UPI Gateway -->
+      <g id="src-upi" transform="translate(72,52)">
+        <rect x="-52" y="-24" width="104" height="46" rx="7" fill="#061420" stroke="#38E1FF" stroke-width="1.4" filter="url(#glow-c)"/>
+        <text y="-9" text-anchor="middle" font-size="13">📱</text>
+        <text y="6" text-anchor="middle" font-family="IBM Plex Mono" font-size="8.5" fill="#38E1FF" font-weight="700">UPI Gateway</text>
+        <text y="17" text-anchor="middle" font-family="Sora" font-size="7.5" fill="#4A6A80">320M txns/day</text>
+      </g>
+
+      <!-- Source 2: ATM Network -->
+      <g id="src-atm" transform="translate(207,52)">
+        <rect x="-52" y="-24" width="104" height="46" rx="7" fill="#1A1200" stroke="#FBBF24" stroke-width="1.4" filter="url(#glow-a)"/>
+        <text y="-9" text-anchor="middle" font-size="13">🏧</text>
+        <text y="6" text-anchor="middle" font-family="IBM Plex Mono" font-size="8.5" fill="#FBBF24" font-weight="700">ATM Network</text>
+        <text y="17" text-anchor="middle" font-family="Sora" font-size="7.5" fill="#6A5A20">14,000 ATMs</text>
+      </g>
+
+      <!-- Source 3: Card Processing -->
+      <g id="src-card" transform="translate(373,52)">
+        <rect x="-52" y="-24" width="104" height="46" rx="7" fill="#0E0A1E" stroke="#A78BFA" stroke-width="1.4" filter="url(#glow-v)"/>
+        <text y="-9" text-anchor="middle" font-size="13">💳</text>
+        <text y="6" text-anchor="middle" font-family="IBM Plex Mono" font-size="8.5" fill="#A78BFA" font-weight="700">Card Processing</text>
+        <text y="17" text-anchor="middle" font-family="Sora" font-size="7.5" fill="#5A4A80">Visa · Mastercard</text>
+      </g>
+
+      <!-- Source 4: NEFT / RTGS -->
+      <g id="src-neft" transform="translate(508,52)">
+        <rect x="-52" y="-24" width="104" height="46" rx="7" fill="#061A08" stroke="#4ADE80" stroke-width="1.4" filter="url(#glow-g)"/>
+        <text y="-9" text-anchor="middle" font-size="13">🏦</text>
+        <text y="6" text-anchor="middle" font-family="IBM Plex Mono" font-size="8.5" fill="#4ADE80" font-weight="700">NEFT / RTGS</text>
+        <text y="17" text-anchor="middle" font-family="Sora" font-size="7.5" fill="#2A6030">₹8 Lakh Cr/day</text>
+      </g>
+
+      <!-- tx count badge on coordinator (moved from source) -->
+
+      <!-- Feed lines: each source → Coordinator (fan-in) -->
+      <line id="fl-upi"  x1="100" y1="76" x2="252" y2="150" stroke="#38E1FF" stroke-width="1.4" stroke-dasharray="6 4" opacity=".55" marker-end="url(#arr-c)" style="animation:dash 1s linear infinite;"/>
+      <line id="fl-atm"  x1="230" y1="76" x2="272" y2="150" stroke="#FBBF24" stroke-width="1.4" stroke-dasharray="6 4" opacity=".55" marker-end="url(#arr-c)" style="animation:dash 1s linear infinite;animation-delay:.25s;"/>
+      <line id="fl-card" x1="350" y1="76" x2="308" y2="150" stroke="#A78BFA" stroke-width="1.4" stroke-dasharray="6 4" opacity=".55" marker-end="url(#arr-c)" style="animation:dash 1s linear infinite;animation-delay:.5s;"/>
+      <line id="fl-neft" x1="480" y1="76" x2="328" y2="150" stroke="#4ADE80" stroke-width="1.4" stroke-dasharray="6 4" opacity=".55" marker-end="url(#arr-c)" style="animation:dash 1s linear infinite;animation-delay:.75s;"/>
+
+      <!-- ── COORDINATOR NODE ── -->
+      <g id="coord-group" transform="translate(290,182)">
+        <ellipse cx="0" cy="4" rx="52" ry="18" fill="#38E1FF" opacity=".07" filter="url(#glow-c)"/>
+        <rect x="-50" y="-32" width="100" height="62" rx="8" fill="#071420"
+          stroke="#38E1FF" stroke-width="2" id="coord-chassis"/>
+        <!-- icon -->
+        <text y="-12" text-anchor="middle" font-size="20">⚙️</text>
+        <text y="6" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#38E1FF" font-weight="700">COORDINATOR</text>
+        <text y="20" text-anchor="middle" font-family="Sora" font-size="7.5" fill="#7C8CA3">NameNode / Broker</text>
+        <rect x="-38" y="-50" width="76" height="16" rx="4" fill="#0D1E2E" stroke="#38E1FF44"/>
+        <text x="0" y="-39" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="#38E1FF" id="tx-count">0 TXN/s</text>
+      </g>
+
+      <!-- ── DISTRIBUTION LINES (Coordinator → DataNodes) ── -->
+      <!-- Colors: DN1=violet, DN2=green, DN3=amber, DN4=cyan, DN5=rose -->
+      <line id="ln-1" x1="260" y1="202" x2="64" y2="292"  stroke="#A78BFA" stroke-width="1.5" stroke-dasharray="7 5" opacity=".7" style="animation:dash 1.2s linear infinite;" marker-end="url(#arr-v)"/>
+      <line id="ln-2" x1="272" y1="208" x2="168" y2="292" stroke="#4ADE80" stroke-width="1.5" stroke-dasharray="7 5" opacity=".7" style="animation:dash 1.2s linear infinite;animation-delay:.2s;" marker-end="url(#arr-g)"/>
+      <line id="ln-3" x1="290" y1="214" x2="290" y2="292" stroke="#FBBF24" stroke-width="1.5" stroke-dasharray="7 5" opacity=".7" style="animation:dash 1.2s linear infinite;animation-delay:.4s;" marker-end="url(#arr-c)"/>
+      <line id="ln-4" x1="308" y1="208" x2="412" y2="292" stroke="#38E1FF" stroke-width="1.5" stroke-dasharray="7 5" opacity=".7" style="animation:dash 1.2s linear infinite;animation-delay:.6s;" marker-end="url(#arr-c)"/>
+      <line id="ln-5" x1="320" y1="202" x2="516" y2="292" stroke="#FB5E6D" stroke-width="1.5" stroke-dasharray="7 5" opacity=".7" style="animation:dash 1.2s linear infinite;animation-delay:.8s;" marker-end="url(#arr-r)"/>
+
+      <!-- Replication lines between nodes (peer-to-peer, shown in Stage 3) -->
+      <line id="rep-12" x1="90" y1="320" x2="142" y2="320" stroke="#A78BFA" stroke-width="1" stroke-dasharray="4 4" opacity="0" style="animation:dash .8s linear infinite;"/>
+      <line id="rep-23" x1="194" y1="320" x2="264" y2="320" stroke="#4ADE80" stroke-width="1" stroke-dasharray="4 4" opacity="0" style="animation:dash .8s linear infinite;"/>
+      <line id="rep-34" x1="316" y1="320" x2="386" y2="320" stroke="#FBBF24" stroke-width="1" stroke-dasharray="4 4" opacity="0" style="animation:dash .8s linear infinite;"/>
+      <line id="rep-45" x1="438" y1="320" x2="490" y2="320" stroke="#38E1FF" stroke-width="1" stroke-dasharray="4 4" opacity="0" style="animation:dash .8s linear infinite;"/>
+      <!-- Cross-node replication (factor 3: each shard also on +2 nodes) -->
+      <path id="rep-13" d="M 80,308 Q 185,270 270,308" stroke="#A78BFA" stroke-width="1" fill="none" stroke-dasharray="3 5" opacity="0" style="animation:dash .9s linear infinite;"/>
+      <path id="rep-24" d="M 185,308 Q 300,268 392,308" stroke="#4ADE80" stroke-width="1" fill="none" stroke-dasharray="3 5" opacity="0" style="animation:dash .9s linear infinite;"/>
+      <path id="rep-35" d="M 304,308 Q 408,268 504,308" stroke="#FBBF24" stroke-width="1" fill="none" stroke-dasharray="3 5" opacity="0" style="animation:dash .9s linear infinite;"/>
+
+      <!-- Fraud query waves (hidden initially) -->
+      <line id="fq-1" x1="258" y1="198" x2="72" y2="296" stroke="#FB5E6D" stroke-width="2.5" opacity="0" marker-end="url(#arr-r)"/>
+      <line id="fq-2" x1="270" y1="205" x2="172" y2="296" stroke="#FB5E6D" stroke-width="2.5" opacity="0" marker-end="url(#arr-r)"/>
+      <line id="fq-3" x1="290" y1="214" x2="290" y2="296" stroke="#FB5E6D" stroke-width="2.5" opacity="0" marker-end="url(#arr-r)"/>
+      <line id="fq-4" x1="310" y1="205" x2="408" y2="296" stroke="#FB5E6D" stroke-width="2.5" opacity="0" marker-end="url(#arr-r)"/>
+      <line id="fq-5" x1="322" y1="198" x2="508" y2="296" stroke="#FB5E6D" stroke-width="2.5" opacity="0" marker-end="url(#arr-r)"/>
+
+      <!-- Result return lines (hidden initially) -->
+      <line id="rr-1" x1="72" y1="296" x2="258" y2="198" stroke="#4ADE80" stroke-width="1.5" opacity="0" stroke-dasharray="5 3" marker-end="url(#arr-g)"/>
+      <line id="rr-2" x1="172" y1="296" x2="270" y2="205" stroke="#4ADE80" stroke-width="1.5" opacity="0" stroke-dasharray="5 3" marker-end="url(#arr-g)"/>
+      <line id="rr-3" x1="290" y1="296" x2="290" y2="214" stroke="#4ADE80" stroke-width="1.5" opacity="0" stroke-dasharray="5 3" marker-end="url(#arr-g)"/>
+      <line id="rr-4" x1="408" y1="296" x2="310" y2="205" stroke="#4ADE80" stroke-width="1.5" opacity="0" stroke-dasharray="5 3" marker-end="url(#arr-g)"/>
+      <line id="rr-5" x1="508" y1="296" x2="322" y2="198" stroke="#4ADE80" stroke-width="1.5" opacity="0" stroke-dasharray="5 3" marker-end="url(#arr-g)"/>
+
+      <!-- ── DATA NODES (5 nodes) ── -->
+      <!-- DN-1 violet -->
+      <g id="dn1" transform="translate(64,322)">
+        <rect x="-42" y="-28" width="84" height="56" rx="6" fill="#0C0A1E" stroke="#A78BFA" stroke-width="1.5" id="chassis-1"/>
+        <text y="-14" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#A78BFA" font-weight="700">DN-1</text>
+        <!-- storage fill bar -->
+        <rect x="-32" y="-4" width="64" height="7" rx="3" fill="#1A1040"/>
+        <rect x="-32" y="-4" width="48" height="7" rx="3" fill="#A78BFA" opacity=".7" id="fill-1"/>
+        <text y="18" text-anchor="middle" font-family="IBM Plex Mono" font-size="7.5" fill="#7C8CA3" id="shard-1">Shards A·B·G</text>
+        <text y="-38" text-anchor="middle" font-family="Sora" font-size="8" fill="#A78BFA" id="status-1"> </text>
+      </g>
+
+      <!-- DN-2 green -->
+      <g id="dn2" transform="translate(168,322)">
+        <rect x="-42" y="-28" width="84" height="56" rx="6" fill="#0A1A0C" stroke="#4ADE80" stroke-width="1.5" id="chassis-2"/>
+        <text y="-14" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#4ADE80" font-weight="700">DN-2</text>
+        <rect x="-32" y="-4" width="64" height="7" rx="3" fill="#0A2010"/>
+        <rect x="-32" y="-4" width="42" height="7" rx="3" fill="#4ADE80" opacity=".7" id="fill-2"/>
+        <text y="18" text-anchor="middle" font-family="IBM Plex Mono" font-size="7.5" fill="#7C8CA3" id="shard-2">Shards C·D·H</text>
+        <text y="-38" text-anchor="middle" font-family="Sora" font-size="8" fill="#4ADE80" id="status-2"> </text>
+      </g>
+
+      <!-- DN-3 amber -->
+      <g id="dn3" transform="translate(290,322)">
+        <rect x="-42" y="-28" width="84" height="56" rx="6" fill="#1A1400" stroke="#FBBF24" stroke-width="1.5" id="chassis-3"/>
+        <text y="-14" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#FBBF24" font-weight="700">DN-3</text>
+        <rect x="-32" y="-4" width="64" height="7" rx="3" fill="#201800"/>
+        <rect x="-32" y="-4" width="52" height="7" rx="3" fill="#FBBF24" opacity=".7" id="fill-3"/>
+        <text y="18" text-anchor="middle" font-family="IBM Plex Mono" font-size="7.5" fill="#7C8CA3" id="shard-3">Shards E·F·I</text>
+        <text y="-38" text-anchor="middle" font-family="Sora" font-size="8" fill="#FBBF24" id="status-3"> </text>
+      </g>
+
+      <!-- DN-4 cyan -->
+      <g id="dn4" transform="translate(412,322)">
+        <rect x="-42" y="-28" width="84" height="56" rx="6" fill="#061418" stroke="#38E1FF" stroke-width="1.5" id="chassis-4"/>
+        <text y="-14" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#38E1FF" font-weight="700">DN-4</text>
+        <rect x="-32" y="-4" width="64" height="7" rx="3" fill="#081E24"/>
+        <rect x="-32" y="-4" width="38" height="7" rx="3" fill="#38E1FF" opacity=".7" id="fill-4"/>
+        <text y="18" text-anchor="middle" font-family="IBM Plex Mono" font-size="7.5" fill="#7C8CA3" id="shard-4">Shards J·K·L</text>
+        <text y="-38" text-anchor="middle" font-family="Sora" font-size="8" fill="#38E1FF" id="status-4"> </text>
+      </g>
+
+      <!-- DN-5 rose -->
+      <g id="dn5" transform="translate(516,322)">
+        <rect x="-42" y="-28" width="84" height="56" rx="6" fill="#18060A" stroke="#FB5E6D" stroke-width="1.5" id="chassis-5"/>
+        <text y="-14" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#FB5E6D" font-weight="700">DN-5</text>
+        <rect x="-32" y="-4" width="64" height="7" rx="3" fill="#200810"/>
+        <rect x="-32" y="-4" width="56" height="7" rx="3" fill="#FB5E6D" opacity=".7" id="fill-5"/>
+        <text y="18" text-anchor="middle" font-family="IBM Plex Mono" font-size="7.5" fill="#7C8CA3" id="shard-5">Shards M·N·O</text>
+        <text y="-38" text-anchor="middle" font-family="Sora" font-size="8" fill="#FB5E6D" id="status-5"> </text>
+      </g>
+
+      <!-- Labels -->
+      <text x="290" y="392" text-anchor="middle" font-family="IBM Plex Mono" font-size="8.5" fill="#ffffff" letter-spacing=".1em">DATA NODES — HORIZONTAL SCALING — PETABYTE STORAGE</text>
+
+      <!-- Fraud query label (hidden) -->
+      <rect id="fraud-qbox" x="150" y="118" width="280" height="26" rx="5" fill="#120508" stroke="#FB5E6D" stroke-width="1.2" opacity="0"/>
+      <text id="fraud-qlbl" x="290" y="135" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#FB5E6D" opacity="0">🔍 QUERY: Txn &gt; ₹1L in last 24h — scanning all nodes...</text>
+
+    </svg>
+
+    <!-- Fraud result overlay -->
+    <div class="fraud-banner" id="fraud-banner">
+      <div style="position:absolute;top:8px;right:10px;cursor:pointer;font-family:'IBM Plex Mono',monospace;font-size:.7rem;color:var(--inkf);" onclick="document.getElementById('fraud-banner').style.display='none'">✕ close</div>
+      <div class="fb-title">🚨 Fraud Detection Complete</div>
+      <div class="fb-stat">Scanned: <span class="fb-highlight">847,234,182</span> transactions across 5 nodes</div>
+      <div class="fb-stat">Flagged: <span class="fb-highlight" style="color:var(--rose)">143 suspicious transactions</span> &gt; ₹1 lakh</div>
+      <div class="fb-stat" style="margin-top:4px;">
+        Single server: <span style="color:var(--rose)">4.2 hours</span> &nbsp;→&nbsp;
+        Distributed: <span style="color:var(--green);font-weight:700;">2.3 seconds</span>
+      </div>
+      <div class="fb-speed">⚡ 6,500× faster with parallel processing</div>
+    </div>
+  </div>
+
+  <!-- Right panel -->
+  <div class="rp">
+    <div class="rp-hdr">Cluster Dashboard</div>
+    <div class="rp-body">
+
+      <div class="card" style="border-color:#1A3050;">
+        <div class="card-lbl">Cluster Overview</div>
+        <div style="display:flex;flex-direction:column;gap:5px;margin-top:4px;">
+          <div style="display:flex;justify-content:space-between;font-size:.7rem;">
+            <span style="color:var(--inkd);font-family:'IBM Plex Mono',monospace;">Total Nodes</span>
+            <span style="color:var(--cyan);font-weight:700;font-family:'Space Grotesk',sans-serif;">5</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:.7rem;">
+            <span style="color:var(--inkd);font-family:'IBM Plex Mono',monospace;">Total Storage</span>
+            <span style="color:var(--green);font-weight:700;font-family:'Space Grotesk',sans-serif;">12 PB</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:.7rem;">
+            <span style="color:var(--inkd);font-family:'IBM Plex Mono',monospace;">Replication Factor</span>
+            <span style="color:var(--violet);font-weight:700;font-family:'Space Grotesk',sans-serif;">3×</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:.7rem;">
+            <span style="color:var(--inkd);font-family:'IBM Plex Mono',monospace;">Total Records</span>
+            <span style="color:var(--amber);font-weight:700;font-family:'Space Grotesk',sans-serif;">847M</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="metrics">
+        <div class="mc"><div class="ml">Ingest Rate</div><div class="mv" id="m-ing" style="color:var(--cyan)">0 /s</div></div>
+        <div class="mc"><div class="ml">Throughput</div><div class="mv" id="m-thr" style="color:var(--green)">0 GB/s</div></div>
+        <div class="mc"><div class="ml">Active Nodes</div><div class="mv" id="m-nod" style="color:var(--violet)">5 / 5</div></div>
+        <div class="mc"><div class="ml">Query Time</div><div class="mv" id="m-qt" style="color:var(--amber)">—</div></div>
+      </div>
+
+      <div class="card" id="stage-card" style="border-color:#1A3050;">
+        <div class="card-lbl">Current Stage</div>
+        <div class="note" id="stage-note">
+          A Big Data cluster distributes millions of daily bank transactions across multiple servers.<br><br>
+          Press <span style="color:var(--cyan)">▶ Stream</span> to begin — watch transactions arrive and distribute across all 5 data nodes in real time.
+        </div>
+      </div>
+
+      <!-- Node status -->
+      <div class="card">
+        <div class="card-lbl">Node Status</div>
+        <div style="display:flex;flex-direction:column;gap:4px;margin-top:4px;" id="node-rows">
+          <div style="display:flex;align-items:center;gap:8px;font-size:.68rem;">
+            <div style="width:8px;height:8px;border-radius:50%;background:#A78BFA;flex-shrink:0;box-shadow:0 0 5px #A78BFA;"></div>
+            <span style="font-family:'IBM Plex Mono',monospace;color:var(--inkd);flex:1;">DN-1</span>
+            <span style="font-family:'IBM Plex Mono',monospace;color:var(--violet);">2.4 TB</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:var(--inkf);">75%</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:.68rem;">
+            <div style="width:8px;height:8px;border-radius:50%;background:#4ADE80;flex-shrink:0;box-shadow:0 0 5px #4ADE80;"></div>
+            <span style="font-family:'IBM Plex Mono',monospace;color:var(--inkd);flex:1;">DN-2</span>
+            <span style="font-family:'IBM Plex Mono',monospace;color:var(--green);">2.1 TB</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:var(--inkf);">66%</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:.68rem;">
+            <div style="width:8px;height:8px;border-radius:50%;background:#FBBF24;flex-shrink:0;box-shadow:0 0 5px #FBBF24;"></div>
+            <span style="font-family:'IBM Plex Mono',monospace;color:var(--inkd);flex:1;">DN-3</span>
+            <span style="font-family:'IBM Plex Mono',monospace;color:var(--amber);">2.6 TB</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:var(--inkf);">81%</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:.68rem;">
+            <div style="width:8px;height:8px;border-radius:50%;background:#38E1FF;flex-shrink:0;box-shadow:0 0 5px #38E1FF;"></div>
+            <span style="font-family:'IBM Plex Mono',monospace;color:var(--inkd);flex:1;">DN-4</span>
+            <span style="font-family:'IBM Plex Mono',monospace;color:var(--cyan);">1.9 TB</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:var(--inkf);">59%</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:.68rem;">
+            <div style="width:8px;height:8px;border-radius:50%;background:#FB5E6D;flex-shrink:0;box-shadow:0 0 5px #FB5E6D;"></div>
+            <span style="font-family:'IBM Plex Mono',monospace;color:var(--inkd);flex:1;">DN-5</span>
+            <span style="font-family:'IBM Plex Mono',monospace;color:var(--rose);">2.8 TB</span>
+            <span style="font-family:'IBM Plex Mono',monospace;font-size:.6rem;color:var(--inkf);">88%</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="ctrls">
+      <button class="btn c" id="b1" onclick="stageStream()">▶ Stream</button>
+      <button class="btn g" id="b2" onclick="stageDistribute()" disabled>📦 Distribute</button>
+      <button class="btn v" id="b3" onclick="stageReplicate()" disabled>🔄 Replicate</button>
+      <button class="btn r" id="b4" onclick="stageFraud()" disabled>🔍 Fraud Scan</button>
+      <button class="btn a" onclick="stageDemo()">⚡ Full Demo</button>
+      <button class="btn"   onclick="stageReset()">↺ Reset</button>
+    </div>
+  </div>
+</div>
+
+<div class="log" id="log"></div>
+
+<style>
+@keyframes dash{to{stroke-dashoffset:-28;}}
+@keyframes pulse-r{0%,100%{opacity:.6;}50%{opacity:1;}}
+</style>
+
+<script>
+function s(id){return document.getElementById(id);}
+function log(msg,t='ok'){
+  const lg=s('log'),d=new Date();
+  const ts=[d.getHours(),d.getMinutes(),d.getSeconds()].map(n=>String(n).padStart(2,'0')).join(':');
+  const e=Object.assign(document.createElement('div'),{className:'le'});
+  e.innerHTML=`<span class="lt">${ts}</span><span class="lm ${t}">${msg}</span>`;
+  lg.insertBefore(e,lg.firstChild);
+}
+function pill(txt,type=''){
+  s('mpill').className='pill'+(type?' '+type:'');
+  s('ptxt').textContent=txt;
+}
+function setLine(id,op,play){
+  const el=s(id);if(!el)return;
+  el.style.opacity=op;
+  el.style.animationPlayState=play?'running':'paused';
+}
+function setStatus(id,txt){const el=s(id);if(el)el.textContent=txt;}
+
+// ── Reliable packet animation using CSS @keyframes ────────────
+// Each packet gets a unique keyframe — fires the instant element hits DOM.
+// Generation counter ensures stale setTimeout callbacks don't fire after reset.
+let _gen=0, _pktId=0;
+
+function spawnPkt(x1,y1,x2,y2,col,delay,label){
+  const myGen=_gen;            // capture generation at call time
+  const id='pk'+(++_pktId);
+  const dx=x2-x1, dy=y2-y1;
+  const dur=1200;
+
+  // Inject unique keyframe
+  const st=document.createElement('style');
+  st.textContent=`@keyframes ${id}{
+    0%  {transform:translate(0,0);      opacity:0;}
+    8%  {                               opacity:1;}
+    82% {transform:translate(${dx}px,${dy}px); opacity:.9;}
+    100%{transform:translate(${dx}px,${dy}px); opacity:0;}
+  }`;
+  document.head.appendChild(st);
+
+  const ns='http://www.w3.org/2000/svg';
+  const svg=s('bsv');
+
+  const go=()=>{
+    if(_gen!==myGen){st.remove();return;}   // reset happened — abort
+    const g=document.createElementNS(ns,'g');
+    g.classList.add('pkt-anim');
+    const c=document.createElementNS(ns,'circle');
+    c.setAttribute('cx',x1);c.setAttribute('cy',y1);c.setAttribute('r','7');
+    c.setAttribute('fill',col);
+    g.appendChild(c);
+    if(label){
+      const t=document.createElementNS(ns,'text');
+      t.setAttribute('x',x1);t.setAttribute('y',y1-10);
+      t.setAttribute('text-anchor','middle');
+      t.setAttribute('font-family','IBM Plex Mono');
+      t.setAttribute('font-size','8');t.setAttribute('fill',col);
+      t.textContent=label;
+      g.appendChild(t);
+    }
+    g.style.animation=`${id} ${dur}ms ease-out forwards`;
+    svg.appendChild(g);
+    setTimeout(()=>{
+      if(g.parentNode)g.remove();
+      st.remove();
+    },dur+150);
+  };
+
+  if(delay) setTimeout(go,delay);
+  else go();
+}
+
+// ── Stage 1: Stream ───────────────────────────────────────────
+let streamInt=null,txCount=0;
+const txAmts=['₹12,450','₹1,24,800','₹8,200','₹3,56,000','₹45,600','₹92,100','₹2,10,500','₹6,700'];
+const nodeX=[64,168,290,412,516];
+const nodeCols=['#A78BFA','#4ADE80','#FBBF24','#38E1FF','#FB5E6D'];
+
+function stageStream(){
+  log('HDFC Bank transaction feed LIVE — 12,430 transactions/sec ingesting','ok');
+  log('Coordinator node receiving and routing to data cluster','inf');
+  pill('Ingesting','proc');
+  s('m-ing').textContent='12,430 /s';s('m-thr').textContent='4.2 GB/s';
+  s('stage-note').innerHTML=`Transactions arrive continuously from branches, ATMs, UPI, NEFT, RTGS.<br><br>The <span style="color:var(--cyan)">Coordinator</span> receives each transaction and decides which Data Node stores it — based on a <span style="color:var(--amber)">consistent hashing</span> algorithm (transaction ID % 5).`;
+  txCount=0;
+  clearInterval(streamInt);
+  const myGen=_gen;
+  streamInt=setInterval(()=>{
+    if(_gen!==myGen){clearInterval(streamInt);return;}
+    txCount+=Math.round(120+Math.random()*40);
+    s('tx-count').textContent=txCount.toLocaleString()+' TXN/s';
+    const amt=txAmts[Math.floor(Math.random()*txAmts.length)];
+    // Pick a random source for this transaction
+    const sources=[
+      {x:100,y:76,col:'#38E1FF'},{x:230,y:76,col:'#FBBF24'},
+      {x:350,y:76,col:'#A78BFA'},{x:480,y:76,col:'#4ADE80'}
+    ];
+    const src=sources[Math.floor(Math.random()*sources.length)];
+    spawnPkt(src.x,src.y,290,162,src.col,0,amt);
+    const ni=Math.floor(Math.random()*5);
+    spawnPkt(290,214,nodeX[ni],294,nodeCols[ni],700);
+  },1000);
+  s('m-qt').textContent='—';
+  s('b1').disabled=true;s('b2').disabled=false;s('b3').disabled=true;s('b4').disabled=true;
+}
+
+// ── Stage 2: Distribute ───────────────────────────────────────
+function stageDistribute(){
+  clearInterval(streamInt);
+  log('Data distribution: transactions sharded across 5 nodes by hash(txn_id)','ok');
+  log('Each node stores different data shards — no single point of failure','inf');
+  pill('Distributing','proc');
+  ['ln-1','ln-2','ln-3','ln-4','ln-5'].forEach((id,i)=>{
+    setTimeout(()=>{
+      setLine(id,'0.9',true);
+      for(let j=0;j<4;j++){
+        spawnPkt(290,182,nodeX[i],294,nodeCols[i],j*320);
+      }
+    },i*450);
+  });
+  setTimeout(()=>{
+    [1,2,3,4,5].forEach(n=>setStatus(`status-${n}`,'WRITING...'));
+    s('stage-note').innerHTML=`Each transaction is assigned to a specific node using <span style="color:var(--amber)">consistent hashing</span>.<br><br>5 nodes store different shards:<br>DN-1: A·B·G &nbsp;|&nbsp; DN-2: C·D·H<br>DN-3: E·F·I &nbsp;|&nbsp; DN-4: J·K·L &nbsp;|&nbsp; DN-5: M·N·O<br><br>This gives <span style="color:var(--green)">5× storage capacity</span> and parallel write throughput.`;
+  },600);
+  setTimeout(()=>{
+    [1,2,3,4,5].forEach(n=>setStatus(`status-${n}`,''));
+    s('b3').disabled=false;
+  },3500);
+  s('b1').disabled=true;s('b2').disabled=true;s('b4').disabled=true;
+}
+
+// ── Stage 3: Replicate ────────────────────────────────────────
+function stageReplicate(){
+  log('Replication factor 3×: each shard copied to 2 additional nodes','ok');
+  log('If DN-3 fails, shards E·F·I still available on DN-1 and DN-4','inf');
+  pill('Replicating','proc');
+  ['rep-12','rep-23','rep-34','rep-45'].forEach(id=>setLine(id,'0.8',true));
+  setTimeout(()=>['rep-13','rep-24','rep-35'].forEach(id=>setLine(id,'0.7',true)),800);
+  s('stage-note').innerHTML=`Replication factor = <span style="color:var(--violet)">3×</span>. Every shard is stored on 3 different nodes.<br><br>If any node crashes, data remains accessible from replicas. No data loss, no downtime.<br><br><span style="color:var(--green)">High Availability</span> guaranteed even with 2 simultaneous node failures.`;
+  setTimeout(()=>s('b4').disabled=false,1500);
+  s('b1').disabled=true;s('b2').disabled=true;s('b3').disabled=true;
+}
+
+// ── Stage 4: Fraud Scan ───────────────────────────────────────
+function stageFraud(){
+  ['rep-12','rep-23','rep-34','rep-45','rep-13','rep-24','rep-35'].forEach(id=>setLine(id,'0',false));
+  ['ln-1','ln-2','ln-3','ln-4','ln-5'].forEach(id=>setLine(id,'0.2',false));
+  pill('Scanning','alert');
+  log('🔍 FRAUD QUERY: SELECT * WHERE amount > 100000 AND timestamp > NOW()-24h','inf');
+  log('MapReduce job dispatched — all 5 nodes scanning simultaneously','warn');
+  s('fraud-qbox').setAttribute('opacity','1');
+  s('fraud-qlbl').setAttribute('opacity','1');
+  s('stage-note').innerHTML=`<span style="color:var(--rose)">Query:</span> Find all suspicious transactions above ₹1 lakh in the last 24 hours.<br><br>Instead of one server scanning 847M records sequentially:<br><span style="color:var(--amber)">All 5 nodes scan their own shards simultaneously</span> — then send results to Coordinator.`;
+
+  setTimeout(()=>{
+    ['fq-1','fq-2','fq-3','fq-4','fq-5'].forEach(id=>{
+      const el=s(id);if(el){el.style.opacity='0.9';el.style.animation='pulse-r 0.6s infinite';}
+    });
+    [1,2,3,4,5].forEach(n=>setStatus(`status-${n}`,'SCANNING...'));
+  },500);
+
+  setTimeout(()=>{
+    ['fq-1','fq-2','fq-3','fq-4','fq-5'].forEach(id=>{
+      const el=s(id);if(el){el.style.opacity='0';el.style.animation='';}
+    });
+    ['rr-1','rr-2','rr-3','rr-4','rr-5'].forEach(id=>setLine(id,'0.8',true));
+    const found=[28,31,19,42,23];
+    [1,2,3,4,5].forEach((n,i)=>setStatus(`status-${n}`,`FOUND: ${found[i]}`));
+    log(`DN-1: 28 · DN-2: 31 · DN-3: 19 · DN-4: 42 · DN-5: 23 flagged`,'ok');
+    // Spawn result packets back to coordinator
+    nodeX.forEach((x,i)=>spawnPkt(x,294,290,182,'#4ADE80',i*200));
+  },2500);
+
+  setTimeout(()=>{
+    ['rr-1','rr-2','rr-3','rr-4','rr-5'].forEach(id=>setLine(id,'0',false));
+    s('fraud-qbox').setAttribute('opacity','0');s('fraud-qlbl').setAttribute('opacity','0');
+    [1,2,3,4,5].forEach(n=>setStatus(`status-${n}`,''));
+    s('fraud-banner').style.display='block';
+    s('m-qt').textContent='2.3 sec';
+    pill('143 Alerts Found','alert');
+    log('✅ Fraud scan complete: 143 alerts in 2.3s (vs 4.2h single-server)','ok');
+    log('Regulatory report generated — flagged transactions sent to compliance team','inf');
+    s('stage-note').innerHTML=`<span style="color:var(--green)">Result:</span> 143 suspicious transactions found across 847M records.<br><br>Single server: <span style="color:var(--rose)">4.2 hours</span><br>5-node cluster: <span style="color:var(--green);font-weight:700;">2.3 seconds</span><br><br>⚡ <span style="color:var(--amber)">6,500× faster</span> — this is the power of parallel processing in Big Data.`;
+  },4200);
+  s('b1').disabled=true;s('b2').disabled=true;s('b3').disabled=true;s('b4').disabled=true;
+}
+
+// ── Full Demo ─────────────────────────────────────────────────
+function stageDemo(){
+  stageReset();
+  setTimeout(stageStream,400);
+  setTimeout(stageDistribute,5000);
+  setTimeout(stageReplicate,9500);
+  setTimeout(stageFraud,13000);
+}
+
+// ── Reset ─────────────────────────────────────────────────────
+function stageReset(){
+  _gen++;                          // invalidate ALL pending spawnPkt callbacks
+  clearInterval(streamInt);
+  // Remove any in-flight packet elements
+  document.querySelectorAll('.pkt-anim').forEach(e=>e.remove());
+  document.getElementById('log').innerHTML='';
+  pill('Cluster READY');
+  s('tx-count').textContent='0 TXN/s';
+  s('m-ing').textContent='0 /s';s('m-thr').textContent='0 GB/s';s('m-qt').textContent='—';
+  s('fraud-banner').style.display='none';
+  s('fraud-qbox').setAttribute('opacity','0');s('fraud-qlbl').setAttribute('opacity','0');
+  ['fq-1','fq-2','fq-3','fq-4','fq-5'].forEach(id=>{
+    const el=s(id);if(el){el.style.opacity='0';el.style.animation='';}
+  });
+  ['rr-1','rr-2','rr-3','rr-4','rr-5',
+   'rep-12','rep-23','rep-34','rep-45','rep-13','rep-24','rep-35']
+    .forEach(id=>setLine(id,'0',false));
+  ['ln-1','ln-2','ln-3','ln-4','ln-5'].forEach(id=>setLine(id,'0.7',true));
+  [1,2,3,4,5].forEach(n=>setStatus(`status-${n}`,''));
+  s('stage-note').innerHTML=`A Big Data cluster distributes millions of daily bank transactions across multiple servers.<br><br>Press <span style="color:var(--cyan)">▶ Stream</span> to begin — watch transactions arrive and distribute across all 5 data nodes in real time.`;
+  s('b1').disabled=false;s('b2').disabled=true;s('b3').disabled=true;s('b4').disabled=true;
+}
+
+window.onload=()=>setTimeout(stageReset,150);
+</script>
+</body>
+</html>

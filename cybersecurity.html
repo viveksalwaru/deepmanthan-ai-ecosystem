@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Cybersecurity — Threats &amp; Defense</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Sora:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{--bg:#050A0F;--red:#FF3B5C;--amber:#FBBF24;--green:#22C55E;--cyan:#22D3EE;--violet:#A78BFA;--rose:#FB5E6D;--text:#64748B;}
+html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-family:'Sora',sans-serif;color:#CBD5E1;}
+body{display:flex;flex-direction:column;}
+header{padding:5px 14px;background:#060C14;border-bottom:1px solid #0D1E2E;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.title{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--red);letter-spacing:.12em;font-weight:600;}
+.pill{padding:3px 11px;border-radius:20px;font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.1em;border:1px solid;transition:all .4s;}
+.pill.secure{color:var(--green);border-color:var(--green);background:#04100A;}
+.pill.danger{color:var(--red);border-color:var(--red);background:#120408;animation:blink .7s infinite;}
+.pill.scan{color:var(--amber);border-color:var(--amber);background:#110D00;}
+.pill.hard{color:var(--cyan);border-color:var(--cyan);background:#051214;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.4;}}
+.metrics{display:flex;gap:14px;}
+.met{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--text);}
+.met span{color:#CBD5E1;}
+.main{display:flex;flex:1;overflow:hidden;}
+.left{width:38%;display:flex;flex-direction:column;border-right:1px solid #0D1E2E;overflow:hidden;}
+.snote{padding:9px 12px;font-size:11px;line-height:1.65;color:#94A3B8;border-bottom:1px solid #0D1E2E;min-height:108px;max-height:140px;overflow-y:auto;}
+.log{flex:1;overflow-y:auto;padding:5px 8px;background:#030810;}
+.le{display:flex;gap:6px;padding:3px 0;border-bottom:1px solid #09131E;font-size:10px;line-height:1.4;}
+.lt{color:#1A2E40;font-family:'IBM Plex Mono';white-space:nowrap;flex-shrink:0;}
+.lm{color:#4A6070;}
+.lm.ok{color:var(--green);}
+.lm.warn{color:var(--amber);}
+.lm.err{color:var(--red);}
+.lm.inf{color:var(--cyan);}
+.lm.code{color:var(--violet);font-family:'IBM Plex Mono';font-size:9px;}
+.right{flex:1;overflow:hidden;position:relative;}
+.right svg{width:100%;height:100%;}
+.btns{display:flex;gap:5px;padding:6px 10px;background:#060C14;border-top:1px solid #0D1E2E;flex-shrink:0;flex-wrap:wrap;}
+button{padding:4px 12px;border-radius:5px;border:1px solid #1A2E3E;background:#08121E;color:#5A7A90;font-family:'IBM Plex Mono';font-size:10px;cursor:pointer;transition:all .2s;letter-spacing:.04em;}
+button:hover:not(:disabled){background:#0D1E2E;border-color:var(--cyan);color:var(--cyan);}
+button:disabled{opacity:.3;cursor:default;}
+button.rst{border-color:#1E1018;color:#FF3B5C44;}
+button.rst:hover{border-color:var(--red);color:var(--red);background:#120408;}
+.alert-banner{display:none;position:absolute;bottom:0;left:0;right:0;background:#18030A;border-top:2px solid var(--red);padding:8px 14px;font-family:'IBM Plex Mono';font-size:11px;color:var(--red);z-index:10;display:none;align-items:center;justify-content:space-between;}
+.alert-banner button{border-color:var(--red)33;color:var(--red);font-size:10px;padding:2px 8px;}
+.secure-banner{display:none;position:absolute;bottom:0;left:0;right:0;background:#040F08;border-top:2px solid var(--green);padding:8px 14px;font-family:'IBM Plex Mono';font-size:11px;color:var(--green);z-index:10;}
+@keyframes dash{to{stroke-dashoffset:-20;}}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+@keyframes scanline{0%{transform:translateY(-100%);}100%{transform:translateY(400px);}}
+</style>
+</head>
+<body>
+<header>
+  <div class="title">🛡 CYBERSECURITY — THREATS &amp; DEFENSE</div>
+  <div class="metrics">
+    <div class="met">THREAT <span id="m-threat">LOW</span></div>
+    <div class="met">ATTACK <span id="m-type">—</span></div>
+    <div class="met">CPU <span id="m-cpu">22%</span></div>
+    <div class="met">STATUS <span id="m-status">SECURE</span></div>
+  </div>
+  <div class="pill secure" id="mpill"><span id="ptxt">System SECURE</span></div>
+</header>
+<div class="main">
+  <div class="left">
+    <div class="snote" id="snote">Loading...</div>
+    <div class="log" id="log"></div>
+  </div>
+  <div class="right">
+    <svg id="csv" viewBox="0 -15 580 450" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <filter id="glow-r"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <filter id="glow-c"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <filter id="glow-g"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <filter id="glow-a"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        <marker id="arr-r" viewBox="0 0 8 8" refX="6" refY="4" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0L8,4L0,8Z" fill="#FF3B5C" opacity=".9"/></marker>
+        <marker id="arr-c" viewBox="0 0 8 8" refX="6" refY="4" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0L8,4L0,8Z" fill="#22D3EE" opacity=".8"/></marker>
+        <marker id="arr-g" viewBox="0 0 8 8" refX="6" refY="4" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0L8,4L0,8Z" fill="#22C55E" opacity=".8"/></marker>
+        <marker id="arr-a" viewBox="0 0 8 8" refX="6" refY="4" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0L8,4L0,8Z" fill="#FBBF24" opacity=".8"/></marker>
+      </defs>
+
+      <!-- ── ZONE BACKGROUNDS ── -->
+      <rect x="0" y="-15" width="224" height="465" fill="#0D0206" rx="0"/>
+      <text x="112" y="4" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="#2A0810" letter-spacing=".2em">INTERNET ZONE</text>
+
+      <!-- Firewall wall (brick pattern) -->
+      <rect x="224" y="-15" width="20" height="465" fill="#130900"/>
+      <rect x="225" y="-15" width="2" height="465" fill="#FF6B0010"/>
+      <rect x="241" y="-15" width="2" height="465" fill="#FF6B0010"/>
+      <!-- Firewall bricks -->
+      <g fill="#1E0C00" stroke="#FF6B0020" stroke-width="0.5">
+        <rect x="225" y="10" width="17" height="12"/><rect x="225" y="24" width="17" height="12"/>
+        <rect x="225" y="38" width="17" height="12"/><rect x="225" y="52" width="17" height="12"/>
+        <rect x="225" y="66" width="17" height="12"/><rect x="225" y="80" width="17" height="12"/>
+        <rect x="225" y="94" width="17" height="12"/><rect x="225" y="108" width="17" height="12"/>
+        <rect x="225" y="122" width="17" height="12"/><rect x="225" y="136" width="17" height="12"/>
+        <rect x="225" y="150" width="17" height="12"/><rect x="225" y="164" width="17" height="12"/>
+        <rect x="225" y="178" width="17" height="12"/><rect x="225" y="192" width="17" height="12"/>
+        <rect x="225" y="206" width="17" height="12"/><rect x="225" y="220" width="17" height="12"/>
+        <rect x="225" y="234" width="17" height="12"/><rect x="225" y="248" width="17" height="12"/>
+        <rect x="225" y="262" width="17" height="12"/><rect x="225" y="276" width="17" height="12"/>
+        <rect x="225" y="290" width="17" height="12"/><rect x="225" y="304" width="17" height="12"/>
+        <rect x="225" y="318" width="17" height="12"/><rect x="225" y="332" width="17" height="12"/>
+        <rect x="225" y="346" width="17" height="12"/><rect x="225" y="360" width="17" height="12"/>
+        <rect x="225" y="374" width="17" height="12"/><rect x="225" y="388" width="17" height="12"/>
+        <rect x="225" y="402" width="17" height="12"/>
+      </g>
+      <text x="234" y="220" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="#FF6B0050" transform="rotate(-90,234,220)" letter-spacing=".2em">FIREWALL</text>
+
+      <!-- Internal zone -->
+      <rect x="244" y="-15" width="336" height="465" fill="#030A14"/>
+      <text x="412" y="4" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="#08182A" letter-spacing=".2em">INTERNAL NETWORK</text>
+
+      <!-- ── MAIN ATTACKER SERVER (far left) ── -->
+      <g id="attacker" transform="translate(36,210)">
+        <ellipse cx="0" cy="48" rx="32" ry="10" fill="#200510" opacity=".5" filter="url(#glow-r)"/>
+        <rect x="-30" y="-70" width="60" height="118" rx="6" fill="#10020A" stroke="#FF3B5C" stroke-width="1.8" id="atk-chassis"/>
+        <!-- rack units -->
+        <rect x="-22" y="-60" width="44" height="9" rx="2" fill="#1A060E" stroke="#FF3B5C33"/>
+        <rect x="-22" y="-47" width="44" height="9" rx="2" fill="#1A060E" stroke="#FF3B5C33"/>
+        <rect x="-22" y="-34" width="44" height="9" rx="2" fill="#1A060E" stroke="#FF3B5C33"/>
+        <circle cx="14" cy="-56" r="2.5" fill="#FF3B5C" style="animation:pulse .6s infinite;"/>
+        <circle cx="14" cy="-43" r="2.5" fill="#FF3B5C" style="animation:pulse 1s infinite;"/>
+        <circle cx="14" cy="-30" r="2.5" fill="#FBBF24" style="animation:pulse 1.4s infinite;"/>
+        <text y="-8" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#FF3B5C" font-weight="700">ATTACKER</text>
+        <text y="6" text-anchor="middle" font-family="Sora" font-size="7.5" fill="#ffffff">Command &amp; Control</text>
+        <text y="20" text-anchor="middle" font-family="IBM Plex Mono" font-size="7" fill="#ffffff">C2 Server</text>
+        <circle cx="22" cy="-64" r="3.5" fill="#FF3B5C" style="animation:pulse .8s infinite;" filter="url(#glow-r)"/>
+      </g>
+
+      <!-- ── 4 NAMED BOTS (stacked vertically, right side of internet zone) ── -->
+      <!-- Bot 1: Ransomware -->
+      <g id="bot1" transform="translate(164,75)">
+        <rect x="-46" y="-30" width="92" height="58" rx="5" fill="#12020A" stroke="#FF3B5C" stroke-width="1.3"/>
+        <text x="0" y="-14" text-anchor="middle" font-size="13">☠️</text>
+        <text x="0" y="1" text-anchor="middle" font-family="IBM Plex Mono" font-size="9.5" fill="#FFFFFF" font-weight="700">Ransomware</text>
+        <text x="0" y="14" text-anchor="middle" font-family="Sora" font-size="8" fill="#FFFFFF">Encrypt &amp; Extort</text>
+        <text x="0" y="24" text-anchor="middle" font-family="IBM Plex Mono" font-size="7" fill="#CCCCCC">AES-256 · BTC ransom</text>
+      </g>
+
+      <!-- Bot 2: TCP SYN Flood -->
+      <g id="bot2" transform="translate(164,175)">
+        <rect x="-46" y="-30" width="92" height="58" rx="5" fill="#020A12" stroke="#22D3EE" stroke-width="1.3"/>
+        <text x="0" y="-14" text-anchor="middle" font-size="13">🌊</text>
+        <text x="0" y="1" text-anchor="middle" font-family="IBM Plex Mono" font-size="9.5" fill="#FFFFFF" font-weight="700">SYN Flood</text>
+        <text x="0" y="14" text-anchor="middle" font-family="Sora" font-size="8" fill="#FFFFFF">DDoS Attack</text>
+        <text x="0" y="24" text-anchor="middle" font-family="IBM Plex Mono" font-size="7" fill="#CCCCCC">Millions of SYN pkts</text>
+      </g>
+
+      <!-- Bot 3: Cryptominer -->
+      <g id="bot3" transform="translate(164,275)">
+        <rect x="-46" y="-30" width="92" height="58" rx="5" fill="#100A00" stroke="#FBBF24" stroke-width="1.3"/>
+        <text x="0" y="-14" text-anchor="middle" font-size="13">⛏</text>
+        <text x="0" y="1" text-anchor="middle" font-family="IBM Plex Mono" font-size="9.5" fill="#FFFFFF" font-weight="700">Cryptominer</text>
+        <text x="0" y="14" text-anchor="middle" font-family="Sora" font-size="8" fill="#FFFFFF">CPU Hijack</text>
+        <text x="0" y="24" text-anchor="middle" font-family="IBM Plex Mono" font-size="7" fill="#CCCCCC">.dhpcd · XMR mining</text>
+      </g>
+
+      <!-- Bot 4: ARP Spoof / MiTM -->
+      <g id="bot4" transform="translate(164,365)">
+        <rect x="-46" y="-30" width="92" height="58" rx="5" fill="#08041A" stroke="#A78BFA" stroke-width="1.3"/>
+        <text x="0" y="-14" text-anchor="middle" font-size="13">🎭</text>
+        <text x="0" y="1" text-anchor="middle" font-family="IBM Plex Mono" font-size="9.5" fill="#FFFFFF" font-weight="700">ARP Spoof</text>
+        <text x="0" y="14" text-anchor="middle" font-family="Sora" font-size="8" fill="#FFFFFF">Man-in-the-Middle</text>
+        <text x="0" y="24" text-anchor="middle" font-family="IBM Plex Mono" font-size="7" fill="#CCCCCC">Intercept LAN traffic</text>
+      </g>
+
+      <!-- Command lines: Attacker → each Bot (C2 control) -->
+      <line x1="66" y1="175" x2="118" y2="75"  stroke="#FF3B5C" stroke-width=".8" stroke-dasharray="4 4" opacity=".35"/>
+      <line x1="66" y1="190" x2="118" y2="175" stroke="#22D3EE" stroke-width=".8" stroke-dasharray="4 4" opacity=".35"/>
+      <line x1="66" y1="210" x2="118" y2="275" stroke="#FBBF24" stroke-width=".8" stroke-dasharray="4 4" opacity=".35"/>
+      <line x1="66" y1="225" x2="118" y2="365" stroke="#A78BFA" stroke-width=".8" stroke-dasharray="4 4" opacity=".35"/>
+
+      <!-- Network connection line (bots → firewall, always visible) -->
+      <line id="net-line" x1="210" y1="165" x2="224" y2="165" stroke="#1A2A38" stroke-width="1" stroke-dasharray="5 4" opacity=".3"/>
+
+      <!-- ── VICTIM SERVER (AI Server) ── -->
+      <g id="victim" transform="translate(385,155)">
+        <ellipse cx="0" cy="60" rx="52" ry="14" fill="#063060" opacity=".15" filter="url(#glow-c)"/>
+        <rect x="-52" y="-58" width="104" height="120" rx="7" fill="#061420" stroke="#22D3EE" stroke-width="1.8" id="srv-chassis"/>
+        <!-- Rack units -->
+        <rect x="-44" y="-48" width="88" height="12" rx="2" fill="#0A2035" stroke="#0E3055" stroke-width=".5"/>
+        <circle cx="-30" cy="-42" r="3" fill="#22D3EE" opacity=".8" style="animation:pulse 2s infinite;"/>
+        <text x="-18" y="-37" font-family="IBM Plex Mono" font-size="7" fill="#22D3EE">model-train-01</text>
+        <rect x="-44" y="-32" width="88" height="12" rx="2" fill="#0A2035" stroke="#0E3055" stroke-width=".5"/>
+        <circle cx="-30" cy="-26" r="3" fill="#22C55E" opacity=".8" style="animation:pulse 2.4s infinite;"/>
+        <text x="-18" y="-21" font-family="IBM Plex Mono" font-size="7" fill="#22C55E">gpu-node-01</text>
+        <rect x="-44" y="-16" width="88" height="12" rx="2" fill="#0A2035" stroke="#0E3055" stroke-width=".5"/>
+        <circle cx="-30" cy="-10" r="3" fill="#22D3EE" opacity=".6" style="animation:pulse 1.8s infinite;"/>
+        <text x="-18" y="-5" font-family="IBM Plex Mono" font-size="7" fill="#22D3EE">storage-01</text>
+        <text y="20" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#22D3EE" font-weight="700">AI SERVER</text>
+        <text y="35" text-anchor="middle" font-family="Sora" font-size="8" fill="#3A6080">HDFC ML Platform</text>
+        <!-- STATUS label -->
+        <text id="srv-status" y="52" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="#22C55E">● ONLINE</text>
+      </g>
+
+      <!-- ── CPU METER ── -->
+      <g id="cpu-meter" transform="translate(502,80)" opacity="0">
+        <text y="-10" text-anchor="middle" font-family="IBM Plex Mono" font-size="8.5" fill="#94A3B8">CPU</text>
+        <!-- background bar -->
+        <rect x="-14" y="0" width="28" height="130" rx="4" fill="#0A1828" stroke="#1A3040" stroke-width="1"/>
+        <!-- fill bar (grows from bottom) -->
+        <rect id="cpu-fill" x="-11" y="103" width="22" height="24" rx="3" fill="#22C55E" style="transition:all 1.5s ease-out;"/>
+        <text id="cpu-pct" y="148" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#22C55E">18%</text>
+        <!-- danger zone indicator -->
+        <rect x="-14" y="0" width="28" height="26" rx="4" fill="#FF3B5C" opacity=".07"/>
+        <text x="18" y="12" font-family="IBM Plex Mono" font-size="7" fill="#FF3B5C44">95%+</text>
+        <text x="18" y="70" font-family="IBM Plex Mono" font-size="7" fill="#FBBF2444">50%</text>
+      </g>
+
+      <!-- ── AI TRAINING PIPELINE ── -->
+      <g id="ai-pipeline" transform="translate(385,310)" opacity="0">
+        <rect x="-80" y="-22" width="160" height="44" rx="6" fill="#040E1A" stroke="#22D3EE" stroke-width="1" stroke-dasharray="5 3"/>
+        <text y="-8" text-anchor="middle" font-family="IBM Plex Mono" font-size="8" fill="#22D3EE">AI TRAINING PIPELINE</text>
+        <text id="pipe-status" y="8" text-anchor="middle" font-family="Sora" font-size="9" fill="#22C55E">● Running — Epoch 142/500</text>
+        <rect id="pipe-bar" x="-70" y="14" width="140" height="6" rx="3" fill="#081828"/>
+        <rect id="pipe-fill" x="-70" y="14" width="40" height="6" rx="3" fill="#22D3EE" style="transition:width 2s;"/>
+      </g>
+
+      <!-- ── FILE GRID (Ransomware) ── -->
+      <g id="file-grid" opacity="0" transform="translate(260,280)">
+        <!-- 4x3 grid of file icons -->
+        <g id="f0" transform="translate(0,0)"><rect x="0" y="0" width="22" height="26" rx="2" fill="#0A2035" stroke="#22D3EE44" stroke-width=".8"/><text x="11" y="13" text-anchor="middle" font-size="9">📄</text><text x="11" y="24" text-anchor="middle" font-family="IBM Plex Mono" font-size="5.5" fill="#3A6080">DB</text></g>
+        <g id="f1" transform="translate(28,0)"><rect x="0" y="0" width="22" height="26" rx="2" fill="#0A2035" stroke="#22D3EE44" stroke-width=".8"/><text x="11" y="13" text-anchor="middle" font-size="9">📄</text><text x="11" y="24" text-anchor="middle" font-family="IBM Plex Mono" font-size="5.5" fill="#3A6080">DOC</text></g>
+        <g id="f2" transform="translate(56,0)"><rect x="0" y="0" width="22" height="26" rx="2" fill="#0A2035" stroke="#22D3EE44" stroke-width=".8"/><text x="11" y="13" text-anchor="middle" font-size="9">🔑</text><text x="11" y="24" text-anchor="middle" font-family="IBM Plex Mono" font-size="5.5" fill="#3A6080">KEY</text></g>
+        <g id="f3" transform="translate(84,0)"><rect x="0" y="0" width="22" height="26" rx="2" fill="#0A2035" stroke="#22D3EE44" stroke-width=".8"/><text x="11" y="13" text-anchor="middle" font-size="9">📄</text><text x="11" y="24" text-anchor="middle" font-family="IBM Plex Mono" font-size="5.5" fill="#3A6080">IMG</text></g>
+        <g id="f4" transform="translate(112,0)"><rect x="0" y="0" width="22" height="26" rx="2" fill="#0A2035" stroke="#22D3EE44" stroke-width=".8"/><text x="11" y="13" text-anchor="middle" font-size="9">📄</text><text x="11" y="24" text-anchor="middle" font-family="IBM Plex Mono" font-size="5.5" fill="#3A6080">SQL</text></g>
+
+        <g id="f5" transform="translate(0,32)"><rect x="0" y="0" width="22" height="26" rx="2" fill="#0A2035" stroke="#22D3EE44" stroke-width=".8"/><text x="11" y="13" text-anchor="middle" font-size="9">📄</text><text x="11" y="24" text-anchor="middle" font-family="IBM Plex Mono" font-size="5.5" fill="#3A6080">LOG</text></g>
+        <g id="f6" transform="translate(28,32)"><rect x="0" y="0" width="22" height="26" rx="2" fill="#0A2035" stroke="#22D3EE44" stroke-width=".8"/><text x="11" y="13" text-anchor="middle" font-size="9">📄</text><text x="11" y="24" text-anchor="middle" font-family="IBM Plex Mono" font-size="5.5" fill="#3A6080">CFG</text></g>
+        <g id="f7" transform="translate(56,32)"><rect x="0" y="0" width="22" height="26" rx="2" fill="#0A2035" stroke="#22D3EE44" stroke-width=".8"/><text x="11" y="13" text-anchor="middle" font-size="9">📄</text><text x="11" y="24" text-anchor="middle" font-family="IBM Plex Mono" font-size="5.5" fill="#3A6080">PEM</text></g>
+        <g id="f8" transform="translate(84,32)"><rect x="0" y="0" width="22" height="26" rx="2" fill="#0A2035" stroke="#22D3EE44" stroke-width=".8"/><text x="11" y="13" text-anchor="middle" font-size="9">📄</text><text x="11" y="24" text-anchor="middle" font-family="IBM Plex Mono" font-size="5.5" fill="#3A6080">BAK</text></g>
+        <g id="f9" transform="translate(112,32)"><rect x="0" y="0" width="22" height="26" rx="2" fill="#0A2035" stroke="#22D3EE44" stroke-width=".8"/><text x="11" y="13" text-anchor="middle" font-size="9">📄</text><text x="11" y="24" text-anchor="middle" font-family="IBM Plex Mono" font-size="5.5" fill="#3A6080">PY</text></g>
+      </g>
+
+      <!-- ── RANSOM NOTE ── -->
+      <g id="ransom-note" opacity="0" transform="translate(385,200)">
+        <rect x="-110" y="-70" width="220" height="140" rx="8" fill="#120208" stroke="#FF3B5C" stroke-width="2" filter="url(#glow-r)"/>
+        <text y="-50" text-anchor="middle" font-size="20">☠️</text>
+        <text y="-28" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#FF3B5C" font-weight="700">YOUR FILES ARE ENCRYPTED</text>
+        <line x1="-90" y1="-18" x2="90" y2="-18" stroke="#FF3B5C" stroke-width=".5" opacity=".4"/>
+        <text y="-4" text-anchor="middle" font-family="Sora" font-size="9" fill="#9A4050">All data encrypted with AES-256 + RSA-4096</text>
+        <text y="12" text-anchor="middle" font-family="Sora" font-size="9" fill="#9A4050">Send 5 BTC to: 1A1zP1eP5QGefi2DMPTf...</text>
+        <text y="30" text-anchor="middle" font-family="IBM Plex Mono" font-size="10" fill="#FBBF24">⏰ 72 HOURS REMAINING</text>
+        <text y="50" text-anchor="middle" font-family="Sora" font-size="8" fill="#5A3040">files will be permanently deleted after deadline</text>
+      </g>
+
+      <!-- ── CRONTAB DISPLAY (Cryptominer) ── -->
+      <g id="cron-display" opacity="0" transform="translate(390,70)">
+        <rect x="-130" y="-32" width="260" height="58" rx="5" fill="#060F06" stroke="#FBBF24" stroke-width="1.2"/>
+        <text x="-118" y="-16" font-family="IBM Plex Mono" font-size="8" fill="#3A5030">$ crontab -l</text>
+        <text x="-118" y="-2" font-family="IBM Plex Mono" font-size="7.5" fill="#FBBF24" id="cron-line1">*/5 * * * * /tmp/.dhpcd -c /tmp/.mining.conf</text>
+        <text x="-118" y="14" font-family="IBM Plex Mono" font-size="7.5" fill="#FF3B5C" id="cron-line2" opacity="0">↑ MALWARE PERSISTENCE FOUND</text>
+      </g>
+
+      <!-- ── DEFENSE SHIELDS (Harden stage) ── -->
+      <g id="def-shields" opacity="0">
+        <!-- Shield on firewall -->
+        <text x="234" y="120" text-anchor="middle" font-size="18" filter="url(#glow-g)">🛡</text>
+        <text x="234" y="200" text-anchor="middle" font-size="18" filter="url(#glow-g)">🛡</text>
+        <text x="234" y="280" text-anchor="middle" font-size="18" filter="url(#glow-g)">🛡</text>
+        <!-- Hardening rules box -->
+        <rect x="255" y="30" width="200" height="130" rx="6" fill="#040E08" stroke="#22C55E" stroke-width="1.2"/>
+        <text x="355" y="48" text-anchor="middle" font-family="IBM Plex Mono" font-size="8.5" fill="#22C55E" font-weight="700">HARDENING APPLIED ✓</text>
+        <text x="268" y="66" font-family="IBM Plex Mono" font-size="7.5" fill="#3A7050">✓ /tmp mounted noexec,nosuid</text>
+        <text x="268" y="82" font-family="IBM Plex Mono" font-size="7.5" fill="#3A7050">✓ crontab access restricted</text>
+        <text x="268" y="98" font-family="IBM Plex Mono" font-size="7.5" fill="#3A7050">✓ auditd monitoring active</text>
+        <text x="268" y="114" font-family="IBM Plex Mono" font-size="7.5" fill="#3A7050">✓ CPU alert threshold: 80%</text>
+        <text x="268" y="130" font-family="IBM Plex Mono" font-size="7.5" fill="#3A7050">✓ Egress: mining ports blocked</text>
+        <text x="268" y="146" font-family="IBM Plex Mono" font-size="7.5" fill="#3A7050">✓ Process whitelist enforced</text>
+      </g>
+
+      <!-- Label: node name under server -->
+      <text x="385" y="390" text-anchor="middle" font-family="IBM Plex Mono" font-size="7.5" fill="#0D1E2A" letter-spacing=".12em">AI / ML INFRASTRUCTURE — HDFC BANK</text>
+
+    </svg>
+
+    <!-- Alert banners -->
+    <div class="alert-banner" id="compromise-banner">
+      ☠️ RANSOMWARE DETECTED — All files encrypted — Isolate server immediately
+      <button onclick="document.getElementById('compromise-banner').style.display='none'">✕</button>
+    </div>
+    <div class="secure-banner" id="secure-banner" style="display:none;">
+      ✅ Server hardened — Cryptominer eliminated — AI training pipeline restored
+    </div>
+  </div>
+</div>
+<div class="btns">
+  <button id="b1" onclick="stageOverview()">🔍 Attack Types</button>
+  <button id="b2" onclick="stageRansomware()" disabled>☠️ Ransomware</button>
+  <button id="b3" onclick="stageCrypto()" disabled>💻 .dhpcd Miner</button>
+  <button id="b4" onclick="stagePenTest()" disabled>🛠 PEN Test</button>
+  <button id="b5" onclick="stageHarden()" disabled>🛡 Harden</button>
+  <button id="bnext" onclick="ransomNext()" style="display:none;border-color:#FBBF24;color:#FBBF24;">▶ Next Step</button>
+  <button id="b0" class="rst" onclick="stageReset()">↺ Reset</button>
+</div>
+
+<script>
+function s(id){return document.getElementById(id);}
+function log(msg,t='ok'){
+  const lg=s('log'),d=new Date();
+  const ts=[d.getHours(),d.getMinutes(),d.getSeconds()].map(n=>String(n).padStart(2,'0')).join(':');
+  const e=document.createElement('div');e.className='le';
+  e.innerHTML=`<span class="lt">${ts}</span><span class="lm ${t}">${msg}</span>`;
+  lg.insertBefore(e,lg.firstChild);
+}
+function pill(txt,type='secure'){
+  s('mpill').className='pill '+type;
+  s('ptxt').textContent=txt;
+}
+function setMet(threat,type,cpu,status){
+  if(threat)s('m-threat').textContent=threat;
+  if(type)s('m-type').textContent=type;
+  if(cpu)s('m-cpu').textContent=cpu;
+  if(status)s('m-status').textContent=status;
+}
+function show(id,op){const el=s(id);if(el)el.style.opacity=op;}
+
+// ── Reliable keyframe packet animation ─────────────────────────────────────
+let _gen=0,_pid=0;
+function spawnPkt(x1,y1,x2,y2,col,delay,label){
+  const myGen=_gen;
+  const id='pk'+(++_pid);
+  const dx=x2-x1,dy=y2-y1,dur=1300;
+  const st=document.createElement('style');
+  st.textContent=`@keyframes ${id}{0%{transform:translate(0,0);opacity:0;}8%{opacity:1;}82%{transform:translate(${dx}px,${dy}px);opacity:.9;}100%{transform:translate(${dx}px,${dy}px);opacity:0;}}`;
+  document.head.appendChild(st);
+  const go=()=>{
+    if(_gen!==myGen){st.remove();return;}
+    const ns='http://www.w3.org/2000/svg';
+    const g=document.createElementNS(ns,'g');
+    g.classList.add('pkt-anim');
+    const c=document.createElementNS(ns,'circle');
+    c.setAttribute('cx',x1);c.setAttribute('cy',y1);c.setAttribute('r','7');
+    c.setAttribute('fill',col);g.appendChild(c);
+    if(label){
+      const t=document.createElementNS(ns,'text');
+      t.setAttribute('x',x1);t.setAttribute('y',y1-10);
+      t.setAttribute('text-anchor','middle');t.setAttribute('font-family','IBM Plex Mono');
+      t.setAttribute('font-size','8');t.setAttribute('fill',col);t.textContent=label;
+      g.appendChild(t);
+    }
+    g.style.animation=`${id} ${dur}ms ease-out forwards`;
+    s('csv').appendChild(g);
+    setTimeout(()=>{if(g.parentNode)g.remove();st.remove();},dur+150);
+  };
+  if(delay)setTimeout(go,delay);else go();
+}
+
+// CPU meter helper
+function setCPU(pct,col){
+  const fill=s('cpu-fill');
+  if(!fill)return;
+  const barH=130,h=Math.round(barH*pct/100);
+  fill.setAttribute('y',barH-h);
+  fill.setAttribute('height',h);
+  fill.setAttribute('fill',col);
+  s('cpu-pct').textContent=pct+'%';
+  s('cpu-pct').setAttribute('fill',col);
+  s('m-cpu').textContent=pct+'%';
+}
+
+// Lock a file icon (ransomware)
+function lockFile(id,delay){
+  setTimeout(()=>{
+    const g=s(id);if(!g)return;
+    const rect=g.querySelector('rect');
+    if(rect){rect.setAttribute('fill','#180308');rect.setAttribute('stroke','#FF3B5C');}
+    const icon=g.querySelector('text');
+    if(icon)icon.textContent='🔒';
+  },delay);
+}
+
+// ── Stage 1: Attack Types Overview ────────────────────────────────────────
+function stageOverview(){
+  setMet('MEDIUM','OVERVIEW','22%','MONITORING');
+  pill('Threat Analysis','scan');
+  s('snote').innerHTML=`6 major attack vectors used by threat actors today.<br><br>
+<span style="color:var(--red)">TCP SYN Flood</span> — overwhelm server with millions of half-open connections → crash/unavailability (DDoS).<br>
+<span style="color:var(--amber)">ARP Spoofing</span> — poison LAN ARP cache → all traffic redirected through attacker.<br>
+<span style="color:var(--violet)">Man-in-the-Middle</span> — intercept & modify communications between two parties.<br>
+<span style="color:var(--red)">Ransomware</span> — encrypt all files → demand payment (crypto) for decryption key.<br>
+<span style="color:var(--amber)">Cryptominer</span> — silently hijack CPU/GPU cycles to mine cryptocurrency.<br>
+<span style="color:var(--rose)">SQL Injection</span> — malicious SQL in input fields → dump/delete database.`;
+  log('Threat landscape survey initiated','inf');
+  log('TCP SYN Flood: attacker sends SYN packets without completing handshake','warn');
+  log('ARP Spoofing: attacker sends fake ARP replies to poison LAN routing','warn');
+  log('Man-in-the-Middle: SSL stripping or rogue AP to intercept traffic','warn');
+  log('Ransomware: often delivered via phishing email → payload → encryption loop','err');
+  log('Cryptominer: silent, low-priority process — hard to detect without monitoring','warn');
+  log('SQL Injection: unparameterized queries → attacker controls DB logic','err');
+  // Animate attack packets from bots to firewall (all blocked)
+  const myGen=_gen;
+  const botSrcs=[[210,75,'#FF3B5C'],[210,175,'#22D3EE'],[210,275,'#FBBF24'],[210,365,'#A78BFA']];
+  botSrcs.forEach(([x,y,col],i)=>{
+    setInterval(()=>{
+      if(_gen!==myGen)return;
+      spawnPkt(x,y,224,y,col,0);
+    },1800+i*450);
+  });
+  s('b1').disabled=true;s('b2').disabled=false;s('b3').disabled=true;s('b4').disabled=true;s('b5').disabled=true;
+}
+
+// ── Stage 2: Ransomware (teacher-paced, step-by-step) ─────────────────────
+let _rStep=0;
+function showNext(){ const b=s('bnext'); if(b){b.style.display='inline-block';} }
+function hideNext(){ const b=s('bnext'); if(b){b.style.display='none';} }
+
+function stageRansomware(){
+  _gen++;_rStep=0;
+  hideNext();
+  setMet('CRITICAL','RANSOMWARE','38%','COMPROMISED');
+  pill('☠️ Under Attack','danger');
+
+  s('snote').innerHTML=`<span style="color:var(--red)">Ransomware — Step 1 of 4</span><br><br>
+A <span style="color:var(--amber)">phishing email</span> arrives with a malicious .docx attachment. The victim opens it — a hidden macro runs and drops the ransomware binary onto the server silently.<br><br>
+Watch the 📧 email travel from the Ransomware bot to the AI server.<br><br>
+<span style="color:#555">Click <strong style="color:#FBBF24">▶ Next Step</strong> to continue after each stage.</span>`;
+
+  log('⚠️  Phishing email received — malicious .docx attachment','err');
+  show('file-grid','1');
+  spawnPkt(210,75,385,155,'#FBBF24',200,'📧');
+  setTimeout(()=>{
+    log('Payload executed — ransomware dropper installed silently','err');
+    s('srv-status').textContent='⚠ INFECTED';
+    s('srv-status').setAttribute('fill','#FF3B5C');
+    s('srv-chassis').setAttribute('stroke','#FF3B5C');
+    spawnPkt(210,75,385,155,'#FF3B5C',0);
+    spawnPkt(210,75,385,155,'#FF3B5C',500);
+    _rStep=1;
+    showNext();
+  },2000);
+  s('b1').disabled=true;s('b2').disabled=true;s('b4').disabled=true;s('b5').disabled=true;
+}
+
+function ransomNext(){
+  if(_rStep===1){
+    // Step 2: explain pre-encryption phase
+    _rStep=2; hideNext();
+    s('snote').innerHTML=`<span style="color:var(--red)">Ransomware — Step 2 of 4</span><br><br>
+Before encrypting, the malware:<br>
+① Scans <em>all</em> drives — docs, DBs, backups, SSH keys, model weights<br>
+② Generates a unique <span style="color:var(--amber)">AES-256 encryption key</span><br>
+③ <span style="color:var(--red)">Sends that key to the attacker's C2 server</span> — victim never sees it<br>
+④ Starts encrypting file by file<br><br>
+<span style="color:var(--amber)">Key insight:</span> Without the decryption key, files are mathematically unrecoverable — even for the world's fastest supercomputer.`;
+    log('Ransomware scanning all volumes — 847 GB found','warn');
+    log('AES-256 key generated, sent to attacker C2 server','err');
+    spawnPkt(385,155,210,75,'#FF3B5C',500,'🔑');
+    setTimeout(()=>{showNext();},1500);
+
+  } else if(_rStep===2){
+    // Step 3: encrypt files
+    _rStep=3; hideNext();
+    s('snote').innerHTML=`<span style="color:var(--red)">Ransomware — Step 3 of 4</span><br><br>
+<span style="color:var(--amber)">Encryption in progress.</span> Watch each file lock — 🔒<br><br>
+Every file type is targeted: databases, documents, private keys, ML model weights, configuration files, backups.<br><br>
+This typically takes <span style="color:var(--red)">minutes to hours</span> depending on volume size. The server stays responsive — the victim often doesn't notice until it's too late.`;
+    log('Encryption started — files locking one by one','err');
+    [0,1,2,3,4,5,6,7,8,9].forEach((i)=>lockFile('f'+i, i*600));
+    setTimeout(()=>{ _rStep=3; showNext(); }, 6500);
+
+  } else if(_rStep===3){
+    // Step 4: ransom note + advice
+    _rStep=4; hideNext();
+    show('ransom-note','1');
+    s('compromise-banner').style.display='flex';
+    s('snote').innerHTML=`<span style="color:var(--red)">Ransomware — Step 4 of 4</span><br><br>
+<span style="color:var(--amber)">Should you pay the ransom?</span><br>
+<span style="color:var(--red)">NO.</span> ~40% of victims who pay never receive a working key. Paying funds future attacks.<br><br>
+<span style="color:var(--green)">Correct response:</span><br>
+① Isolate server — disconnect from network immediately<br>
+② Restore from <span style="color:var(--green)">air-gapped offline backup</span> (must be pre-incident)<br>
+③ Engage IR team, preserve forensic evidence<br>
+④ Report to <strong>CERT-In</strong> (mandatory in India within 6 hours)`;
+    log('☠️ ALL FILES ENCRYPTED — Ransom: 5 BTC','err');
+    log('DO NOT PAY — restore from offline backup','warn');
+    log('Report to CERT-In within 6 hours (IT Act mandate)','warn');
+    s('b3').disabled=false;
+  }
+}
+
+// ── Stage 3: Cryptominer (.dhpcd) ─────────────────────────────────────────
+let cpuInt=null;
+function stageCrypto(){
+  _gen++;clearInterval(cpuInt);
+  // Reset ransomware visuals
+  show('ransom-note','0');show('file-grid','0');
+  s('compromise-banner').style.display='none';
+  [0,1,2,3,4,5,6,7,8,9].forEach(i=>{
+    const g=s('f'+i);if(!g)return;
+    const rect=g.querySelector('rect');
+    if(rect){rect.setAttribute('fill','#0A2035');rect.setAttribute('stroke','#22D3EE44');}
+  });
+  s('srv-status').textContent='● ONLINE';
+  s('srv-status').setAttribute('fill','#22C55E');
+  s('srv-chassis').setAttribute('stroke','#22D3EE');
+
+  setMet('HIGH','CRYPTOMINER','22%','DEGRADED');
+  pill('💻 CPU Hijack','danger');
+  show('cpu-meter','1');
+  show('ai-pipeline','1');
+  setCPU(22,'#22C55E');
+  s('pipe-status').textContent='● Running — Epoch 142/500';
+  s('pipe-fill').style.width='40px';
+  s('pipe-fill').setAttribute('fill','#22D3EE');
+
+  s('snote').innerHTML=`<span style="color:var(--amber)">REAL CASE: .dhpcd Cryptominer on HDFC AI Server</span><br><br>
+A cryptominer disguised as <code style="color:var(--violet)">dhcpd</code> (DHCP daemon) was found on our AI training server. The leading dot (<code style="color:var(--red)">.dhpcd</code>) hid it from casual <code>ls</code> listings.<br><br>
+It added itself to <span style="color:var(--amber)">crontab</span> for persistence — surviving reboots. It used <span style="color:var(--red)">89% CPU</span>, delaying model training from hours to days.`;
+
+  log('AI training pipeline running normally — Epoch 142/500','ok');
+  log('Monitoring: CPU 22%, GPU 76% (training load)','inf');
+
+  // Simulate gradual CPU takeover
+  const steps=[
+    [1500,'Unknown process .dhpcd spawned silently','warn',45,'#FBBF24'],
+    [3000,'.dhpcd connecting to mining pool: pool.minexmr.com:4444','err',68,'#FBBF24'],
+    [4500,'CPU usage spike: 68% → training pipeline slowing','warn',78,'#FB5E6D'],
+    [6000,'⚠️  Training pipeline STALLED — Epoch 142 not progressing','err',89,'#FF3B5C'],
+    [7500,'crontab entry found: */5 * * * * /tmp/.dhpcd -c /tmp/.mining.conf','err',89,'#FF3B5C'],
+  ];
+  steps.forEach(([delay,msg,type,cpu,col])=>{
+    setTimeout(()=>{
+      log(msg,type);
+      setCPU(cpu,col);
+      s('m-cpu').textContent=cpu+'%';
+      if(cpu>70){
+        s('pipe-status').textContent='⚠ STALLED — Epoch 142/500';
+        s('pipe-status').setAttribute('fill','#FBBF24');
+        s('pipe-fill').setAttribute('fill','#FF3B5C');
+        s('pipe-fill').style.width='40px';
+      }
+      if(cpu>=89){
+        s('cron-display').style.opacity='1';
+        setTimeout(()=>s('cron-line2').setAttribute('opacity','1'),800);
+      }
+    },delay);
+  });
+  // Spawn outbound mining packets
+  const myGen=_gen;
+  setTimeout(()=>{
+    const mineInt=setInterval(()=>{
+      if(_gen!==myGen){clearInterval(mineInt);return;}
+      spawnPkt(437,170,210,275,'#FBBF24',0,'⛏');
+    },1200);
+  },2000);
+
+  setTimeout(()=>{
+    log('>>> Initiating cleanup...','inf');
+    s('b4').disabled=false;
+  },8500);
+  s('b1').disabled=true;s('b2').disabled=true;s('b3').disabled=true;s('b5').disabled=true;
+}
+
+// ── Stage 4: PEN Test (Ethical Hacking) ───────────────────────────────────
+function stagePenTest(){
+  _gen++;
+  show('cron-display','0');
+  setMet('LOW','PEN TEST','22%','TESTING');
+  pill('🛠 PEN Testing','scan');
+  s('snote').innerHTML=`<span style="color:var(--cyan)">Ethical Hacking — How to detect & simulate attacks</span><br><br>
+PEN (Penetration) testing is authorised, structured attack simulation — done by defenders to find vulnerabilities before real attackers do.<br><br>
+The scripts below are the same tools a defender would use to:<br>
+① Detect the cryptominer via process monitoring<br>
+② Find crontab persistence<br>
+③ Block outbound connections to mining pools`;
+
+  log('PEN TEST MODE — Authorised security assessment','inf');
+  log('--- Step 1: Detect suspicious processes ---','inf');
+  setTimeout(()=>{
+    log('$ ps aux --sort=-%cpu | head -10','code');
+    setTimeout(()=>{
+      log('www-data  4821 89.2  0.1  .dhpcd -c /tmp/.mining.conf','err');
+      log('^ Suspicious: hidden process (.dot prefix), high CPU, /tmp path','warn');
+    },1000);
+  },500);
+
+  setTimeout(()=>{
+    log('--- Step 2: Check crontab persistence ---','inf');
+    log('$ crontab -l -u www-data','code');
+    setTimeout(()=>{
+      log('*/5 * * * * /tmp/.dhpcd -c /tmp/.mining.conf >/dev/null 2>&1','err');
+      log('^ Every 5 min: restarts miner even after kill','warn');
+    },1000);
+  },3000);
+
+  setTimeout(()=>{
+    log('--- Step 3: Trace network connections ---','inf');
+    log('$ ss -tunap | grep dhpcd','code');
+    setTimeout(()=>{
+      log('tcp ESTAB .dhpcd → pool.minexmr.com:4444 (XMR mining pool)','err');
+      log('^ Outbound on port 4444 — common cryptomining port','warn');
+    },1000);
+  },5500);
+
+  setTimeout(()=>{
+    log('--- Step 4: Kill & Remove ---','inf');
+    log('$ kill -9 $(pgrep -f .dhpcd)','code');
+    log('$ rm -f /tmp/.dhpcd /tmp/.mining.conf','code');
+    log('$ crontab -r -u www-data','code');
+    setCPU(22,'#22C55E');
+    s('pipe-status').textContent='● Resumed — Epoch 142/500';
+    s('pipe-status').setAttribute('fill','#22C55E');
+    s('pipe-fill').setAttribute('fill','#22D3EE');
+    setTimeout(()=>{
+      log('✅ Process killed. CPU: 89% → 22%. Training resumed.','ok');
+      s('b5').disabled=false;
+    },1000);
+  },8000);
+
+  // Scan animation: packets probing server and returning
+  const myGen=_gen;
+  [[164,75],[164,165],[164,255],[164,345],[36,210]].forEach(([x,y],i)=>{
+    setTimeout(()=>{
+      if(_gen!==myGen)return;
+      spawnPkt(x,y,385,155,'#22D3EE',0,'⟶');
+      spawnPkt(385,155,x,y,'#22C55E',800,'●');
+    },i*700+800);
+  });
+  s('b1').disabled=true;s('b2').disabled=true;s('b3').disabled=true;s('b4').disabled=true;
+}
+
+// ── Stage 5: Harden ────────────────────────────────────────────────────────
+function stageHarden(){
+  _gen++;
+  setMet('LOW','—','22%','HARDENED');
+  pill('🛡 Hardened','hard');
+  show('ai-pipeline','1');
+  show('def-shields','1');
+  s('pipe-status').textContent='● Running — Epoch 142/500';
+  s('pipe-status').setAttribute('fill','#22C55E');
+  s('srv-status').textContent='● SECURE ✓';
+  s('srv-status').setAttribute('fill','#22C55E');
+  s('srv-chassis').setAttribute('stroke','#22C55E');
+  setCPU(22,'#22C55E');
+  s('secure-banner').style.display='block';
+
+  s('snote').innerHTML=`<span style="color:var(--green)">Server Hardening — 6 Layers Applied</span><br><br>
+After eliminating .dhpcd, we hardened the server to prevent future attacks. A cryptominer getting in means the attacker had <em>code execution</em> — which must be treated seriously.<br><br>
+These defences make it much harder for malware to land, persist, or communicate out.`;
+
+  log('=== HARDENING COMPLETE ===','ok');
+  const steps=[
+    [200,'/tmp remounted with noexec,nosuid — binaries in /tmp can no longer execute','ok'],
+    [1000,'crontab access restricted to root only via /etc/cron.allow','ok'],
+    [1800,'auditd activated — all crontab edits and new process executions logged','ok'],
+    [2600,'CPU alert configured — any process >80% CPU triggers PagerDuty alert','ok'],
+    [3400,'iptables: outbound ports 3333,4444,5555,14444 (mining pools) DROPPED','ok'],
+    [4200,'Process whitelist enforced via AppArmor — unknown binaries blocked','ok'],
+    [5000,'Weekly automated scan: find /tmp /var/tmp -perm /111 -type f → review','ok'],
+    [5800,'Incident documented. Security training for team on phishing & supply chain','ok'],
+  ];
+  steps.forEach(([delay,msg,type])=>setTimeout(()=>log(msg,type),delay));
+  setTimeout(()=>log('✅ All 6 hardening layers active. System back to full capacity.','ok'),6600);
+  s('b1').disabled=true;s('b2').disabled=true;s('b3').disabled=true;s('b4').disabled=true;s('b5').disabled=true;
+}
+
+// ── Reset ──────────────────────────────────────────────────────────────────
+function stageReset(){
+  _gen++;
+  document.querySelectorAll('.pkt-anim').forEach(e=>e.remove());
+  s('log').innerHTML='';
+  show('ransom-note','0');show('file-grid','0');show('cpu-meter','0');
+  show('ai-pipeline','0');show('cron-display','0');show('def-shields','0');
+  s('compromise-banner').style.display='none';
+  s('secure-banner').style.display='none';
+  s('srv-status').textContent='● ONLINE';
+  s('srv-status').setAttribute('fill','#22C55E');
+  s('srv-chassis').setAttribute('stroke','#22D3EE');
+  [0,1,2,3,4,5,6,7,8,9].forEach(i=>{
+    const g=s('f'+i);if(!g)return;
+    const rect=g.querySelector('rect');
+    if(rect){rect.setAttribute('fill','#0A2035');rect.setAttribute('stroke','#22D3EE44');}
+    const icon=g.querySelector('text');
+    const labels=['DB','DOC','KEY','IMG','SQL','LOG','CFG','PEM','BAK','PY'];
+    if(icon)icon.textContent='📄';
+  });
+  s('cron-line2').setAttribute('opacity','0');
+  setMet('LOW','—','22%','SECURE');
+  pill('System SECURE','secure');
+  s('snote').innerHTML=`Cybersecurity is the practice of defending servers, networks, and data from attackers.<br><br>
+HDFC Bank's AI servers process sensitive financial data and run critical ML pipelines — making them high-value targets.<br><br>
+Press <span style="color:var(--cyan)">🔍 Attack Types</span> for an overview of major threats, then walk through each stage to see how attacks work and how to stop them.`;
+  s('b1').disabled=false;s('b2').disabled=true;s('b3').disabled=true;s('b4').disabled=true;s('b5').disabled=true;
+}
+
+window.onload=()=>setTimeout(stageReset,100);
+</script>
+</body>
+</html>

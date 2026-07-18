@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inside Attention — Multi-Head &amp; KV Cache</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+:root{
+  --bg:#07080c;--surface:#0d0f16;--surface2:#111420;--border:#20263a;
+  --cyan:#00d4ff;--violet:#a78bfa;--green:#22c55e;--amber:#f59e0b;
+  --magenta:#e879f9;--red:#ef4444;--teal:#00e5c7;
+  --ink:#eef2f8;--ink-dim:#a9b4c6;--ink-faint:#6b7689;
+}
+body{background:var(--bg);color:var(--ink);font-family:'IBM Plex Mono',monospace;font-size:12px;height:100vh;overflow:hidden;display:flex}
+.content{flex:1;min-width:0;display:flex;flex-direction:column}
+.view{flex:1;min-height:0;display:none;flex-direction:column}
+.view.show{display:flex}
+.ctrlbar{flex-shrink:0;background:var(--surface);border-bottom:1px solid var(--border);padding:7px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.title{font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:700}
+.title .accent{color:var(--teal)}
+.cbtn{padding:6px 13px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--ink);font-family:inherit;font-size:11px;cursor:pointer;transition:border-color .2s,color .2s}
+.cbtn:hover{border-color:var(--cyan);color:var(--cyan)}
+.cbtn.big{font-weight:600;padding:6px 17px}
+.slabel{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--ink-dim)}
+input[type=range]{-webkit-appearance:none;appearance:none;height:4px;width:88px;background:var(--border);border-radius:2px;outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--cyan);cursor:pointer;box-shadow:0 0 8px rgba(0,212,255,.5)}
+.pill{font-size:10px;color:var(--ink-dim);background:rgba(255,255,255,.05);border:1px solid var(--border);padding:3px 10px;border-radius:10px}
+.pill b{color:var(--ink)}
+.hint{margin-left:auto;font-size:10px;color:var(--ink-faint)}
+.stage{flex:1;min-height:0;position:relative}
+.stage svg{width:100%;height:100%;display:block}
+.note{flex-shrink:0;background:var(--surface);border-top:1px solid var(--border);padding:7px 16px;font-family:'Sora',sans-serif;font-size:11px;color:var(--ink-dim);line-height:1.45}
+.note b{color:var(--ink)}
+.note .tag{font-size:8px;padding:1px 5px;border-radius:3px;background:rgba(0,229,199,.16);color:var(--teal);border:1px solid rgba(0,229,199,.28)}
+.subrail{flex:0 0 42px;background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column}
+.subrail .rlogo{height:42px;display:flex;align-items:center;justify-content:center;border-bottom:1px solid var(--border);color:var(--teal);font-family:'Space Grotesk';font-weight:700;font-size:11px}
+.subtab{flex:1;border:none;background:transparent;color:var(--ink-dim);cursor:pointer;font-family:inherit;font-size:12px;letter-spacing:.05em;
+  writing-mode:vertical-rl;transform:rotate(180deg);display:flex;align-items:center;justify-content:center;gap:9px;border-left:2px solid transparent;transition:color .2s,background .2s,border-color .2s}
+.subtab .num{writing-mode:horizontal-tb;transform:rotate(180deg);width:16px;height:16px;border-radius:50%;border:1px solid var(--border);font-size:8.5px;display:flex;align-items:center;justify-content:center;color:var(--ink-faint)}
+.subtab+.subtab{border-top:1px solid var(--border)}
+.subtab:hover{color:var(--ink);background:rgba(255,255,255,.03)}
+.subtab.active{color:var(--teal);background:var(--bg);border-left-color:var(--teal)}
+.subtab.active .num{border-color:var(--teal);color:var(--teal)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+</head>
+<body>
+<div class="content">
+  <div class="view show" id="v_mha">
+    <div class="ctrlbar">
+      <span class="title">Multi-Head <span class="accent">Attention</span></span>
+      <button class="cbtn big" id="mha-play" onclick="MHA.toggle()">⏸ Pause</button>
+      <button class="cbtn" onclick="MHA.reset()">↺ Reset</button>
+      <label class="slabel">speed<input type="range" id="mha-speed" min="1" max="10" value="6" oninput="MHA.speed=+this.value"></label>
+      <span class="hint">one vector splits into heads · each head attends in parallel · results are stitched back</span>
+    </div>
+    <div class="stage"><svg id="mha-svg" viewBox="0 0 720 380" preserveAspectRatio="xMidYMid meet"></svg></div>
+    <div class="note"><b>Multi-head = attention done several times in parallel.</b> The token vector is <span class="tag">split</span> into equal slices (heads); each head runs its own attention independently, so different heads can focus on different things; then the pieces are <span class="tag">concatenated</span> and mixed by a final projection <b>Wₒ</b>. Same math, just sliced and re-joined.</div>
+  </div>
+  <div class="view" id="v_kv">
+    <div class="ctrlbar">
+      <span class="title">KV Cache <span class="accent">·</span> Q, K, V vectors</span>
+      <button class="cbtn big" id="kv-play" onclick="KV.toggle()">▶ Auto-generate</button>
+      <button class="cbtn" onclick="KV.step()">Generate next ▶</button>
+      <button class="cbtn" onclick="KV.reset()">↺ Reset</button>
+      <label class="slabel">speed<input type="range" id="kv-speed" min="1" max="10" value="6" oninput="KV.speed=+this.value"></label>
+      <span class="pill">generated <b id="kv-n">0</b> / <b id="kv-tot">3</b></span>
+    </div>
+    <div class="stage"><svg id="kv-svg" viewBox="0 0 720 400" preserveAspectRatio="xMidYMid meet"></svg></div>
+    <div class="note"><b>One generation step, in three phases:</b> <span class="tag">1</span> the latest token's <b style="color:var(--cyan)">Q</b> is multiplied with every cached <b style="color:var(--violet)">K</b> → softmax weights; <span class="tag">2</span> those weights blend the cached <b style="color:var(--amber)">V</b>s into an output that <b>predicts the next token</b>; <span class="tag">3</span> that new token's own <b>K, V slide into the cache</b> — ready for the next step. Past K/V are reused, never recomputed. Single head.</div>
+  </div>
+</div>
+<div class="subrail">
+  <div class="rlogo">AT</div>
+  <button class="subtab active" data-v="mha" onclick="showSub('mha')"><span class="num">1</span>Multi-head</button>
+  <button class="subtab" data-v="kv" onclick="showSub('kv')"><span class="num">2</span>KV cache</button>
+</div>
+
+<script>
+const CY='#00d4ff',VI='#a78bfa',TEAL='#00e5c7',AM='#f59e0b',MA='#e879f9',GR='#22c55e',DIM='#6b7689',GRID='#2a3352',F='#475569';
+const clamp=(v,a,b)=>v<a?a:v>b?b:v, lerp=(a,b,k)=>a+(b-a)*k, ease=k=>{k=clamp(k,0,1);return k*k*(3-2*k);};
+function mul(s){return ()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+const T=(x,y,s,c,sz,an,fw)=>`<text x="${x}" y="${y}" fill="${c||DIM}" font-size="${sz||9}" font-family="${fw==='g'?'Space Grotesk':'IBM Plex Mono'}"${fw==='b'?' font-weight="600"':''} text-anchor="${an||'middle'}">${s}</text>`;
+
+/* =================== MULTI-HEAD =================== */
+const MHA={ p:0, playing:true, speed:6,
+  toggle(){ this.playing=!this.playing; document.getElementById('mha-play').textContent=this.playing?'⏸ Pause':'▶ Play'; },
+  reset(){ this.p=0; },
+  tick(dt){ if(this.playing) this.p=(this.p+dt*0.16*(this.speed/6))%1; this.draw(); },
+  draw(){
+    const p=this.p, D=8, HEADS=4, cW=26, cH=20, gap=4;
+    const Xin=112, Xmid=356, WoX=556, Xout=652, Yc=208;
+    const hc=[CY,VI,AM,GR], laneY=hh=>110+hh*66;
+    let x, glow=false, s;
+    if(p<0.22){ x=lerp(Xin,Xmid,ease(p/0.22)); s=ease(p/0.22); }
+    else if(p<0.6){ x=Xmid; s=1; glow=true; }
+    else if(p<0.82){ x=lerp(Xmid,WoX,ease((p-0.6)/0.22)); s=1-ease((p-0.6)/0.22); }
+    else { x=lerp(WoX,Xout,ease((p-0.82)/0.18)); s=0; }
+    let h='';
+    h+=T(Xin,26,'input token',DIM,10,'middle','b')+T(Xin,40,'d_model = 8',F,8);
+    h+=T(Xmid,26,'split into '+HEADS+' heads',DIM,10,'middle','b')+T(Xmid,40,'each d_k = 2 · parallel',F,8);
+    h+=T(WoX,26,'Wₒ projection',TEAL,10,'middle','b')+T(WoX,40,'concat → mix',F,8);
+    h+=T(Xout,26,'output',DIM,10,'middle','b')+T(Xout,40,'d_model = 8',F,8);
+    for(let hh=0;hh<HEADS;hh++){ const ly=laneY(hh); const on=glow;
+      h+=`<rect x="${Xmid-42}" y="${ly-28}" width="84" height="56" rx="9" fill="${on?hc[hh]+'14':'rgba(255,255,255,.02)'}" stroke="${hc[hh]}" stroke-opacity="${on?0.9:0.4}" stroke-width="${on?2:1.2}"${on?' filter="url(#glm)"':''}/>`;
+      h+=T(Xmid,ly-35,'head '+(hh+1),hc[hh],8.5,'middle');
+      if(on) h+=T(Xmid,ly+3,'attention',hc[hh],7.5,'middle'); }
+    h+=`<rect x="${WoX-28}" y="${Yc-58}" width="56" height="116" rx="9" fill="rgba(0,229,199,.05)" stroke="${TEAL}" stroke-opacity=".7" stroke-width="1.4"/>`;
+    for(let i=0;i<D;i++){ const hd=Math.floor(i/2);
+      const uY=Yc-(D-1)*(cH+gap)/2+i*(cH+gap);
+      const sY=laneY(hd)+((i%2)-0.5)*(cH+gap+2);
+      const y=lerp(uY,sY,s), col=hc[hd];
+      h+=`<rect x="${(x-cW/2).toFixed(1)}" y="${(y-cH/2).toFixed(1)}" width="${cW}" height="${cH}" rx="4" fill="${col}" opacity="0.92" stroke="rgba(255,255,255,.4)" stroke-width="1"/>`; }
+    h+=`<path d="M${Xin+22} ${Yc} L ${Xmid-58} ${Yc}" stroke="${GRID}" stroke-width="1.5" marker-end="url(#arm)"/>`;
+    h+=`<path d="M${Xmid+58} ${Yc} L ${WoX-34} ${Yc}" stroke="${GRID}" stroke-width="1.5" marker-end="url(#arm)"/>`;
+    h+=`<path d="M${WoX+30} ${Yc} L ${Xout-16} ${Yc}" stroke="${GRID}" stroke-width="1.5" marker-end="url(#arm)"/>`;
+    h+=`<defs><marker id="arm" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0 L7 3.5 L0 7 z" fill="${GRID}"/></marker><filter id="glm" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>`;
+    document.getElementById('mha-svg').innerHTML=h;
+  }
+};
+
+/* =================== KV CACHE (phased) =================== */
+const KV={ nStep:0, phase:0, playing:false, speed:6, D:5,
+  prompt:['the','cat','sat'], gen:['on','the','mat'],
+  Kv:[],Vv:[],Qv:[],
+  boot(){ const L=this.prompt.length+this.gen.length; this.Kv=[];this.Vv=[];this.Qv=[];
+    for(let i=0;i<L;i++){ const r=mul(50+i*11); this.Kv.push(Array.from({length:this.D},()=>r()*2-1)); this.Vv.push(Array.from({length:this.D},()=>r()*2-1)); this.Qv.push(Array.from({length:this.D},()=>r()*2-1)); }
+    document.getElementById('kv-tot').textContent=this.gen.length; },
+  toggle(){ if(this.nStep>=this.gen.length) this.reset(); this.playing=!this.playing; document.getElementById('kv-play').textContent=this.playing?'⏸ Pause':'▶ Auto-generate'; },
+  step(){ if(this.nStep>=this.gen.length) return; this.playing=false; document.getElementById('kv-play').textContent='▶ Auto-generate'; if(this.phase<1){ this.phase=1; } else { this.nStep++; this.phase=0; } },
+  reset(){ this.playing=false; this.nStep=0; this.phase=0; document.getElementById('kv-play').textContent='▶ Auto-generate'; },
+  tick(dt){ if(this.nStep<this.gen.length && this.phase<1) this.phase=Math.min(1,this.phase+dt*0.42*(this.speed/6));
+    if(this.playing && this.phase>=1 && this.nStep<this.gen.length){ this.nStep++; this.phase=0; if(this.nStep>=this.gen.length){ this.playing=false; document.getElementById('kv-play').textContent='↺ Replay'; } }
+    this.draw(); },
+  draw(){
+    const D=this.D, prompt=this.prompt, gen=this.gen, phase=this.phase, nStep=this.nStep;
+    const done=nStep>=gen.length, cacheLen=prompt.length+nStep, qi=cacheLen-1;
+    const seqC=prompt.concat(gen.slice(0,nStep)), predTok=done?null:gen[nStep], predIdx=cacheLen;
+    const p1=clamp(phase/0.4,0,1), p2=clamp((phase-0.4)/0.25,0,1), p3=clamp((phase-0.65)/0.35,0,1);
+    document.getElementById('kv-n').textContent=nStep;
+    let sc=[],mx=-1e9; for(let j=0;j<cacheLen;j++){ let d=0; for(let k=0;k<D;k++) d+=this.Qv[qi][k]*this.Kv[j][k]; sc.push(d); if(d>mx)mx=d; }
+    let ex=sc.map(v=>Math.exp((v-mx)*0.9)), sum=ex.reduce((a,b)=>a+b,0)||1, w=ex.map(v=>v/sum);
+    const cW=13,cH=15;
+    function vec(x,y,vals,col,op){ let s=''; for(let i=0;i<vals.length;i++){const a=(0.3+0.7*Math.min(1,Math.abs(vals[i])))*(op==null?1:op);s+=`<rect x="${x+i*cW}" y="${y}" width="${cW-1.5}" height="${cH}" rx="2" fill="${col}" opacity="${a.toFixed(2)}"/>`;} return s; }
+    let h='';
+    // ===== sentence band =====
+    h+=T(28,20,'text so far:',F,9,'start');
+    let sx=118;
+    for(let i=0;i<cacheLen;i++){ const isP=i<prompt.length, bw=seqC[i].length*8+14;
+      h+=`<rect x="${sx}" y="8" width="${bw}" height="18" rx="5" fill="${isP?'rgba(0,212,255,.1)':'rgba(167,139,250,.14)'}" stroke="${isP?CY:VI}" stroke-opacity=".55"/>`+T(sx+bw/2,21,seqC[i],isP?CY:VI,10,'middle'); sx+=bw+6; }
+    if(predTok){ const bw=predTok.length*8+14, op=(0.25+0.7*p2);
+      h+=`<rect x="${sx}" y="8" width="${bw}" height="18" rx="5" fill="rgba(0,229,199,.14)" stroke="${TEAL}" opacity="${op.toFixed(2)}"/>`+T(sx+bw/2,21,predTok,TEAL,10,'middle')+(p2>0.4?T(sx+bw+8,21,'← new',TEAL,8,'start'):''); }
+    h+=`<line x1="20" y1="36" x2="700" y2="36" stroke="${GRID}" stroke-width="1"/>`;
+    // ===== phase banner =====
+    const banner = done?'✓ generation complete':
+      (phase<0.4?'phase 1 — multiply  Q · K  → weights':(phase<0.65?'phase 2 — blend  Σ weight · V  → predict token':'phase 3 — add the new token’s K, V to the cache'));
+    h+=T(360,52,banner,done?TEAL:MA,11,'middle','b');
+    if(!done) h+=T(360,66,'step '+(nStep+1)+' of '+gen.length,F,8.5,'middle');
+    // ===== left: latest token + Q =====
+    const Qx=46, Qy=112;
+    if(!done){
+      h+=T(88,86,'latest token',DIM,9,'middle')+T(88,98,'“'+seqC[qi]+'”',CY,11,'middle','b');
+      h+=T(Qx-2,108,'Q  (query)',CY,8.5,'start');
+      h+=`<g>`+vec(Qx,Qy,this.Qv[qi],CY, phase<0.4?(0.6+0.4*p1):1)+`</g>`;
+    }
+    // ===== cache =====
+    const Kx=294, Vx=Kx+D*cW+8, cyTop=116, rowH=26, wbX=452;
+    h+=T(Kx-56,104,'KV CACHE',TEAL,9,'start','g');
+    h+=T(Kx+D*cW/2,104,'K',VI,9,'middle')+T(Vx+D*cW/2,104,'V',AM,9,'middle');
+    if(!done) h+=T(wbX+28,104,'weight',MA,8.5,'middle');
+    for(let j=0;j<cacheLen;j++){ const y=cyTop+j*rowH;
+      h+=`<rect x="${Kx-56}" y="${y-2}" width="${(wbX-8)-(Kx-56)}" height="${rowH-4}" rx="5" fill="none" stroke="${GRID}" stroke-opacity=".5"/>`;
+      h+=T(Kx-48,y+12,''+j,F,7.5,'middle')+T(Kx-38,y+12,seqC[j].slice(0,4),DIM,8,'start');
+      h+=vec(Kx,y+1,this.Kv[j],VI)+vec(Vx,y+1,this.Vv[j],AM);
+      if(!done){ const rev=clamp((p1*cacheLen)-j,0,1);
+        if(rev>0){ h+=`<line x1="${Qx+D*cW+2}" y1="${Qy+7}" x2="${Kx-4}" y2="${y+9}" stroke="${MA}" stroke-width="${(0.4+w[j]*2.2).toFixed(1)}" opacity="${(0.12+0.5*rev).toFixed(2)}"/>`;
+          h+=`<rect x="${wbX}" y="${y+1}" width="${(w[j]*78*rev).toFixed(1)}" height="13" rx="2" fill="rgba(232,121,249,.72)"/>`;
+          if(rev>0.55) h+=T(wbX+w[j]*78+4,y+11,(w[j]*100).toFixed(0)+'%',MA,7.5,'start'); } }
+    }
+    // moving Q·K probe
+    if(!done && p1>0 && p1<1){ const py=clamp(cyTop+p1*cacheLen*rowH,cyTop,cyTop+cacheLen*rowH); h+=`<circle cx="${Kx-4}" cy="${py.toFixed(1)}" r="4" fill="${MA}"/>`; }
+    // ===== right: output + predicted token (phase 2) =====
+    if(!done){
+      const oX=558, oY=126;
+      if(p2>0){ const out=Array.from({length:D},(_,k)=>{let s=0;for(let j=0;j<cacheLen;j++)s+=w[j]*this.Vv[j][k];return s;});
+        h+=T(oX+D*cW/2,oY-6,'output',TEAL,8.5,'middle')+T(oX+D*cW/2,oY+2,'Σ w·V',F,7.5,'middle');
+        h+=vec(oX,oY+8,out,TEAL,p2);
+        h+=`<path d="M${oX+D*cW/2} ${oY+26} L ${oX+D*cW/2} ${oY+44}" stroke="${TEAL}" stroke-width="1.5" opacity="${p2.toFixed(2)}" marker-end="url(#ark)"/>`;
+        h+=`<rect x="${oX-6}" y="${oY+48}" width="${D*cW+12}" height="26" rx="7" fill="rgba(34,197,94,.12)" stroke="${GR}" opacity="${p2.toFixed(2)}"/>`+T(oX+D*cW/2,oY+65,'“'+predTok+'”',GR,11,'middle');
+        h+=T(oX+D*cW/2,oY+86,'predicted next token',F,7.5,'middle');
+      }
+    }
+    // ===== phase 3: new K,V slide into cache =====
+    if(!done && p3>0 && predTok){ const iy=cyTop+cacheLen*rowH, off=(1-ease(p3))*150;
+      h+=`<rect x="${Kx-56}" y="${iy-2}" width="${(wbX-8)-(Kx-56)}" height="${rowH-4}" rx="5" fill="rgba(0,229,199,.07)" stroke="${TEAL}" stroke-opacity="${(0.4+0.5*p3).toFixed(2)}"/>`;
+      h+=T(Kx-48,iy+12,''+cacheLen,F,7.5,'middle')+T(Kx-38,iy+12,predTok.slice(0,4),TEAL,8,'start');
+      h+=vec(Kx+off,iy+1,this.Kv[predIdx],VI,clamp(p3*1.4,0,1))+vec(Vx+off,iy+1,this.Vv[predIdx],AM,clamp(p3*1.4,0,1));
+      h+=T(Vx+D*cW+16,iy+12,'new K, V',TEAL,7.5,'start');
+      // connector from predicted token to incoming row
+      h+=`<path d="M558 ${cyTop+cacheLen*rowH-30} Q ${Vx+90} ${iy-2} ${Vx+D*cW+12} ${iy+9}" fill="none" stroke="${TEAL}" stroke-width="1.2" stroke-dasharray="4,3" opacity="${(0.5*p3).toFixed(2)}"/>`;
+    }
+    h+=`<defs><marker id="ark" markerWidth="7" markerHeight="7" refX="6" refY="3.5" orient="auto"><path d="M0 0 L7 3.5 L0 7 z" fill="${TEAL}"/></marker></defs>`;
+    document.getElementById('kv-svg').innerHTML=h;
+  }
+};
+
+/* =================== shell =================== */
+let active='mha', raf=null, lastTs=0;
+function showSub(v){ active=v; document.querySelectorAll('.subtab').forEach(t=>t.classList.toggle('active',t.dataset.v===v));
+  document.getElementById('v_mha').classList.toggle('show',v==='mha'); document.getElementById('v_kv').classList.toggle('show',v==='kv'); }
+function frame(ts){ const dt=Math.min(.05,(ts-lastTs)/1000); lastTs=ts; if(active==='mha') MHA.tick(dt); else KV.tick(dt); raf=requestAnimationFrame(frame); }
+function init(){ MHA.draw(); KV.boot(); KV.draw(); lastTs=performance.now(); raf=requestAnimationFrame(frame); }
+document.addEventListener('visibilitychange',()=>{ if(document.hidden&&raf){cancelAnimationFrame(raf);raf=null;} else if(!document.hidden&&!raf){lastTs=performance.now();raf=requestAnimationFrame(frame);} });
+init();
+</script>
+</body>
+</html>

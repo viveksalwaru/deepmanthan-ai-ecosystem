@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Transformer — Encoder–Decoder Architecture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+:root{
+  --bg:#07080c;--surface:#0d0f16;--surface2:#111420;--border:#20263a;
+  --cyan:#00d4ff;--violet:#a78bfa;--green:#22c55e;--amber:#f59e0b;
+  --magenta:#e879f9;--red:#ef4444;--teal:#00e5c7;
+  --ink:#eef2f8;--ink-dim:#a9b4c6;--ink-faint:#6b7689;
+}
+body{background:var(--bg);color:var(--ink);font-family:'IBM Plex Mono',monospace;font-size:12px;display:flex;flex-direction:column;height:100vh;overflow:hidden}
+.ctrlbar{flex-shrink:0;background:var(--surface);border-bottom:1px solid var(--border);padding:7px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.cbtn{padding:6px 13px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--ink);font-family:inherit;font-size:11px;cursor:pointer;transition:border-color .2s,color .2s}
+.cbtn:hover{border-color:var(--cyan);color:var(--cyan)}
+.cbtn.big{font-weight:600;padding:6px 17px}
+.slabel{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--ink-dim)}
+input[type=range]{-webkit-appearance:none;appearance:none;height:4px;width:88px;background:var(--border);border-radius:2px;outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--cyan);cursor:pointer;box-shadow:0 0 8px rgba(0,212,255,.5)}
+.pill{font-size:10px;color:var(--ink-dim);background:rgba(255,255,255,.05);border:1px solid var(--border);padding:3px 10px;border-radius:10px}
+.pill b{color:var(--ink)}
+.title{font-family:'Space Grotesk',sans-serif;font-size:13px;font-weight:700}
+.title .accent{color:var(--teal)}
+#stagepill{margin-left:auto;font-size:11px;padding:3px 12px;border-radius:20px;border:1px solid var(--ac,var(--teal));color:var(--ac,var(--teal));white-space:nowrap;max-width:46vw;overflow:hidden;text-overflow:ellipsis}
+.diagram{flex:1;min-height:0;position:relative;overflow:hidden;background:radial-gradient(ellipse at 50% 45%,rgba(0,229,199,.05),transparent 72%)}
+#svg{width:100%;height:100%}
+.cstrip{flex-shrink:0;background:var(--surface);border-top:1px solid var(--border);padding:8px 16px;display:flex;gap:0}
+.csi{flex:1;padding:0 14px}
+.csi:first-child{padding-left:0}
+.csi:not(:last-child){border-right:1px solid var(--border)}
+.csl{font-size:9px;color:var(--csc,var(--ink-faint));text-transform:uppercase;letter-spacing:.09em;margin-bottom:3px;font-weight:600}
+.csv{font-size:10px;color:var(--ink-dim);line-height:1.45}
+.tag{font-size:8px;padding:1px 5px;border-radius:3px;background:rgba(0,229,199,.16);color:var(--teal);border:1px solid rgba(0,229,199,.28)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block;animation:pulse 1.4s ease-in-out infinite;margin-right:3px}
+@keyframes dash{to{stroke-dashoffset:-16}}
+.flow{stroke-dasharray:6,4;animation:dash 1s linear infinite}
+@media (prefers-reduced-motion:reduce){.dot,.flow{animation:none}}
+</style>
+</head>
+<body>
+
+<div class="ctrlbar">
+  <span class="title">The <span class="accent">Transformer</span> · encoder–decoder</span>
+  <button class="cbtn big" id="btn-play" onclick="togglePlay()">▶ Play</button>
+  <button class="cbtn" onclick="step()">Step ▶</button>
+  <button class="cbtn" onclick="resetAll()">↺ Reset</button>
+  <label class="slabel">speed<input type="range" id="speed" min="1" max="10" value="6" oninput="speed=+this.value"></label>
+  <span class="pill">block <b id="blkc">0</b>/<b id="blkn">6</b> <span id="lane" style="color:var(--ink-faint)"></span></span>
+  <span id="stagepill">idle · press Play</span>
+</div>
+
+<div class="diagram"><svg id="svg" viewBox="0 0 1320 620" preserveAspectRatio="xMidYMid meet"></svg></div>
+
+<script>
+const CY='#00d4ff',VI='#a78bfa',TEAL='#00e5c7',AM='#f59e0b',MA='#e879f9',GR='#22c55e',DIM='#6b7689',GRID='#2a3352';
+const N=6, ENCY=210, DECY=420, BW=146, BH=64;
+/* boxes: encoder lane then decoder lane */
+const BOX=[
+ {k:'e_in',  lane:'e', x:84,   ac:DIM,  nm:['Inputs'],                 sub:'source tokens',      cap:'The source sequence as token IDs — the encoder reads the whole thing at once.', sh:['text','[src]']},
+ {k:'e_emb', lane:'e', x:236,  ac:CY,   nm:['Input Embedding','⊕ Positional'], sub:'',           cap:'Source tokens become vectors; a positional signal is added so order is known.', sh:['[src]','[src × d]']},
+ {k:'e_attn',lane:'e', x:388,  ac:AM,   nm:['Multi-Head','Attention'], sub:'self-attention · Add & Norm', blk:'e', res:1, cap:'Each source token attends to all source tokens, mixing context. Output is added back (residual) and normalized.', sh:['[src × d]','[src × d]']},
+ {k:'e_ffn', lane:'e', x:540,  ac:AM,   nm:['Feed','Forward'],         sub:'per-token MLP · Add & Norm', blk:'e', res:1, cap:'A per-token MLP (expand → GELU → contract) refines each vector. Residual + LayerNorm follow.', sh:['[src × d]','[src × d]']},
+ {k:'e_out', lane:'e', x:692,  ac:TEAL, nm:['Encoder','Output'],       sub:'memory: K, V',       cap:'After N encoder blocks, the source is a set of context-rich vectors — the Keys & Values the decoder will attend to.', sh:['[src × d]','K, V']},
+ {k:'d_in',  lane:'d', x:84,   ac:DIM,  nm:['Outputs','(shifted right)'], sub:'tokens so far',   cap:'The tokens generated so far (shifted right) — the decoder’s own input.', sh:['text','[tgt]']},
+ {k:'d_emb', lane:'d', x:236,  ac:VI,   nm:['Output Embedding','⊕ Positional'], sub:'',           cap:'Target tokens become vectors with positional information added.', sh:['[tgt]','[tgt × d]']},
+ {k:'d_mattn',lane:'d',x:388,  ac:AM,   nm:['Masked Multi-Head','Attention'], sub:'can’t see future · Add & Norm', blk:'d', res:1, cap:'Masked self-attention: each position attends only to earlier positions, so generation stays left-to-right.', sh:['[tgt × d]','[tgt × d]']},
+ {k:'d_xattn',lane:'d',x:540,  ac:MA,   nm:['Cross Multi-Head','Attention'], sub:'Q from decoder · K,V from encoder', blk:'d', res:1, cross:1, cap:'Cross-attention: the decoder’s Queries attend over the ENCODER’s Keys & Values — this is where input meets output.', sh:['Q·[K,V]','[tgt × d]']},
+ {k:'d_ffn', lane:'d', x:692,  ac:AM,   nm:['Feed','Forward'],         sub:'per-token MLP · Add & Norm', blk:'d', res:1, cap:'Per-token MLP with residual + LayerNorm — same as the encoder’s feed-forward.', sh:['[tgt × d]','[tgt × d]']},
+ {k:'d_lin', lane:'d', x:876,  ac:CY,   nm:['Linear'],                 sub:'project to vocab',    cap:'Project the top decoder vectors to one logit per vocabulary word.', sh:['[tgt × d]','[tgt × vocab]']},
+ {k:'d_soft',lane:'d', x:1024, ac:MA,   nm:['Softmax'],                sub:'logits → probs',      cap:'Turn the last position’s logits into a probability distribution over the vocabulary.', sh:['[vocab]','probabilities']},
+ {k:'d_out', lane:'d', x:1176, ac:GR,   nm:['Output','Probabilities'], sub:'next token',          cap:'The predicted next-token distribution — the highest is emitted, then fed back as the next decoder input.', sh:['probs','→ next token']},
+];
+const I=k=>BOX.findIndex(b=>b.k===k);
+const eB0=I('e_attn'),eB1=I('e_ffn'), dB0=I('d_mattn'),dB1=I('d_ffn');
+const accGl={[CY]:'rgba(0,212,255,.55)',[VI]:'rgba(167,139,250,.55)',[TEAL]:'rgba(0,229,199,.55)',[AM]:'rgba(245,158,11,.6)',[MA]:'rgba(232,121,249,.6)',[GR]:'rgba(34,197,94,.55)',[DIM]:'rgba(148,163,184,.35)'};
+let cur=0, encPass=1, decPass=1, playing=false, speed=6, stageT=0, started=false, raf=null, lastTs=0;
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+function pace(){ const k=BOX[cur].k; const base={e_in:1.0,e_emb:1.4,e_attn:1.9,e_ffn:1.7,e_out:1.4,d_in:1.0,d_emb:1.4,d_mattn:1.8,d_xattn:2.0,d_ffn:1.7,d_lin:1.5,d_soft:1.5,d_out:1.6}[k];
+  const inE=cur>=eB0&&cur<=eB1&&encPass>1, inD=cur>=dB0&&cur<=dB1&&decPass>1; return (inE||inD)?base*0.42:base; }
+
+/* ---- build ---- */
+function build(){
+  let h=`<defs>
+    <marker id="art" markerWidth="8" markerHeight="8" refX="6" refY="3.5" orient="auto"><path d="M0 0 L7 3.5 L0 7 z" fill="${TEAL}"/></marker>
+    <marker id="arm" markerWidth="8" markerHeight="8" refX="6" refY="3.5" orient="auto"><path d="M0 0 L7 3.5 L0 7 z" fill="${MA}"/></marker>
+    <filter id="gl" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>`;
+  // top annotation (fills the empty header space)
+  h+=`<text x="660" y="42" fill="${TEAL}" font-size="17" font-family="Space Grotesk" font-weight="700" text-anchor="middle">Encoder–Decoder Transformer</text>`;
+  h+=`<text x="660" y="64" fill="${DIM}" font-size="10.5" font-family="IBM Plex Mono" text-anchor="middle">data flows left → right — the encoder reads the whole input; the decoder generates output, attending back through cross-attention</text>`;
+  // lane labels + stacked shadow for the ×N blocks
+  h+=`<text x="40" y="${ENCY-58}" fill="${CY}" font-size="12" font-family="Space Grotesk" font-weight="700">ENCODER</text>`;
+  h+=`<text x="40" y="${DECY+70}" fill="${VI}" font-size="12" font-family="Space Grotesk" font-weight="700">DECODER</text>`;
+  // encoder ×N block wrapper (around e_attn..e_ffn)
+  h+=blockWrap(BOX[eB0].x-BW/2-10, ENCY-BH/2-12, BOX[eB1].x+BW/2+10-(BOX[eB0].x-BW/2-10), BH+24, CY, 'above', ENCY);
+  // decoder ×N block wrapper (around d_mattn..d_ffn)
+  h+=blockWrap(BOX[dB0].x-BW/2-10, DECY-BH/2-12, BOX[dB1].x+BW/2+10-(BOX[dB0].x-BW/2-10), BH+24, VI, 'below', DECY);
+  // flow arrows between consecutive same-lane boxes
+  for(let i=0;i<BOX.length-1;i++){ const a=BOX[i],b=BOX[i+1]; if(a.lane!==b.lane)continue;
+    h+=`<line id="fl${i}" x1="${a.x+BW/2}" y1="${a.lane==='e'?ENCY:DECY}" x2="${b.x-BW/2}" y2="${b.lane==='e'?ENCY:DECY}" stroke="${GRID}" stroke-width="2.2" marker-end="url(#art)"/>`; }
+  // residual skip arcs (encoder above boxes, decoder below boxes)
+  BOX.forEach((b,i)=>{ if(!b.res)return; const y=b.lane==='e'?ENCY:DECY, dir=b.lane==='e'?-1:1;
+    const yb=y+dir*(BH/2), yt=y+dir*(BH/2+22);
+    h+=`<path d="M${b.x-BW/2+16} ${yb} C ${b.x-BW/2+16} ${yt}, ${b.x+BW/2-16} ${yt}, ${b.x+BW/2-16} ${yb}" fill="none" stroke="${TEAL}" stroke-width="1.3" opacity=".7" class="flow"/>`; });
+  // cross-attention connector: encoder output → decoder cross-attn (K,V)
+  const eo=BOX[I('e_out')], dx=BOX[I('d_xattn')];
+  h+=`<path id="crossln" d="M${eo.x} ${ENCY+BH/2} C ${eo.x} ${(ENCY+DECY)/2}, ${dx.x} ${(ENCY+DECY)/2-10}, ${dx.x} ${DECY-BH/2}" fill="none" stroke="${MA}" stroke-width="2" opacity=".5" class="flow" marker-end="url(#arm)"/>`;
+  h+=`<text x="${(eo.x+dx.x)/2+8}" y="${(ENCY+DECY)/2-6}" fill="${MA}" font-size="9" font-family="IBM Plex Mono" text-anchor="middle">encoder K, V →</text>`;
+  // boxes
+  BOX.forEach((b,i)=>{ const y=b.lane==='e'?ENCY:DECY, x=b.x-BW/2;
+    h+=`<g id="box_${i}"><rect id="r_${i}" x="${x}" y="${y-BH/2}" width="${BW}" height="${BH}" rx="10" fill="var(--surface)" stroke="${b.ac}" stroke-opacity=".55" stroke-width="1.5"/>`;
+    const lines=b.nm; const startY=y-(lines.length-1)*8 - (b.sub? 4:-2);
+    lines.forEach((ln,li)=> h+=`<text x="${b.x}" y="${(startY+li*15).toFixed(0)}" fill="${b.ac}" font-size="12.5" font-family="Space Grotesk" font-weight="600" text-anchor="middle">${ln}</text>`);
+    if(b.sub) h+=`<text x="${b.x}" y="${(y+BH/2-7).toFixed(0)}" fill="${DIM}" font-size="8" font-family="IBM Plex Mono" text-anchor="middle">${b.sub}</text>`;
+    h+=`</g>`; });
+  // bottom legend (fills the empty footer space)
+  const leg=[[CY,'Encoder'],[VI,'Decoder'],[AM,'Attention / Feed-Forward'],[MA,'Cross-attention'],[TEAL,'residual · Add & Norm'],[GR,'Output']];
+  const lxs=[150,320,500,745,975,1180];
+  leg.forEach((it,i)=>{ h+=`<rect x="${lxs[i]}" y="551" width="13" height="13" rx="3" fill="${it[0]}"/><text x="${lxs[i]+19}" y="561.5" fill="${DIM}" font-size="10.5" font-family="IBM Plex Mono">${it[1]}</text>`; });
+  h+=`<text x="660" y="592" fill="${DIM}" font-size="9.5" font-family="IBM Plex Mono" text-anchor="middle">● moving dots are token activations flowing through the network · press Play to walk the data through every block</text>`;
+  h+=`<g id="pk"></g><g id="lead"></g>`;
+  document.getElementById('svg').innerHTML=h;
+  document.getElementById('blkn').textContent=N;
+  initPk();
+}
+function blockWrap(x,y,w,hh,c,side,laneY){
+  let s=`<rect x="${x+12}" y="${y-(side==='above'?7:-7)}" width="${w}" height="${hh}" rx="12" fill="none" stroke="${c}" stroke-opacity=".14" stroke-width="1"/>`;
+  s+=`<rect x="${x+6}" y="${y-(side==='above'?3:-3)}" width="${w}" height="${hh}" rx="12" fill="none" stroke="${c}" stroke-opacity=".22" stroke-width="1"/>`;
+  s+=`<rect x="${x}" y="${y}" width="${w}" height="${hh}" rx="12" fill="${c==CY?'rgba(0,212,255,.03)':'rgba(167,139,250,.03)'}" stroke="${c}" stroke-opacity=".4" stroke-width="1.2" stroke-dasharray="6,4"/>`;
+  const ly = side==='above'? y-14 : y+hh+16;
+  s+=`<text x="${x+w-6}" y="${ly}" fill="${c}" font-size="12" font-family="Space Grotesk" font-weight="700" text-anchor="end">× N blocks</text>`;
+  return s;
+}
+
+/* ---- flowing packets on both lanes ---- */
+let ep=[], dp=[];
+function initPk(){ ep=[]; dp=[];
+  for(let i=0;i<9;i++) ep.push({x:40+Math.random()*(BOX[I('e_out')].x-40), sp:70+Math.random()*40, off:(Math.random()*2-1)*5});
+  for(let i=0;i<12;i++) dp.push({x:40+Math.random()*(BOX[I('d_out')].x-40), sp:70+Math.random()*40, off:(Math.random()*2-1)*5}); }
+function mix(a,b,u){const A=hx(a),B=hx(b);return `rgb(${Math.round(A[0]+(B[0]-A[0])*u)},${Math.round(A[1]+(B[1]-A[1])*u)},${Math.round(A[2]+(B[2]-A[2])*u)})`;}
+function hx(c){return[parseInt(c.slice(1,3),16),parseInt(c.slice(3,5),16),parseInt(c.slice(5,7),16)];}
+function drawPk(dt){ const g=document.getElementById('pk'); if(!g)return; let s=''; const boost=playing?1.7:0.7;
+  const eEnd=BOX[I('e_out')].x, dEnd=BOX[I('d_out')].x;
+  for(const p of ep){ p.x+=p.sp*dt*boost; if(p.x>eEnd){p.x=44;p.off=(Math.random()*2-1)*5;} const u=clamp((p.x-40)/(eEnd-40),0,1); const c=mix(CY,TEAL,u);
+    s+=`<circle cx="${p.x.toFixed(1)}" cy="${ENCY+p.off}" r="3" fill="${c}" opacity=".9"/><circle cx="${(p.x-7).toFixed(1)}" cy="${ENCY+p.off}" r="1.5" fill="${c}" opacity=".4"/>`; }
+  for(const p of dp){ p.x+=p.sp*dt*boost; if(p.x>dEnd){p.x=44;p.off=(Math.random()*2-1)*5;} const u=clamp((p.x-40)/(dEnd-40),0,1); const c=u<0.6?mix(VI,MA,u/0.6):mix(MA,GR,(u-0.6)/0.4);
+    s+=`<circle cx="${p.x.toFixed(1)}" cy="${DECY+p.off}" r="3" fill="${c}" opacity=".9"/><circle cx="${(p.x-7).toFixed(1)}" cy="${DECY+p.off}" r="1.5" fill="${c}" opacity=".4"/>`; }
+  g.innerHTML=s;
+}
+
+/* ---- lead pointer / active box ---- */
+function renderStage(){
+  const b=BOX[cur], y=b.lane==='e'?ENCY:DECY;
+  BOX.forEach((bb,i)=>{ const r=document.getElementById('r_'+i),box=document.getElementById('box_'+i); if(!r)return;
+    const on=started&&i===cur; r.setAttribute('stroke-opacity',on?'1':'0.5'); r.setAttribute('stroke-width',on?'2.4':'1.5'); r.style.filter=on?'url(#gl)':'none';
+    box.style.opacity=(!started||i===cur)?'1':'0.74'; });
+  const lead=document.getElementById('lead');
+  const ly=b.lane==='e'?(y-BH/2-12):(y+BH/2+12);
+  lead.innerHTML = started? `<circle cx="${b.x}" cy="${ly}" r="6" fill="none" stroke="${b.ac}" stroke-width="2" filter="url(#gl)"/><circle cx="${b.x}" cy="${ly}" r="2.5" fill="${b.ac}"/>` : '';
+  // highlight cross connector when at cross-attn
+  const cl=document.getElementById('crossln'); if(cl){ const hot=started&&b.k==='d_xattn'; cl.setAttribute('opacity',hot?'.95':'.5'); cl.setAttribute('stroke-width',hot?'3':'2'); }
+  const eoBox=document.getElementById('r_'+I('e_out')); if(eoBox&&started&&b.k==='d_xattn'){ eoBox.setAttribute('stroke-opacity','1'); eoBox.style.filter='url(#gl)'; }
+  // readouts
+  const inE=cur>=eB0&&cur<=eB1, inD=cur>=dB0&&cur<=dB1;
+  const dp2= b.lane==='e' ? (cur<eB0?0:(cur>eB1?N:encPass)) : (cur<dB0?0:(cur>dB1?N:decPass));
+  document.getElementById('blkc').textContent=dp2;
+  document.getElementById('lane').textContent=started?(b.lane==='e'?'· encoder':'· decoder'):'';
+  const sp=document.getElementById('stagepill'); sp.textContent= started? (b.nm.join(' ')+' — '+b.cap) : 'idle · press Play'; sp.style.setProperty('--ac',b.ac);
+}
+
+/* ---- flow control (two block loops) ---- */
+function go(i){ cur=clamp(i,0,BOX.length-1); renderStage(); }
+function advance(){
+  if(cur===eB1 && encPass<N){ encPass++; go(eB0); return; }
+  if(cur===dB1 && decPass<N){ decPass++; go(dB0); return; }
+  if(cur<BOX.length-1) go(cur+1); else { playing=false; document.getElementById('btn-play').textContent='↺ Replay'; }
+}
+function step(){ started=true; playing=false; document.getElementById('btn-play').textContent='▶ Play'; advance(); }
+function togglePlay(){ if(playing){playing=false;document.getElementById('btn-play').textContent='▶ Play';return;}
+  if(cur>=BOX.length-1) resetAll(); started=true; playing=true; stageT=0; document.getElementById('btn-play').textContent='⏸ Pause'; renderStage(); }
+function resetAll(){ playing=false; started=false; cur=0; encPass=1; decPass=1; stageT=0; document.getElementById('btn-play').textContent='▶ Play'; renderStage(); }
+
+function frame(ts){ const dt=Math.min(.05,(ts-lastTs)/1000); lastTs=ts;
+  if(playing){ stageT+=dt*(speed/5); if(stageT>=pace()){ stageT=0; advance(); } }
+  drawPk(dt); raf=requestAnimationFrame(frame);
+}
+function init(){ build(); renderStage(); lastTs=performance.now(); raf=requestAnimationFrame(frame); }
+document.addEventListener('visibilitychange',()=>{ if(document.hidden&&raf){cancelAnimationFrame(raf);raf=null;} else if(!document.hidden&&!raf){lastTs=performance.now();raf=requestAnimationFrame(frame);} });
+init();
+</script>
+</body>
+</html>
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   
