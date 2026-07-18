@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>BSE Distributed System</title>
+<title>Stock Exchange Distributed System</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -144,7 +144,7 @@ body{font-family:"Sora",sans-serif;color:var(--ink);display:flex;flex-direction:
 <div class="hdr">
   <div class="hdr-ico">🏦</div>
   <div>
-    <div class="hdr-title">BSE — Bombay Stock Exchange · Distributed Production System</div>
+    <div class="hdr-title">Stock Exchange · Distributed Production System</div>
     <div class="hdr-sub">4 Data Centers · Primary / Standby Architecture · Real-time Replication · Disaster Recovery</div>
   </div>
   <div class="pill" id="mpill"><div class="dot"></div><span id="ptxt">Mumbai PRIMARY</span></div>
@@ -324,7 +324,7 @@ body{font-family:"Sora",sans-serif;color:var(--ink);display:flex;flex-direction:
     </svg>
   <!-- Ticker -->
 <div class="ticker">
-  <div class="tk-lbl">BSE&nbsp;LIVE</div>
+  <div class="tk-lbl">MKT&nbsp;LIVE</div>
   <div class="tk-time" id="mkt-time">IST&nbsp;09:30:00</div>
   <div class="tk-scroll"><div class="tk-inner" id="tk">
     <span class="tk-item" style="background:rgba(251,191,36,.06);border-left:2px solid #FBBF2466;"><span class="nm">SENSEX</span><span class="prc">72,456.89</span><span class="up">▲ 123.45 (1.23%)</span></span>
@@ -527,7 +527,7 @@ function ledBlink(id, state) {
 
 // ── STAGE 1: Normal Operation ─────────────────────────────────
 function go1() {
-  log('BSE Mumbai ACTIVE — 12,400+ req/s · All replication healthy', 'ok');
+  log('Mumbai ACTIVE — 12,400+ req/s · All replication healthy', 'ok');
   log('Bangalore (SYNC 2ms), Chennai (ASYNC 45ms), Delhi (ASYNC 38ms)', 'inf');
   pill('Mumbai PRIMARY');
   // Restore Mumbai chassis
@@ -612,10 +612,10 @@ function go2() {
 // ── STAGE 3: Failover ─────────────────────────────────────────
 function go3() {
   log('🔄 DNS failover: redirecting all traffic to Chennai DC...', 'inf');
-  log('Chennai: loading BSE app from latest snapshot + WAL replay...', 'inf');
+  log('Chennai: loading StockEx app from latest snapshot + WAL replay...', 'inf');
   pill('Failover in progress', 'warn');
   setTimeout(()=>{
-    log('✅ Chennai BSE application UP — accepting live orders', 'ok');
+    log('✅ Chennai StockEx application UP — accepting live orders', 'ok');
     log('RTO met: ~2.8 min | RPO: ~45ms async lag from Mumbai', 'ok');
     pill('Chennai PRIMARY', '');
     // Activate Chennai rack
