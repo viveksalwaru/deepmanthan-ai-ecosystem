@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wildlife Surveillance · Production Grade AI Ecosystem</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --bg:        #070B12;
+        --bg-2:      #0A1019;
+        --panel:     #0E1622;
+        --panel-2:   #121C2B;
+        --line:      #1E2C3F;
+        --line-soft: #16212F;
+        --ink:       #DCE6F2;
+        --ink-dim:   #7C8CA3;
+        --ink-faint: #4A5970;
+        --cyan:    #38E1FF;
+        --teal:    #2DE3C0;
+        --green:   #4ADE80;
+        --amber:   #FBBF24;
+        --rose:    #FB5E6D;
+        --violet:  #A78BFA;
+        --magenta: #E879F9;
+        --radius:    14px;
+        --radius-sm: 9px;
+        --shadow:    0 18px 50px -22px rgba(0,0,0,0.85);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+        font-family: "Sora", -apple-system, sans-serif;
+        color: var(--ink); min-height: 100vh;
+        background:
+            radial-gradient(1100px 600px at 12% -8%,  rgba(56,225,255,0.07),  transparent 60%),
+            radial-gradient(900px  620px at 92% 0%,   rgba(167,139,250,0.06), transparent 58%),
+            radial-gradient(800px  700px at 50% 120%, rgba(45,227,192,0.05),  transparent 60%),
+            linear-gradient(180deg, var(--bg), var(--bg-2));
+        background-attachment: fixed;
+        display: flex; flex-direction: column; align-items: center;
+        padding: 34px 28px 60px;
+    }
+    body::before {
+        content: ""; position: fixed; inset: 0;
+        background-image:
+            linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
+        background-size: 44px 44px;
+        pointer-events: none; z-index: 0;
+        mask-image: radial-gradient(circle at 50% 35%, #000 0%, transparent 78%);
+    }
+    .shell { width: 1280px; max-width: 100%; position: relative; z-index: 1; }
+
+    /* Masthead */
+    .masthead {
+        display: flex; align-items: flex-end; justify-content: space-between;
+        margin-bottom: 22px; padding-bottom: 18px;
+        border-bottom: 1px solid var(--line-soft);
+    }
+    .brand { display: flex; align-items: center; gap: 16px; }
+    .glyph {
+        width: 46px; height: 46px; border-radius: 12px;
+        background: linear-gradient(150deg, rgba(56,225,255,0.18), rgba(45,227,192,0.12));
+        border: 1px solid rgba(56,225,255,0.35);
+        display: grid; place-items: center;
+        box-shadow: inset 0 0 18px rgba(56,225,255,0.18), 0 8px 22px -10px rgba(56,225,255,0.5);
+    }
+    .glyph svg { width: 24px; height: 24px; }
+    .brand h1 {
+        font-family: "Space Grotesk", sans-serif;
+        font-size: 1.83rem; font-weight: 700; letter-spacing: -0.01em; line-height: 1;
+        background: linear-gradient(90deg, #F4FAFF, #9FE9FF 70%);
+        -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .brand .tag {
+        font-family: "IBM Plex Mono", monospace;
+        font-size: 0.8rem; letter-spacing: 0.22em; text-transform: uppercase;
+        color: #ffffff; margin-top: 6px;
+    }
+    .masthead-right { text-align: right; display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
+    .clock { font-family: "IBM Plex Mono", monospace; font-size: 1.12rem; color: var(--ink); letter-spacing: 0.04em; }
+    .clock span { color: var(--ink-dim); }
+    .health-pill {
+        display: inline-flex; align-items: center; gap: 8px;
+        font-family: "IBM Plex Mono", monospace; font-size: 0.83rem;
+        letter-spacing: 0.12em; text-transform: uppercase;
+        padding: 5px 12px; border-radius: 999px;
+        border: 1px solid rgba(74,222,128,0.3); color: var(--green);
+        background: rgba(74,222,128,0.07);
+    }
+    .health-pill .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); box-shadow: 0 0 8px var(--green); animation: breathe 2s ease-in-out infinite; }
+    @keyframes breathe { 50% { opacity: 0.4; } }
+
+    .section-caption {
+        font-family: "IBM Plex Mono", monospace; font-size: 0.72rem;
+        letter-spacing: 0.22em; text-transform: uppercase; color: var(--cyan);
+        margin-bottom: 10px; display: flex; align-items: center; gap: 10px;
+    }
+    .section-caption::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, rgba(56,225,255,0.3), transparent); }
+
+    /* Canvas */
+    .canvas-frame {
+        position: relative; border-radius: var(--radius); padding: 1px;
+        background: linear-gradient(160deg, rgba(56,225,255,0.22), rgba(30,44,63,0.4) 40%, rgba(167,139,250,0.16));
+        box-shadow: var(--shadow);
+    }
+    .canvas {
+        position: relative; width: 100%; height: 660px;
+        background:
+            radial-gradient(700px 420px at 30% 30%, rgba(56,225,255,0.04), transparent 70%),
+            linear-gradient(180deg, rgba(14,22,34,0.96), rgba(10,16,25,0.98));
+        border-radius: calc(var(--radius) - 1px);
+        overflow: hidden;
+    }
+    .canvas-label {
+        position: absolute; top: 14px; left: 18px;
+        font-family: "IBM Plex Mono", monospace; font-size: 0.76rem;
+        letter-spacing: 0.2em; text-transform: uppercase; color: #ffffff; z-index: 5;
+    }
+    .col-cap {
+        position: absolute; top: 40px;
+        font-family: "IBM Plex Mono", monospace; font-size: 0.71rem;
+        letter-spacing: 0.18em; text-transform: uppercase; color: #ffffff; z-index: 5;
+    }
+
+    /* Nodes */
+    .node {
+        position: absolute; width: 158px;
+        background: linear-gradient(180deg, var(--panel-2), var(--panel));
+        border: 1px solid var(--line); border-radius: var(--radius-sm);
+        display: flex; flex-direction: column; align-items: center; text-align: center;
+        z-index: 10; box-shadow: 0 12px 30px -16px rgba(0,0,0,0.8); padding: 11px 10px;
+        transition: border-color .35s ease, box-shadow .35s ease, transform .35s ease;
+    }
+    .node .title {
+        font-family: "Space Grotesk", sans-serif; font-weight: 600;
+        font-size: 0.92rem; letter-spacing: 0.02em;
+        display: flex; align-items: center; gap: 6px;
+    }
+    .node .ico { width: 14px; height: 14px; opacity: 0.85; }
+    .node .desc { font-family: "IBM Plex Mono", monospace; font-size: 0.66rem; color: #ffffff; margin-top: 4px; letter-spacing: 0.05em; }
+
+    .edge-viewport {
+        width: 100%; height: 54px; margin-top: 9px;
+        background:
+            repeating-linear-gradient(0deg, rgba(255,255,255,0.025) 0 1px, transparent 1px 3px),
+            radial-gradient(circle at 50% 60%, rgba(56,225,255,0.07), #04070C 75%);
+        border: 1px solid var(--line-soft); border-radius: 6px;
+        position: relative; overflow: hidden;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .edge-viewport .reticle {
+        position: absolute; width: 26px; height: 26px;
+        border: 1px solid rgba(56,225,255,0.3); border-radius: 3px;
+    }
+    .edge-viewport .reticle::before, .edge-viewport .reticle::after { content: ""; position: absolute; background: rgba(56,225,255,0.4); }
+    .edge-viewport .reticle::before { width: 1px; height: 100%; left: 50%; }
+    .edge-viewport .reticle::after  { height: 1px; width: 100%; top: 50%; }
+    .vp-tag { position: absolute; bottom: 3px; right: 5px; font-family: "IBM Plex Mono", monospace; font-size: 0.59rem; letter-spacing: 0.1em; color: rgba(74,222,128,0.8); }
+    .vp-tag::before { content: "● REC "; color: var(--rose); }
+    .scan-line { position: absolute; top: 0; left: 0; width: 100%; height: 22px; background: linear-gradient(180deg, rgba(56,225,255,0.22), transparent); animation: sweep 2.4s linear infinite; }
+    @keyframes sweep { 0% { transform: translateY(-22px); } 100% { transform: translateY(54px); } }
+
+    .node-chip {
+        margin-top: 8px; font-family: "IBM Plex Mono", monospace; font-size: 0.64rem;
+        letter-spacing: 0.12em; text-transform: uppercase; padding: 3px 9px; border-radius: 999px;
+        background: rgba(74,222,128,0.1); color: var(--green); border: 1px solid rgba(74,222,128,0.25);
+    }
+
+    /* detection states */
+    .edge-match {
+        border-color: var(--green) !important;
+        box-shadow: 0 0 0 1px rgba(74,222,128,0.4), 0 0 32px -4px rgba(74,222,128,0.45) !important;
+        transform: translateY(-2px);
+    }
+    .edge-match .edge-viewport { border-color: var(--rose); background: radial-gradient(circle at 50% 60%, rgba(251,94,109,0.22), #1a0508 75%); }
+    .edge-match .scan-line { background: linear-gradient(180deg, rgba(251,94,109,0.4), transparent); }
+    .edge-match .reticle { border-color: var(--rose); animation: lock .5s ease; }
+    @keyframes lock { 0% { transform: scale(1.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+    .edge-pinged { border-color: var(--violet) !important; box-shadow: 0 0 24px -6px rgba(167,139,250,0.5) !important; }
+    .pulse-cloud  { animation: pCloud  .5s ease 3; }
+    .pulse-mobile { animation: pMobile .55s ease infinite alternate; }
+    @keyframes pCloud  { 100% { box-shadow: 0 0 30px -4px rgba(56,225,255,0.6); } }
+    @keyframes pMobile { 100% { border-color: var(--amber); box-shadow: 0 0 30px -4px rgba(251,191,36,0.6); background: linear-gradient(180deg,#2a2308,#1a1505); } }
+
+    /* ── Node positions ──
+       Layout columns (approx x centres):
+         Cameras:      left ~30px  (width 158 → right edge ~188)
+         Edge nodes:   left ~270px (width 168 → right edge ~438)
+         AI Server:    left ~270px bottom section
+         Cloud/Mobile: right ~50px
+       Camera tech tags go BELOW the camera node
+       Row 1: cam1 top=80,  edge1 top=80
+       Row 2: cam2 top=330, edge2 top=330
+       AI Server: top=530
+    */
+    #node-cam-1  { top: 80px;  left: 30px; }
+    #node-cam-2  { top: 330px; left: 30px; }
+    #node-edge-1 { top: 68px;  left: 270px; }
+    #node-edge-2 { top: 318px; left: 270px; }
+    #node-ai     { top: 548px; left: 270px; width: 178px; }
+    #node-cloud  { top: 230px; right: 50px; }
+    #node-mobile { top: 390px; right: 50px; }
+
+    #node-cam-1 .ico, #node-cam-2 .ico { color: var(--cyan); }
+    #node-cloud  { border-color: rgba(56,225,255,0.4); }
+    #node-cloud .title  { color: var(--cyan); }
+    #node-mobile { border-color: rgba(251,191,36,0.4); }
+    #node-mobile .title { color: var(--amber); }
+    #node-ai     { border-color: rgba(232,121,249,0.4); }
+    #node-ai .title { color: var(--magenta); }
+
+    /* SVG paths */
+    svg.links { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
+    svg.links path { stroke: var(--line); stroke-width: 1.6; fill: none; transition: stroke .3s; }
+    svg.links path.dashed { stroke-dasharray: 5 4; stroke: rgba(232,121,249,0.35); }
+
+    /* MQTT label */
+    .mqtt-label {
+        position: absolute; z-index: 12;
+        font-family: "IBM Plex Mono", monospace; font-size: 0.66rem;
+        letter-spacing: 0.14em; text-transform: uppercase;
+        color: var(--teal); background: rgba(45,227,192,0.1);
+        border: 1px solid rgba(45,227,192,0.3); border-radius: 6px;
+        padding: 3px 9px; pointer-events: none;
+    }
+
+    /* Tech tags */
+    .tech-cluster {
+        position: absolute; z-index: 8;
+        display: flex; flex-direction: column; gap: 4px;
+        pointer-events: none;
+    }
+    /* horizontal row variant for below-camera placement */
+    .tech-cluster.row { flex-direction: row; flex-wrap: wrap; }
+
+    .tech-tag {
+        display: inline-flex; align-items: center; gap: 5px;
+        font-family: "IBM Plex Mono", monospace; font-size: 0.62rem;
+        letter-spacing: 0.1em; text-transform: uppercase;
+        padding: 3px 8px; border-radius: 6px; white-space: nowrap; opacity: 0.92;
+    }
+    .tech-tag .dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+
+    .tt-cyan    { background: rgba(56,225,255,0.1);  color: var(--cyan);    border: 1px solid rgba(56,225,255,0.25); }
+    .tt-cyan    .dot { background: var(--cyan); }
+    .tt-green   { background: rgba(74,222,128,0.1);  color: var(--green);   border: 1px solid rgba(74,222,128,0.25); }
+    .tt-green   .dot { background: var(--green); }
+    .tt-violet  { background: rgba(167,139,250,0.1); color: var(--violet);  border: 1px solid rgba(167,139,250,0.25); }
+    .tt-violet  .dot { background: var(--violet); }
+    .tt-amber   { background: rgba(251,191,36,0.1);  color: var(--amber);   border: 1px solid rgba(251,191,36,0.25); }
+    .tt-amber   .dot { background: var(--amber); }
+    .tt-teal    { background: rgba(45,227,192,0.1);  color: var(--teal);    border: 1px solid rgba(45,227,192,0.25); }
+    .tt-teal    .dot { background: var(--teal); }
+    .tt-rose    { background: rgba(251,94,109,0.1);  color: var(--rose);    border: 1px solid rgba(251,94,109,0.25); }
+    .tt-rose    .dot { background: var(--rose); }
+    .tt-magenta { background: rgba(232,121,249,0.1); color: var(--magenta); border: 1px solid rgba(232,121,249,0.25); }
+    .tt-magenta .dot { background: var(--magenta); }
+
+    /* Distributed systems brace */
+    .dist-brace {
+        position: absolute; z-index: 9; bottom: 72px; left: 958px;
+        display: flex; flex-direction: column; align-items: center; gap: 4px;
+    }
+    .dist-brace .brace-line { width: 186px; height: 1px; background: linear-gradient(90deg, transparent, rgba(167,139,250,0.5), transparent); }
+    .dist-brace .brace-label {
+        font-family: "IBM Plex Mono", monospace; font-size: 0.62rem; letter-spacing: 0.14em;
+        text-transform: uppercase; color: var(--violet);
+        padding: 2px 10px; border: 1px solid rgba(167,139,250,0.25);
+        border-radius: 6px; background: rgba(167,139,250,0.07);
+    }
+    .dist-brace .brace-tags { display: flex; gap: 5px; flex-wrap: wrap; justify-content: center; }
+
+    .packet { position: absolute; width: 11px; height: 11px; border-radius: 50%; z-index: 20; }
+
+    /* Telemetry */
+    .tele-grid { display: grid; grid-template-columns: 1.1fr 1fr 1fr 1fr; gap: 14px; margin-top: 22px; }
+    .panel {
+        background: linear-gradient(180deg, var(--panel-2), var(--panel));
+        border: 1px solid var(--line); border-radius: var(--radius);
+        padding: 16px; box-shadow: var(--shadow);
+    }
+    .panel-summary { display: flex; flex-direction: column; justify-content: space-between; }
+    .panel-summary .lead { font-family: "IBM Plex Mono", monospace; font-size: 0.71rem; letter-spacing: 0.2em; text-transform: uppercase; color: #ffffff; }
+    .big-stat { font-family: "Space Grotesk", sans-serif; font-size: 2.5rem; font-weight: 700; margin: 6px 0 0; letter-spacing: -0.02em; }
+    .big-stat small { font-size: 1rem; color: var(--ink-dim); font-weight: 400; }
+    .summary-rows { margin-top: 14px; display: flex; flex-direction: column; gap: 9px; }
+    .summary-rows .r { display: flex; justify-content: space-between; font-size: 0.87rem; color: var(--ink-dim); }
+    .summary-rows .r b { color: var(--ink); font-weight: 500; font-family: "IBM Plex Mono", monospace; }
+    .summary-rows .r b.ok { color: var(--green); }
+    .metric-card { transition: border-color .35s, box-shadow .35s; }
+    .card-header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 11px; margin-bottom: 13px; border-bottom: 1px solid var(--line-soft); }
+    .card-header .name { font-family: "IBM Plex Mono", monospace; font-size: 0.85rem; letter-spacing: 0.06em; color: var(--ink); }
+    .badge { font-family: "IBM Plex Mono", monospace; font-size: 0.66rem; letter-spacing: 0.1em; padding: 3px 8px; border-radius: 999px; background: rgba(74,222,128,0.1); color: var(--green); border: 1px solid rgba(74,222,128,0.22); }
+    .stat { margin-bottom: 12px; }
+    .stat:last-child { margin-bottom: 0; }
+    .stat .lbl { display: flex; justify-content: space-between; font-size: 0.78rem; color: var(--ink-dim); margin-bottom: 5px; }
+    .stat .lbl span:last-child { font-family: "IBM Plex Mono", monospace; color: var(--ink); }
+    .track { width: 100%; height: 5px; background: var(--bg-2); border-radius: 999px; overflow: hidden; }
+    .fill  { height: 100%; width: 0%; border-radius: 999px; background: linear-gradient(90deg, var(--cyan), var(--teal)); transition: width .5s cubic-bezier(.4,0,.2,1); }
+
+    .leopard-alert { display: none; align-items: center; gap: 9px; margin-top: 13px; padding: 8px 12px; border-radius: 8px; background: rgba(251,94,109,0.13); border: 1px solid rgba(251,94,109,0.42); animation: alertPulse .9s ease infinite alternate; }
+    .leopard-alert.show { display: flex; }
+    .leopard-alert .alert-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--rose); box-shadow: 0 0 8px var(--rose); flex-shrink: 0; }
+    .leopard-alert .alert-text { font-family: "IBM Plex Mono", monospace; font-size: 0.66rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--rose); font-weight: 600; }
+    .leopard-alert .alert-conf { margin-left: auto; font-family: "IBM Plex Mono", monospace; font-size: 0.63rem; letter-spacing: 0.08em; color: rgba(251,94,109,0.75); }
+    @keyframes alertPulse { 100% { border-color: rgba(251,94,109,0.8); background: rgba(251,94,109,0.2); } }
+
+    /* Controls */
+    .controls { margin-top: 22px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; background: linear-gradient(180deg, var(--panel-2), var(--panel)); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 20px; box-shadow: var(--shadow); }
+    .controls label { font-family: "IBM Plex Mono", monospace; font-size: 0.78rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-dim); }
+    select { font-family: "Sora", sans-serif; background: var(--bg-2); color: var(--ink); border: 1px solid var(--line); padding: 11px 14px; border-radius: 10px; font-size: 0.99rem; outline: none; cursor: pointer; transition: border-color .2s; }
+    select:hover, select:focus { border-color: var(--cyan); }
+    .spacer { flex: 1; }
+    button { font-family: "Sora", sans-serif; font-weight: 600; font-size: 0.99rem; cursor: pointer; padding: 12px 22px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg-2); color: var(--ink); transition: all .2s ease; display: inline-flex; align-items: center; gap: 8px; }
+    button:hover { border-color: var(--ink-dim); transform: translateY(-1px); }
+    button:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+    #btn-trigger { background: linear-gradient(180deg, #FB5E6D, #E1394A); color: #fff; border: none; box-shadow: 0 10px 24px -10px rgba(251,94,109,0.8); }
+    #btn-trigger:hover:not(:disabled) { box-shadow: 0 14px 30px -10px rgba(251,94,109,0.9); }
+    #btn-trigger svg { width: 15px; height: 15px; }
+
+    /* Terminal */
+    .terminal { margin-top: 16px; height: 152px; overflow-y: auto; background: linear-gradient(180deg, #05080D, #04060A); border: 1px solid var(--line); border-radius: var(--radius); font-family: "IBM Plex Mono", monospace; font-size: 0.87rem; line-height: 1.65; padding: 14px 16px; color: var(--teal); }
+    .terminal::-webkit-scrollbar { width: 8px; }
+    .terminal::-webkit-scrollbar-thumb { background: var(--line); border-radius: 8px; }
+    .term-head { display: flex; align-items: center; gap: 7px; margin-bottom: 8px; color: var(--ink-faint); font-size: 0.71rem; letter-spacing: 0.2em; text-transform: uppercase; }
+    .term-head .dots { display: flex; gap: 5px; }
+    .term-head .dots i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+    .log-entry { margin-bottom: 3px; }
+    .log-time { color: var(--ink-faint); margin-right: 8px; }
+
+    @media (max-width: 1300px) { .shell { width: 100%; } .canvas { height: auto; min-height: 660px; } }
+    .run-overlay-btn {
+        position: absolute;
+        top: 14px;
+        right: 14px;
+        z-index: 10;
+    }
+</style>
+</head>
+<body>
+<div class="shell">
+
+    <!-- Masthead -->
+    <header class="masthead">
+        <div class="brand">
+            <div class="glyph">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#9FE9FF" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 2a7 7 0 0 0-7 7c0 3 2 5 3 7l4 6 4-6c1-2 3-4 3-7a7 7 0 0 0-7-7z"/>
+                    <circle cx="12" cy="9" r="2.4"/>
+                </svg>
+            </div>
+            <div>
+                <h1>Wildlife Surveillance — Production Grade AI Ecosystem</h1>
+                <div class="tag">Junnar Leopard Corridor · Edge Vision System</div>
+            </div>
+        </div>
+        <div class="masthead-right">
+            <div class="clock" id="clock"><span>UTC+05:30</span> 00:00:00</div>
+            <div class="health-pill"><span class="dot"></span> All Systems Nominal · 2 Nodes Online</div>
+        </div>
+    </header>
+
+    <div class="section-caption">Live Infrastructure Topology · Technology Stack Map</div>
+
+    <!-- Topology Canvas -->
+    <div class="canvas-frame">
+        <div class="canvas" id="canvas-container">
+            <div class="canvas-label">Wildlife-Grid · Edge → Cloud · Detection Pipeline</div>
+
+            <!-- Column captions -->
+            <span class="col-cap" style="left:40px;">Field Cameras</span>
+            <span class="col-cap" style="left:295px;">Edge Inference</span>
+            <span class="col-cap" style="right:40px;">Cloud / Ranger</span>
+
+            <!-- SVG paths
+                 Cam1 node: left=30, top=80,  height≈70 → centre y≈115
+                 Cam2 node: left=30, top=330, height≈70 → centre y≈365
+                 Edge1 node: left=270, top=68,  height≈145 → centre y≈140
+                 Edge2 node: left=270, top=318, height≈145 → centre y≈390
+                 AI node:   left=270, top=548
+                 Cloud:  right=50 → left≈1070, top=160, centre y≈200
+                 Mobile: right=50 → left≈1070, top=390, centre y≈430
+            -->
+            <svg class="links" id="links">
+                <!-- cam → edge (horizontal lines at node centre heights) -->
+                <path id="path-cam-edge1" d="M 188 115 L 270 140"/>
+                <path id="path-cam-edge2" d="M 188 365 L 270 390"/>
+
+                <!-- edge → cloud via MQTT (converge at midpoint x=700, y=270 then to cloud) -->
+                <path id="path-edge1-cloud" d="M 438 140 L 560 140 L 560 270 L 1068 270"/>
+                <path id="path-edge2-cloud" d="M 438 390 L 560 390 L 560 270 L 1068 270"/>
+
+                <!-- cloud → mobile -->
+                <path id="path-cloud-mobile" d="M 1140 308 L 1140 430"/>
+
+                <!-- AI server → edge nodes (dashed, represents model deployment) -->
+                <path class="dashed" id="path-ai-edge1" d="M 359 548 L 359 450 L 354 450 L 354 220"/>
+                <path class="dashed" id="path-ai-edge2" d="M 359 548 L 359 470"/>
+            </svg>
+
+            <!-- MQTT label at path convergence midpoint -->
+            <div class="mqtt-label" style="left:756px; top:242px;">MQTT</div>
+
+            <!-- Model deploy label on dashed path -->
+            <div class="mqtt-label" style="left:308px; top:505px; color:var(--magenta); background:rgba(232,121,249,0.08); border-color:rgba(232,121,249,0.3);">Model Deploy</div>
+
+            <!-- ═══ CAMERA 1 ═══ -->
+            <div class="node" id="node-cam-1" style="border-color:rgba(56,225,255,0.45);">
+                <div class="title">
+                    <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M2 7h13l3-2v10l-3-2H2z"/><circle cx="8.5" cy="11.5" r="2"/></svg>
+                    Cam · Lekurwadi
+                </div>
+                <div class="desc">RTSP · 4K · 30fps</div>
+            </div>
+            <!-- Camera 1 tech tags — BELOW the camera node -->
+            <div class="tech-cluster row" style="left:14px; top:168px;">
+                <span class="tech-tag tt-cyan"><span class="dot"></span>IoT Sensor</span>
+                <span class="tech-tag tt-cyan"><span class="dot"></span>RTSP Protocol</span>
+            </div>
+
+            <!-- ═══ CAMERA 2 ═══ -->
+            <div class="node" id="node-cam-2" style="border-color:rgba(56,225,255,0.45);">
+                <div class="title">
+                    <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M2 7h13l3-2v10l-3-2H2z"/><circle cx="8.5" cy="11.5" r="2"/></svg>
+                    Cam · Aamboli Pass
+                </div>
+                <div class="desc">RTSP · 4K · 30fps</div>
+            </div>
+            <!-- Camera 2 tech tags — BELOW the camera node -->
+            <div class="tech-cluster row" style="left:14px; top:418px;">
+                <span class="tech-tag tt-cyan"><span class="dot"></span>IoT Sensor</span>
+                <span class="tech-tag tt-cyan"><span class="dot"></span>RTSP Protocol</span>
+            </div>
+
+            <!-- ═══ EDGE NODE 1 ═══ -->
+            <div class="node" id="node-edge-1" style="width:168px;">
+                <div class="title">Edge Node 01</div>
+                <div class="desc">Jetson Orin Nano · Lekurwadi</div>
+                <div class="edge-viewport"><div class="scan-line"></div><div class="reticle"></div><div class="vp-tag">CH1</div></div>
+                <div class="node-chip" id="pulse-1">ACTIVE</div>
+            </div>
+            <!-- Edge Node 1 tech tags — RIGHT of node -->
+            <div class="tech-cluster" style="left:448px; top:62px; align-items:flex-start;">
+                <span class="tech-tag tt-green"><span class="dot"></span>Linux, Data Structures, Networking (TCP/IP) Concepts</span>
+                <span class="tech-tag tt-violet"><span class="dot"></span>Python Programming, SQL, OOPS Concepts</span>
+                <span class="tech-tag tt-green"><span class="dot"></span>Multi-threading Concepts (sync, deadlock)</span>
+                <span class="tech-tag tt-teal"><span class="dot"></span>Edge Computing, Fog Computing</span>
+                <span class="tech-tag tt-violet"><span class="dot"></span>Docker Container, Kubernetes</span>
+                <span class="tech-tag tt-rose"><span class="dot"></span>CNN · Object Detection</span>
+                <span class="tech-tag tt-violet"><span class="dot"></span>Remote Debugging techniques</span>
+            </div>
+
+            <!-- ═══ EDGE NODE 2 ═══ -->
+            <div class="node" id="node-edge-2" style="width:168px;">
+                <div class="title">Edge Node 02</div>
+                <div class="desc">Jetson Orin Nano · Aamboli</div>
+                <div class="edge-viewport"><div class="scan-line"></div><div class="reticle"></div><div class="vp-tag">CH2</div></div>
+                <div class="node-chip" id="pulse-2">ACTIVE</div>
+            </div>
+            <!-- Edge Node 2 tech tags — RIGHT of node -->
+            <div class="tech-cluster" style="left:448px; top:312px; align-items:flex-start;">
+                <span class="tech-tag tt-rose"><span class="dot"></span>LLM, MCP, Multi Agent System</span>
+                <span class="tech-tag tt-green"><span class="dot"></span>GPU Optimization Techniques</span>
+                <span class="tech-tag tt-rose"><span class="dot"></span>AI Observability</span>
+                <span class="tech-tag tt-green"><span class="dot"></span>Edge Observability</span>
+                <span class="tech-tag tt-rose"><span class="dot"></span>Edge Continuous Dataset Enrichment Pipeline</span>
+                <span class="tech-tag tt-green"><span class="dot"></span>Cybersecurity & Device Management</span>
+                <span class="tech-tag tt-rose"><span class="dot"></span>AI Platform-as-a-Service (Model-Agnostic)</span>
+            </div>
+
+            <!-- ═══ AI SERVER (Model Training) ═══ -->
+            <div class="node" id="node-ai">
+                <div class="title">
+                    <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/><circle cx="12" cy="10" r="3"/></svg>
+                    AI Server
+                </div>
+                <div class="desc">GPU Cluster · Training</div>
+                <div class="node-chip" style="background:rgba(232,121,249,0.1);color:var(--magenta);border-color:rgba(232,121,249,0.3);">TRAINING</div>
+            </div>
+            <!-- AI Server tech tags — RIGHT of node -->
+            <div class="tech-cluster" style="left:458px; top:542px; align-items:flex-start;">
+                <span class="tech-tag tt-magenta"><span class="dot"></span>AI Model Training, Augmentation, Normalization</span>
+                <span class="tech-tag tt-magenta"><span class="dot"></span>PyTorch / TensorFlow</span>
+                <span class="tech-tag tt-magenta"><span class="dot"></span>Data Centre GPU</span>
+                <span class="tech-tag tt-violet"><span class="dot"></span>MLOps · CI/CD</span>
+            </div>
+
+            <!-- Distributed Systems brace spanning both edge nodes -->
+            <div class="dist-brace">
+                <div class="brace-line"></div>
+                <div class="brace-label">Distributed Systems</div>
+                <div class="brace-tags">
+                    <span class="tech-tag tt-violet" style="pointer-events:none;"><span class="dot"></span>Fault Tolerance</span>
+                    <span class="tech-tag tt-violet" style="pointer-events:none;"><span class="dot"></span>Replication</span>
+                </div>
+            </div>
+
+            <!-- ═══ CLOUD GATEWAY ═══ -->
+            <div class="node" id="node-cloud" style="width:162px;">
+                <div class="title">
+                    <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M6 18a4 4 0 1 1 1-7.9A5 5 0 0 1 17 9a3.5 3.5 0 0 1 0 9z"/></svg>
+                    Cloud Gateway
+                </div>
+                <div class="desc">Alert Ingress · REST API</div>
+            </div>
+            <!-- Cloud tech tags — LEFT of cloud node -->
+            <div class="tech-cluster" style="right:80px; top:150px; align-items:flex-end;">
+                <span class="tech-tag tt-cyan"><span class="dot"></span>Cloud Computing</span>
+                <span class="tech-tag tt-cyan"><span class="dot"></span>REST API</span>
+                <span class="tech-tag tt-teal"><span class="dot"></span>MQTT Broker</span>
+            </div>
+
+            <!-- ═══ RANGER MOBILE ═══ -->
+            <div class="node" id="node-mobile" style="width:162px;">
+                <div class="title">
+                    <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg>
+                    Ranger Mobile
+                </div>
+                <div class="desc">Field Alert Terminal</div>
+            </div>
+            <!-- Ranger mobile tech tags — LEFT of mobile node -->
+            <div class="tech-cluster" style="right:222px; top:382px; align-items:flex-end;">
+                <span class="tech-tag tt-amber"><span class="dot"></span>Android App Dev</span>
+                <span class="tech-tag tt-amber"><span class="dot"></span>Push Notifications</span>
+                <span class="tech-tag tt-amber"><span class="dot"></span>Real-time Alerts</span>
+            </div>
+
+        </div><!-- /canvas -->
+    <button id="btn-trigger" class="run-overlay-btn" onclick="runPipeline()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2 3 14h7l-1 8 10-12h-7z"/></svg>
+        Simulate Leopard Detection
+    </button>
+    </div><!-- /canvas-frame -->
+
+    <!-- Telemetry -->
+    <div class="tele-grid">
+        <div class="panel panel-summary">
+            <div>
+                <div class="lead">System Status</div>
+                <div class="big-stat" style="color:var(--green);">100<small>% online</small></div>
+            </div>
+            <div class="summary-rows">
+                <div class="r"><span>Edge nodes online</span><b class="ok">2 / 2</b></div>
+                <div class="r"><span>Streams ingesting</span><b>2</b></div>
+                <div class="r"><span>MQTT broker</span><b class="ok">Connected</b></div>
+                <div class="r"><span>Detections today</span><b id="sum-detect">0</b></div>
+            </div>
+        </div>
+
+        <div class="panel metric-card" id="card-node-1">
+            <div class="card-header">
+                <span class="name">EDGE_01 · Lekurwadi</span>
+                <span class="badge" id="badge-1">ACTIVE</span>
+            </div>
+            <div class="stat">
+                <div class="lbl"><span>CPU Load</span><span id="txt-cpu-1">18%</span></div>
+                <div class="track"><div class="fill" id="bar-cpu-1" style="width:18%"></div></div>
+            </div>
+            <div class="stat">
+                <div class="lbl"><span>GPU Inference</span><span id="txt-gpu-1">45%</span></div>
+                <div class="track"><div class="fill" id="bar-gpu-1" style="width:45%;background:linear-gradient(90deg,var(--teal),var(--green))"></div></div>
+            </div>
+            <div class="stat">
+                <div class="lbl"><span>Memory</span><span id="txt-mem-1">32%</span></div>
+                <div class="track"><div class="fill" id="bar-mem-1" style="width:32%"></div></div>
+            </div>
+            <div class="leopard-alert" id="leopard-alert-1">
+                <span class="alert-dot"></span>
+                <span class="alert-text">Leopard Detected</span>
+                <span class="alert-conf">99.4% conf</span>
+            </div>
+        </div>
+
+        <div class="panel metric-card" id="card-node-2">
+            <div class="card-header">
+                <span class="name">EDGE_02 · Aamboli</span>
+                <span class="badge" id="badge-2">ACTIVE</span>
+            </div>
+            <div class="stat">
+                <div class="lbl"><span>CPU Load</span><span id="txt-cpu-2">22%</span></div>
+                <div class="track"><div class="fill" id="bar-cpu-2" style="width:22%"></div></div>
+            </div>
+            <div class="stat">
+                <div class="lbl"><span>GPU Inference</span><span id="txt-gpu-2">41%</span></div>
+                <div class="track"><div class="fill" id="bar-gpu-2" style="width:41%;background:linear-gradient(90deg,var(--teal),var(--green))"></div></div>
+            </div>
+            <div class="stat">
+                <div class="lbl"><span>Memory</span><span id="txt-mem-2">35%</span></div>
+                <div class="track"><div class="fill" id="bar-mem-2" style="width:35%"></div></div>
+            </div>
+            <div class="leopard-alert" id="leopard-alert-2">
+                <span class="alert-dot"></span>
+                <span class="alert-text">Leopard Detected</span>
+                <span class="alert-conf">99.4% conf</span>
+            </div>
+        </div>
+
+        <!-- Tech Stack Reference -->
+        <div class="panel" style="border-color:rgba(56,225,255,0.2);">
+            <div class="card-header">
+                <span class="name" style="color:var(--cyan);">Tech Stack · This System</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px;">
+                <div style="display:flex;gap:5px;flex-wrap:wrap;">
+                    <span class="tech-tag tt-cyan" style="pointer-events:none;"><span class="dot"></span>IoT</span>
+                    <span class="tech-tag tt-green" style="pointer-events:none;"><span class="dot"></span>Linux</span>
+                    <span class="tech-tag tt-green" style="pointer-events:none;"><span class="dot"></span>Python</span>
+                </div>
+                <div style="display:flex;gap:5px;flex-wrap:wrap;">
+                    <span class="tech-tag tt-teal" style="pointer-events:none;"><span class="dot"></span>Edge AI</span>
+                    <span class="tech-tag tt-violet" style="pointer-events:none;"><span class="dot"></span>Docker</span>
+                    <span class="tech-tag tt-rose" style="pointer-events:none;"><span class="dot"></span>CNN / DL</span>
+                </div>
+                <div style="display:flex;gap:5px;flex-wrap:wrap;">
+                    <span class="tech-tag tt-teal" style="pointer-events:none;"><span class="dot"></span>MQTT</span>
+                    <span class="tech-tag tt-cyan" style="pointer-events:none;"><span class="dot"></span>Cloud</span>
+                    <span class="tech-tag tt-amber" style="pointer-events:none;"><span class="dot"></span>Android</span>
+                </div>
+                <div style="display:flex;gap:5px;flex-wrap:wrap;">
+                    <span class="tech-tag tt-magenta" style="pointer-events:none;"><span class="dot"></span>AI Training</span>
+                    <span class="tech-tag tt-violet" style="pointer-events:none;"><span class="dot"></span>Dist. Systems</span>
+                </div>
+                <div style="display:flex;gap:5px;flex-wrap:wrap;">
+                    <span class="tech-tag tt-teal" style="pointer-events:none;"><span class="dot"></span>Multi Agent System</span>
+                    <span class="tech-tag tt-rose" style="pointer-events:none;"><span class="dot"></span>LLM, MCP</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls">
+        <label for="edge-select">Target Node</label>
+        <select id="edge-select">
+            <option value="1">Edge 01 · Lekurwadi Corridor</option>
+            <option value="2">Edge 02 · Aamboli Pass</option>
+        </select>
+        <button onclick="resetPipeline()">Reset</button>
+    </div>
+
+    <!-- Terminal -->
+    <div class="terminal" id="terminal-screen">
+        <div class="term-head">
+            <span class="dots">
+                <i style="background:var(--rose)"></i>
+                <i style="background:var(--amber)"></i>
+                <i style="background:var(--green)"></i>
+            </span>
+            event stream · wildlife-grid.log
+        </div>
+        <div class="log-entry">
+            <span class="log-time">[SYSTEM]</span>
+            <span style="color:#ffffff">Wildlife-Grid online · 2 edge nodes active · MQTT broker connected · AI Server model v3.2 deployed · awaiting detections.</span>
+        </div>
+    </div>
+
+</div><!-- /shell -->
+
+<script>
+    const canvas     = document.getElementById('canvas-container');
+    const cloudNode  = document.getElementById('node-cloud');
+    const mobileNode = document.getElementById('node-mobile');
+    const logScreen  = document.getElementById('terminal-screen');
+
+    let pipelineActive = false;
+    let detectCount    = 0;
+    let pingNode       = 1;
+
+    // Live clock
+    setInterval(() => {
+        const d = new Date();
+        document.getElementById('clock').innerHTML =
+            '<span>UTC+05:30</span> ' + d.toTimeString().split(' ')[0];
+    }, 1000);
+
+    function appendLog(msg, color = "var(--teal)") {
+        const now = new Date();
+        const t = now.toTimeString().split(' ')[0] + '.' + String(now.getMilliseconds()).padStart(3,'0');
+        const entry = document.createElement('div');
+        entry.className = 'log-entry';
+        entry.innerHTML = `<span class="log-time">[${t}]</span> <span style="color:${color}">${msg}</span>`;
+        logScreen.appendChild(entry);
+        logScreen.scrollTop = logScreen.scrollHeight;
+    }
+
+    function createPacket(pathId, duration, color, reverse, cb) {
+        const path = document.getElementById(pathId);
+        if (!path) { if (cb) cb(); return; }
+        const len = path.getTotalLength();
+        const pkt = document.createElement('div');
+        pkt.className = 'packet';
+        pkt.style.cssText = `background:${color};box-shadow:0 0 12px ${color},0 0 4px ${color}`;
+        canvas.appendChild(pkt);
+        let t0 = null;
+        function step(ts) {
+            if (!t0) t0 = ts;
+            let p = Math.min((ts - t0) / duration, 1);
+            const pt = path.getPointAtLength(reverse ? len * (1 - p) : len * p);
+            pkt.style.left = (pt.x - 5.5) + 'px';
+            pkt.style.top  = (pt.y - 5.5) + 'px';
+            if (p < 1) requestAnimationFrame(step);
+            else { pkt.remove(); if (cb) cb(); }
+        }
+        requestAnimationFrame(step);
+    }
+
+    function updateMetrics(id, cpu, gpu, mem, accent) {
+        const card = document.getElementById(`card-node-${id}`);
+        card.style.boxShadow = accent ? `0 0 0 1px ${accent}33, var(--shadow)` : '';
+        document.getElementById(`txt-cpu-${id}`).innerText = cpu + '%';
+        document.getElementById(`bar-cpu-${id}`).style.width = cpu + '%';
+        document.getElementById(`txt-gpu-${id}`).innerText = gpu + '%';
+        document.getElementById(`bar-gpu-${id}`).style.width = gpu + '%';
+        document.getElementById(`txt-mem-${id}`).innerText = mem + '%';
+        document.getElementById(`bar-mem-${id}`).style.width = mem + '%';
+    }
+
+    // Ambient stream packets cam→edge
+    setInterval(() => {
+        if (pipelineActive) return;
+        [1, 2].forEach(i => createPacket(`path-cam-edge${i}`, 2600, "#5C6B82", false, null));
+    }, 1600);
+
+    // Cloud health-ping daemon
+    setInterval(() => {
+        if (pipelineActive) return;
+        const id = pingNode;
+        appendLog(`[monitor] probing Edge Node 0${id} heartbeat…`, "var(--violet)");
+        createPacket(`path-edge${id}-cloud`, 1500, "var(--violet)", true, () => {
+            document.getElementById(`node-edge-${id}`).classList.add('edge-pinged');
+            setTimeout(() => {
+                const cpu = Math.floor(Math.random()*12)+12;
+                const gpu = Math.floor(Math.random()*15)+38;
+                const mem = Math.floor(Math.random()*8)+28;
+                appendLog(`[telemetry] Node 0${id} ▸ OK · cpu ${cpu}% · gpu ${gpu}% · mem ${mem}%`, "var(--teal)");
+                updateMetrics(id, cpu, gpu, mem, "#A78BFA");
+                createPacket(`path-edge${id}-cloud`, 1500, "var(--teal)", false, () => {
+                    document.getElementById(`node-edge-${id}`).classList.remove('edge-pinged');
+                    document.getElementById(`card-node-${id}`).style.boxShadow = '';
+                });
+            }, 400);
+        });
+        pingNode = pingNode === 1 ? 2 : 1;
+    }, 4500);
+
+    function runPipeline() {
+        const id = parseInt(document.getElementById('edge-select').value);
+        pipelineActive = true;
+        document.getElementById('btn-trigger').disabled = true;
+        const edgeNode = document.getElementById(`node-edge-${id}`);
+
+        appendLog(`[iot-cam-0${id}] IoT camera stream received · extracting RTSP frame buffer…`, "var(--ink)");
+
+        // Step 1: Camera → Edge
+        createPacket(`path-cam-edge${id}`, 2200, "var(--green)", false, () => {
+            appendLog(`[edge-0${id}] Linux · Python process triggered · Dockerised CNN inference running…`, "var(--cyan)");
+            setTimeout(() => {
+                appendLog(`[edge-0${id}] CNN object detection complete ▸ LEOPARD CONFIRMED · 99.4% confidence`, "var(--green)");
+                edgeNode.classList.add('edge-match');
+                updateMetrics(id, 89, 98, 76, "#4ADE80");
+                const chip = document.getElementById(`pulse-${id}`);
+                chip.innerText = "LEOPARD";
+                chip.style.cssText = "background:rgba(251,94,109,0.18);color:var(--rose);border-color:rgba(251,94,109,0.4)";
+                document.getElementById(`leopard-alert-${id}`).classList.add('show');
+                detectCount++;
+                document.getElementById('sum-detect').innerText = detectCount;
+
+                // Step 2: Edge → Cloud via MQTT
+                setTimeout(() => {
+                    appendLog(`[mqtt] Edge 0${id} publishing detection payload → Cloud Gateway MQTT broker…`, "var(--teal)");
+                    createPacket(`path-edge${id}-cloud`, 3000, "var(--teal)", false, () => {
+                        appendLog("[cloud] MQTT message received · Cloud Computing layer processing · alert stored ✓", "var(--cyan)");
+                        cloudNode.classList.add('pulse-cloud');
+
+                        // Step 3: Cloud → Ranger Mobile
+                        setTimeout(() => {
+                            appendLog("[cloud] Dispatching Android push notification to Ranger Mobile…", "var(--amber)");
+                            createPacket('path-cloud-mobile', 1800, "var(--amber)", false, () => {
+                                appendLog("[mobile] Android app alert delivered · Ranger notified ✓", "var(--amber)");
+                                mobileNode.classList.add('pulse-mobile');
+                                document.getElementById('btn-trigger').disabled = false;
+                                pipelineActive = false;
+                            });
+                        }, 800);
+                    });
+                }, 900);
+            }, 600);
+        });
+    }
+
+    function resetPipeline() {
+        pipelineActive = false;
+        [1, 2].forEach(i => {
+            document.getElementById(`node-edge-${i}`).classList.remove('edge-match', 'edge-pinged');
+            const chip = document.getElementById(`pulse-${i}`);
+            chip.innerText = "ACTIVE";
+            chip.style.cssText = "background:rgba(74,222,128,0.1);color:var(--green);border-color:rgba(74,222,128,0.25)";
+            updateMetrics(i, i===1?18:22, i===1?45:41, i===1?32:35, null);
+            document.getElementById(`leopard-alert-${i}`).classList.remove('show');
+        });
+        cloudNode.classList.remove('pulse-cloud');
+        mobileNode.classList.remove('pulse-mobile');
+        document.querySelectorAll('.packet').forEach(el => el.remove());
+        document.getElementById('btn-trigger').disabled = false;
+        appendLog("Pipeline reset · ambient monitoring resumed.", "var(--ink-dim)");
+    }
+</script>
+</body>
+</html>

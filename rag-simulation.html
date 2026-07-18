@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAG — Retrieval-Augmented Generation, end to end</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+:root{
+  --bg:#07080c;--surface:#0d0f16;--surface2:#111420;--border:#20263a;
+  --cyan:#00d4ff;--violet:#a78bfa;--green:#22c55e;--amber:#f59e0b;
+  --magenta:#e879f9;--red:#ef4444;--teal:#00e5c7;
+  --ink:#eef2f8;--ink-dim:#a9b4c6;--ink-faint:#6b7689;
+}
+body{background:var(--bg);color:var(--ink);font-family:'IBM Plex Mono',monospace;font-size:12px;display:flex;flex-direction:column;height:100vh;overflow:hidden}
+.hdr{flex-shrink:0;background:var(--surface);border-bottom:1px solid var(--border);padding:9px 20px;display:flex;align-items:center;gap:10px}
+.htitle{font-family:'Space Grotesk',sans-serif;font-size:16px;font-weight:700;letter-spacing:-.01em}
+.hsub{font-size:11px;color:var(--ink-dim);margin-top:2px}
+.badge{margin-left:auto;font-size:11px;padding:3px 12px;border-radius:20px;border:1px solid;white-space:nowrap}
+.ctrlbar{flex-shrink:0;background:var(--surface);border-bottom:1px solid var(--border);padding:8px 20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.cbtn{padding:6px 13px;border-radius:6px;border:1px solid var(--border);background:var(--bg);color:var(--ink);font-family:inherit;font-size:11px;cursor:pointer;transition:border-color .2s,color .2s}
+.cbtn:hover{border-color:var(--cyan);color:var(--cyan)}
+.cbtn.big{font-weight:600;padding:6px 17px}
+.slabel{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--ink-dim)}
+input[type=range]{-webkit-appearance:none;appearance:none;height:4px;width:90px;background:var(--border);border-radius:2px;outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--cyan);cursor:pointer;box-shadow:0 0 8px rgba(0,212,255,.5)}
+.pill{font-size:10px;color:var(--ink-dim);background:rgba(255,255,255,.05);border:1px solid var(--border);padding:3px 10px;border-radius:10px}
+.pill b{color:var(--ink)}
+/* stage map */
+.map{flex-shrink:0;background:var(--surface);border-bottom:1px solid var(--border);padding:9px 14px 11px;overflow-x:auto}
+.mapflow{display:flex;align-items:stretch;gap:5px;min-width:min-content}
+.phasewrap{position:relative;display:flex;align-items:stretch;gap:5px;padding:13px 9px 5px;border:1px dashed var(--pc);border-radius:10px;background:var(--pbg)}
+.phasetag{position:absolute;top:-9px;left:10px;font-size:8.5px;letter-spacing:.05em;color:var(--pc);background:var(--surface);padding:0 7px;font-weight:600}
+.mstep{position:relative;flex:0 0 auto;min-width:78px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:6px 8px;text-align:center;transition:border-color .3s,box-shadow .3s,opacity .3s;opacity:.66}
+.mstep .mn{font-size:9.5px;font-weight:600;color:var(--ink-dim);white-space:nowrap}
+.mstep .mnum{font-size:7.5px;color:var(--ink-faint);margin-top:1px}
+.mstep.active{opacity:1;border-color:var(--sc,var(--cyan));box-shadow:0 0 15px var(--sg,rgba(0,212,255,.28))}
+.mstep.active .mn{color:var(--sc,var(--cyan))}
+.marrow{align-self:center;color:var(--ink-faint);font-size:11px;flex:0 0 auto}
+/* stage */
+.work{flex:1;min-height:0;position:relative;overflow:hidden}
+#bg{position:absolute;inset:0;z-index:0;pointer-events:none}
+#svg{position:absolute;inset:0;width:100%;height:100%;z-index:1}
+#cap{position:absolute;left:50%;transform:translateX(-50%);bottom:8px;max-width:70%;text-align:center;z-index:2;font-family:'Sora',sans-serif;font-size:11.5px;color:var(--ink-dim);background:rgba(13,15,22,.7);border:1px solid var(--border);border-radius:8px;padding:5px 14px}
+#cap b{color:var(--capc,var(--cyan));font-family:'Space Grotesk',sans-serif;font-weight:600}
+/* ribbon */
+.ribbonbar{flex-shrink:0;background:var(--surface);border-top:1px solid var(--border);padding:6px 16px 8px}
+.rbtoprow{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.rbttl{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint)}
+.rbnote{font-size:9px;color:var(--ink-dim)}
+#ribbon{position:relative;display:flex;height:22px;width:100%;border-radius:6px;overflow:hidden;border:1px solid var(--border)}
+.rseg{position:relative;height:100%;border-right:1px solid var(--bg);display:flex;align-items:center;justify-content:center;overflow:hidden;transition:background .25s}
+.rseg:last-child{border-right:none}
+.rseg .rsl{font-size:7.5px;color:var(--ink-faint);white-space:nowrap;padding:0 2px;transition:color .25s;z-index:2;position:relative}
+.rseg.active .rsl{color:var(--ink);font-weight:600}
+.rseg.active{background:rgba(255,255,255,.06)}
+#rbfill{position:absolute;top:0;left:0;height:100%;background:linear-gradient(90deg,rgba(0,212,255,.18),rgba(232,121,249,.18));border-right:2px solid var(--cyan);width:0%;z-index:1}
+/* concept strip */
+.cstrip{flex-shrink:0;background:var(--surface);border-top:1px solid var(--border);padding:7px 16px;display:flex;gap:0}
+.csi{flex:1;padding:0 14px}
+.csi:first-child{padding-left:0}
+.csi:not(:last-child){border-right:1px solid var(--border)}
+.csl{font-size:8px;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.1em;margin-bottom:3px}
+.csv{font-size:10px;color:var(--ink-dim);line-height:1.45}
+.tag{font-size:8px;padding:1px 5px;border-radius:3px;background:rgba(0,229,199,.16);color:var(--teal);border:1px solid rgba(0,229,199,.28)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block;animation:pulse 1.4s ease-in-out infinite;margin-right:2px}
+@media (prefers-reduced-motion:reduce){.dot{animation:none}}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div>
+    <div class="htitle">🔎 RAG — Retrieval-Augmented Generation</div>
+    <div class="hsub">Answer a question by first <b>retrieving</b> relevant passages from a knowledge base, then <b>generating</b> a grounded answer from them.</div>
+  </div>
+  <span class="badge" id="badge" style="border-color:var(--green);color:var(--green)"><span class="dot"></span>at rest</span>
+</div>
+
+<div class="ctrlbar">
+  <button class="cbtn big" id="btn-play" onclick="togglePlay()">▶ Play</button>
+  <button class="cbtn" onclick="step(-1)">◀ Step</button>
+  <button class="cbtn" onclick="step(1)">Step ▶</button>
+  <button class="cbtn" onclick="resetAll()">↺ Reset</button>
+  <label class="slabel">speed<input type="range" id="speed" min="1" max="10" value="6" oninput="speed=+this.value"></label>
+  <span class="pill" id="phasepill">offline · indexing</span>
+  <span class="pill" id="readout">stage 1 / 10</span>
+</div>
+
+<div class="map"><div class="mapflow" id="mapflow"></div></div>
+
+<div class="work" id="work">
+  <canvas id="bg"></canvas>
+  <svg id="svg" viewBox="0 0 1000 470" preserveAspectRatio="xMidYMid meet"></svg>
+  <div id="cap"></div>
+</div>
+
+<div class="ribbonbar">
+  <div class="rbtoprow"><span class="rbttl">⏱ Time ribbon — where the work actually goes</span><span class="rbnote">retrieval &amp; generation dominate · indexing is done once, offline</span></div>
+  <div id="ribbon"><div id="rbfill"></div></div>
+</div>
+
+<script>
+const CY='#00d4ff',VI='#a78bfa',TEAL='#00e5c7',AM='#f59e0b',MA='#e879f9',GR='#22c55e',RED='#ef4444',DIM='#6b7689',GRID='#232a40',F='#475569';
+const STAGES=[
+ {k:'docs',   n:'Documents',    ph:'off', ac:CY,   cap:['Knowledge base','Your source documents — the facts the model can draw on. They are NOT in the model’s weights.']},
+ {k:'chunk',  n:'Chunk',        ph:'off', ac:CY,   cap:['Chunking','Each document is split into small passages (chunks) — the unit that will be retrieved.']},
+ {k:'embed',  n:'Embed',        ph:'off', ac:TEAL, cap:['Embed chunks','Every chunk is turned into a vector that captures its meaning — a point in embedding space.']},
+ {k:'store',  n:'Vector store', ph:'off', ac:TEAL, cap:['Index','Chunk vectors are stored in a vector database, ready for fast similarity search. (done once, offline)']},
+ {k:'query',  n:'Query',        ph:'on',  ac:VI,   cap:['User query','A user asks a question.']},
+ {k:'qembed', n:'Embed query',  ph:'on',  ac:VI,   cap:['Embed query','The question is embedded into the SAME vector space as the chunks.']},
+ {k:'retr',   n:'Retrieve',     ph:'on',  ac:MA,   cap:['Retrieve (top-k)','Find the chunks whose vectors are nearest the query — the most relevant passages.']},
+ {k:'augm',   n:'Augment',      ph:'on',  ac:AM,   cap:['Augment prompt','Build the prompt: the question + the retrieved chunks pasted in as context.']},
+ {k:'gen',    n:'Generate',     ph:'on',  ac:GR,   cap:['Generate','The LLM reads the augmented prompt and writes an answer grounded in the retrieved context.']},
+ {k:'ans',    n:'Answer',       ph:'on',  ac:GR,   cap:['Grounded answer','The answer — with citations pointing back to the exact source chunks it used.']},
+];
+const TW=[.06,.10,.10,.08,.06,.07,.20,.10,.16,.07];
+const PBDUR=[1.6,2.4,2.2,1.8,1.6,1.8,3.4,2.4,3.0,2.2];
+const Tcum=(()=>{const o=[0];let s=0;for(const v of TW){s+=v;o.push(s);}return o;})();
+const accG={[CY]:'rgba(0,212,255,.28)',[VI]:'rgba(167,139,250,.28)',[TEAL]:'rgba(0,229,199,.28)',[AM]:'rgba(245,158,11,.28)',[MA]:'rgba(232,121,249,.28)',[GR]:'rgba(34,197,94,.28)'};
+
+/* knowledge base: 3 docs, ~4 chunks each */
+const DOCS=[{t:'Photosynthesis',c:CY},{t:'Solar power',c:VI},{t:'Batteries',c:AM}];
+const CHUNKTXT=[
+ ['chlorophyll absorbs light','light reactions split water','Calvin cycle fixes CO₂','glucose stores the energy'],
+ ['PV cells convert photons','silicon semiconductors','inverter makes AC','grid-tie systems'],
+ ['lithium-ion chemistry','anode & cathode','charge/discharge cycles','high energy density'],
+];
+const QUERY='How do plants turn sunlight into energy?';
+const ANSWER='Plants capture sunlight with chlorophyll and convert it into chemical energy: the light reactions split water and the Calvin cycle fixes CO₂ into glucose. [1][2][3]';
+
+/* vector-space geometry (SVG viewBox 1000x470) */
+const VS={x:352,y:70,w:300,h:312};
+function vpx(nx,ny){return [VS.x+nx*VS.w, VS.y+ny*VS.h];}
+let CH=[], Q=null, TOPK=[], scores=[];
+function buildData(){
+  const clusters=[[0.30,0.30],[0.52,0.80],[0.76,0.44]];
+  const rng=mul(7); CH=[];
+  for(let d=0;d<3;d++){ for(let c=0;c<4;c++){ const nx=clamp(clusters[d][0]+(rng()*2-1)*0.11,0.06,0.94), ny=clamp(clusters[d][1]+(rng()*2-1)*0.11,0.06,0.94);
+    const [px,py]=vpx(nx,ny); CH.push({doc:d,ci:c,nx,ny,x:px,y:py,txt:CHUNKTXT[d][c]}); } }
+  const [qx,qy]=vpx(0.34,0.26); Q={x:qx,y:qy};
+  scores=CH.map((p,i)=>({i,d:Math.hypot(p.x-Q.x,p.y-Q.y)})).sort((a,b)=>a.d-b.d);
+  const dmax=Math.max(...scores.map(s=>s.d));
+  scores.forEach(s=>s.sim=1-s.d/(dmax*1.15));
+  TOPK=scores.slice(0,3).map(s=>s.i);
+}
+function mul(s){return ()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+const clamp=(v,a,b)=>v<a?a:v>b?b:v, lerp=(a,b,k)=>a+(b-a)*k, ease=k=>{k=clamp(k,0,1);return k*k*(3-2*k);};
+const simOf=i=>{const s=scores.find(x=>x.i===i);return s?s.sim:0;};
+const T=(x,y,s,c,sz,an,fw)=>`<text x="${x}" y="${y}" fill="${c||DIM}" font-size="${sz||9}" font-family="${fw==='g'?'Space Grotesk':'IBM Plex Mono'}"${fw==='b'?' font-weight="600"':''} text-anchor="${an||'start'}">${s}</text>`;
+
+/* ---- state ---- */
+let cur=0, stageElapsed=0, playing=false, speed=6, started=false, raf=null, lastTs=0;
+
+/* ---- build stage map ---- */
+function buildMap(){
+  const mf=document.getElementById('mapflow'); let html='';
+  html+=`<div class="phasewrap" style="--pc:${CY};--pbg:rgba(0,212,255,.04)"><span class="phasetag">① indexing · offline (built once)</span>`;
+  for(let i=0;i<4;i++){ html+=stepHTML(i); if(i<3)html+=arrow(); }
+  html+='</div>'+arrow();
+  html+=`<div class="phasewrap" style="--pc:${MA};--pbg:rgba(232,121,249,.04)"><span class="phasetag">② query · online (every question)</span>`;
+  for(let i=4;i<10;i++){ html+=stepHTML(i); if(i<9)html+=arrow(); }
+  html+='</div>';
+  mf.innerHTML=html;
+}
+function stepHTML(i){const s=STAGES[i];return `<div class="mstep" id="ms${i}" style="--sc:${s.ac};--sg:${accG[s.ac]}"><div class="mn">${s.n}</div><div class="mnum">${i+1}</div></div>`;}
+function arrow(){return '<span class="marrow">→</span>';}
+
+/* ---- vector-space helper ---- */
+function drawVS(opts){ // {nShown, dim, showQ, qA, lines, hiK, pullK}
+  const o=opts||{}; let h='';
+  h+=`<rect x="${VS.x}" y="${VS.y}" width="${VS.w}" height="${VS.h}" rx="12" fill="rgba(255,255,255,.015)" stroke="${GRID}" stroke-width="1.2"/>`;
+  h+=T(VS.x+VS.w/2,VS.y-8,'embedding space  ·  vector store',TEAL,9.5,'middle','b');
+  // faint grid
+  for(let g=1;g<4;g++){ h+=`<line x1="${VS.x+g*VS.w/4}" y1="${VS.y}" x2="${VS.x+g*VS.w/4}" y2="${VS.y+VS.h}" stroke="${GRID}" stroke-width=".5" opacity=".5"/>`;
+    h+=`<line x1="${VS.x}" y1="${VS.y+g*VS.h/4}" x2="${VS.x+VS.w}" y2="${VS.y+g*VS.h/4}" stroke="${GRID}" stroke-width=".5" opacity=".5"/>`; }
+  const nShown = o.nShown==null?CH.length:o.nShown;
+  // retrieval lines (query → nearest)
+  if(o.lines){ const kn=Math.round(o.lines*8); const near=scores.slice(0,Math.max(3,kn));
+    near.forEach((s,idx)=>{ const p=CH[s.i]; const on=TOPK.includes(s.i); h+=`<line x1="${Q.x}" y1="${Q.y}" x2="${p.x}" y2="${p.y}" stroke="${on?MA:DIM}" stroke-width="${on?1.8:0.8}" opacity="${on?0.8:0.3}" stroke-dasharray="${on?'':'3,3'}"/>`; }); }
+  // chunk points
+  for(let i=0;i<nShown;i++){ const p=CH[i]; const isK=o.hiK&&TOPK.includes(i);
+    let px=p.x,py=p.y;
+    if(o.pullK && TOPK.includes(i)){ const slot=TOPK.indexOf(i); const [tx,ty]=[720,120+slot*70]; px=lerp(p.x,tx,ease(o.pullK)); py=lerp(p.y,ty,ease(o.pullK)); }
+    const r=isK?7:5, op=o.dim?(isK?1:0.4):(isK?1:0.85), col=DOCS[p.doc].c;
+    h+=`<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="${r}" fill="${isK?MA:col}" opacity="${op}"${isK?` stroke="${MA}" stroke-width="1.5"`:''}/>`;
+    if(isK && o.hiK && !o.pullK){ h+=T(px+10,py+3,(simOf(i)*100).toFixed(0)+'%',MA,8,'start'); }
+  }
+  // query point
+  if(o.showQ){ const qa=o.qA==null?1:o.qA; h+=`<circle cx="${Q.x}" cy="${Q.y}" r="${7*qa+2}" fill="${VI}" opacity="${qa}" stroke="#fff" stroke-opacity=".5" stroke-width="1.4"/>`;
+    if(qa>0.6) h+=T(Q.x,Q.y-13,'query',VI,8.5,'middle','b'); }
+  return h;
+}
+
+/* ---- per-stage scene ---- */
+function scene(k, lp){
+  let h='';
+  if(k==='docs'){
+    DOCS.forEach((d,i)=>{ const x=90,y=110+i*88, on=lp>i/3;
+      h+=`<rect x="${x}" y="${y}" width="150" height="66" rx="9" fill="var(--surface)" stroke="${d.c}" stroke-opacity="${on?0.8:0.3}" stroke-width="1.4"/>`;
+      h+=T(x+12,y+22,d.t,d.c,11,'start','b')+T(x+12,y+40,'source document',DIM,8,'start');
+      for(let l=0;l<3;l++)h+=`<rect x="${x+12}" y="${y+46+l*5}" width="${120-l*24}" height="2.4" rx="1" fill="${DIM}" opacity=".5"/>`; });
+    h+=T(90,90,'KNOWLEDGE BASE',CY,10,'start','g');
+    h+=T(650,240,'not stored in the model’s weights —',DIM,10,'middle');
+    h+=T(650,258,'kept external, searchable, updatable',DIM,10,'middle');
+  }
+  else if(k==='chunk'){
+    h+=T(90,90,'CHUNKING',CY,10,'start','g');
+    h+=`<rect x="70" y="120" width="150" height="66" rx="9" fill="var(--surface)" stroke="${CY}" stroke-opacity=".7"/>`+T(82,142,DOCS[0].t,CY,11,'start','b')+T(82,160,'1 document',DIM,8,'start');
+    // splits into 4 chunk cards
+    for(let c=0;c<4;c++){ const e=ease(clamp(lp*1.2-c*0.12,0,1)); const x0=150,y0=150; const x=lerp(x0,340,e),y=lerp(y0,90+c*72,e);
+      h+=`<rect x="${x}" y="${y}" width="188" height="52" rx="8" fill="var(--surface2)" stroke="${CY}" stroke-opacity="${0.3+0.5*e}"/>`;
+      h+=T(x+10,y+20,'chunk '+(c+1),CY,8.5,'start','b')+T(x+10,y+38,'“'+CHUNKTXT[0][c]+'”',DIM,9,'start'); }
+    h+=`<path d="M226 153 L300 153" stroke="${CY}" stroke-width="1.4" opacity="${lp>0.1?1:0}" marker-end="url(#arr)"/>`;
+    h+=T(640,300,'small passages = the unit of retrieval',DIM,10,'middle');
+  }
+  else if(k==='embed'){
+    // chunk cards on left fly into VS as points
+    h+=drawVS({nShown:Math.round(ease(lp)*CH.length), showQ:false});
+    for(let c=0;c<4;c++){ const gone=lp>((c+1)/6); if(gone)continue; const y=90+c*60;
+      h+=`<rect x="70" y="${y}" width="180" height="46" rx="8" fill="var(--surface2)" stroke="${CY}" stroke-opacity=".5"/>`+T(80,y+18,'chunk','#00d4ff',8.5,'start','b')+T(80,y+34,'“'+CHUNKTXT[0][c]+'”',DIM,8.5,'start'); }
+    h+=T(160,60,'EMBED',TEAL,10,'middle','g');
+    h+=`<path d="M258 210 L${VS.x-8} 210" stroke="${TEAL}" stroke-width="1.4" marker-end="url(#art)"/>`;
+    h+=T(160,430,'meaning → a vector (a point in space)',DIM,10,'middle');
+  }
+  else if(k==='store'){
+    h+=drawVS({showQ:false});
+    h+=T(150,120,'VECTOR',TEAL,12,'middle','g')+T(150,140,'STORE',TEAL,12,'middle','g');
+    h+=T(150,168,CH.length+' chunk vectors',DIM,9,'middle')+T(150,184,'indexed for search',DIM,9,'middle');
+    h+=T(150,220,'similar meaning →',DIM,9,'middle')+T(150,234,'nearby points',DIM,9,'middle');
+    // cluster labels
+    DOCS.forEach((d,i)=>{ const c=CH.filter(p=>p.doc===i); const mx=c.reduce((a,p)=>a+p.x,0)/c.length, my=c.reduce((a,p)=>a+p.y,0)/c.length; h+=T(mx,my-16,d.t,d.c,8,'middle','b'); });
+    h+=T(830,236,'built ONCE, offline.',DIM,10,'middle')+T(830,254,'reused for every query →',DIM,10,'middle');
+  }
+  else if(k==='query'){
+    h+=drawVS({dim:true,showQ:false});
+    h+=`<rect x="70" y="150" width="220" height="70" rx="10" fill="var(--surface)" stroke="${VI}" stroke-opacity=".8" stroke-width="1.4"/>`;
+    h+=T(84,174,'USER QUERY',VI,9,'start','g')+T(84,198,'“'+QUERY+'”',VI,10.5,'start');
+    h+=T(830,240,'the question the user',DIM,10,'middle')+T(830,258,'wants answered',DIM,10,'middle');
+  }
+  else if(k==='qembed'){
+    const a=ease(lp);
+    h+=drawVS({dim:true,showQ:true,qA:a});
+    h+=`<rect x="70" y="150" width="220" height="70" rx="10" fill="var(--surface)" stroke="${VI}" stroke-opacity="${1-a*0.5}"/>`+T(84,174,'USER QUERY',VI,9,'start','g')+T(84,198,'“'+QUERY+'”',VI,10,'start');
+    h+=`<path d="M296 185 Q ${VS.x-30} 185 ${Q.x-10} ${Q.y-6}" fill="none" stroke="${VI}" stroke-width="1.4" opacity="${a}" marker-end="url(#arv)"/>`;
+    h+=T(160,60,'same embedder',VI,9,'middle','b');
+    h+=T(830,300,'query lands in the SAME space',DIM,10,'middle')+T(830,318,'as the chunks',DIM,10,'middle');
+  }
+  else if(k==='retr'){
+    h+=drawVS({dim:true,showQ:true,lines:lp,hiK:lp>0.35});
+    h+=T(150,120,'RETRIEVE',MA,12,'middle','g')+T(150,140,'top-k = 3',MA,10,'middle');
+    h+=T(150,172,'measure similarity',DIM,9,'middle')+T(150,186,'(cosine / distance)',DIM,9,'middle');
+    h+=T(150,214,'keep the nearest',DIM,9,'middle')+T(150,228,'few chunks',DIM,9,'middle');
+    if(lp>0.4){ h+=T(830,110,'nearest chunks:',MA,9.5,'middle','b');
+      TOPK.forEach((i,s)=>{ h+=T(830,132+s*22,'['+(s+1)+'] “'+CH[i].txt+'”',MA,9,'middle'); }); }
+  }
+  else if(k==='augm'){
+    h+=drawVS({dim:true,showQ:true,hiK:true,pullK:ease(lp)});
+    // prompt box on the right assembling
+    const px=690,py=70,pw=286;
+    h+=`<rect x="${px}" y="${py}" width="${pw}" height="330" rx="11" fill="rgba(245,158,11,.04)" stroke="${AM}" stroke-opacity=".7" stroke-width="1.3"/>`;
+    h+=T(px+pw/2,py+18,'AUGMENTED PROMPT',AM,10,'middle','g');
+    h+=T(px+14,py+42,'system: answer using the context.',DIM,8.5,'start');
+    h+=T(px+14,py+64,'context:',TEAL,9,'start','b');
+    TOPK.forEach((i,s)=>{ const e=ease(clamp(lp*1.1-s*0.12,0,1)); const y=py+78+s*58;
+      h+=`<rect x="${px+14}" y="${y}" width="${pw-28}" height="48" rx="7" fill="var(--surface2)" stroke="${MA}" stroke-opacity="${0.3+0.5*e}" opacity="${0.3+0.7*e}"/>`;
+      h+=T(px+22,y+18,'['+(s+1)+'] '+DOCS[CH[i].doc].t,MA,8.5,'start','b')+T(px+22,y+36,'“'+CH[i].txt+'”',DIM,9,'start'); });
+    const qy=py+78+3*58+6;
+    h+=`<rect x="${px+14}" y="${qy}" width="${pw-28}" height="34" rx="7" fill="rgba(167,139,250,.08)" stroke="${VI}" stroke-opacity=".6"/>`+T(px+22,qy+14,'question:',VI,8.5,'start','b')+T(px+22,qy+29,'“'+QUERY+'”',VI,8.5,'start');
+    h+=T(200,300,'retrieved chunks pasted in as context →',DIM,10,'middle');
+  }
+  else if(k==='gen'||k==='ans'){
+    const isAns=k==='ans';
+    // prompt (left, compact)
+    const px=70,py=80,pw=250;
+    h+=`<rect x="${px}" y="${py}" width="${pw}" height="220" rx="10" fill="rgba(245,158,11,.04)" stroke="${AM}" stroke-opacity=".5"/>`+T(px+pw/2,py+16,'AUGMENTED PROMPT',AM,9,'middle','g');
+    TOPK.forEach((i,s)=>{ const y=py+30+s*40; h+=`<rect x="${px+12}" y="${y}" width="${pw-24}" height="32" rx="6" fill="var(--surface2)" stroke="${MA}" stroke-opacity=".35"/>`+T(px+18,y+13,'['+(s+1)+'] '+DOCS[CH[i].doc].t,MA,8,'start','b')+T(px+18,y+27,'“'+CH[i].txt+'”',DIM,8,'start'); });
+    h+=`<rect x="${px+12}" y="${py+30+3*40}" width="${pw-24}" height="30" rx="6" fill="rgba(167,139,250,.08)" stroke="${VI}" stroke-opacity=".5"/>`+T(px+18,py+30+3*40+13,'question',VI,8,'start','b')+T(px+18,py+30+3*40+27,'“'+QUERY.slice(0,30)+'…”',VI,8,'start');
+    // LLM node
+    const lx=430,ly=150; const pulse=isAns?1:(0.7+0.3*Math.sin(performance.now()/180));
+    h+=`<rect x="${lx}" y="${ly}" width="150" height="120" rx="14" fill="rgba(34,197,94,.06)" stroke="${GR}" stroke-width="2" opacity="${pulse.toFixed(2)}"/>`;
+    h+=T(lx+75,ly+50,'LLM',GR,20,'middle','g')+T(lx+75,ly+72,'generator',GR,9,'middle');
+    h+=`<path d="M${px+pw+6} 190 L ${lx-8} 190" stroke="${AM}" stroke-width="1.5" marker-end="url(#ara)"/>`;
+    h+=T((px+pw+lx)/2,178,'reads',DIM,8,'middle');
+    // answer box (right)
+    const ax=610,ay=90,aw=350;
+    h+=`<rect x="${ax}" y="${ay}" width="${aw}" height="240" rx="12" fill="var(--surface)" stroke="${GR}" stroke-opacity=".7" stroke-width="1.3"/>`;
+    h+=T(ax+16,ay+22,'ANSWER',GR,10,'start','g')+(isAns?T(ax+aw-16,ay+22,'grounded ✓',GR,8.5,'end'):'');
+    h+=`<path d="M${lx+150} 190 L ${ax-8} 190" stroke="${GR}" stroke-width="1.5" marker-end="url(#arg)"/>`;
+    // streamed answer text
+    const full=ANSWER; const shown=isAns?full:full.slice(0,Math.round(full.length*ease(lp)));
+    h+=wrapText(shown, ax+16, ay+46, aw-32, 15, 10.5, '#e8f4ee');
+    if(isAns){ h+=T(ax+16,ay+218,'citations:',DIM,8.5,'start');
+      TOPK.forEach((i,s)=>{ h+=`<rect x="${ax+70+s*70}" y="${ay+207}" width="62" height="16" rx="4" fill="rgba(232,121,249,.14)" stroke="${MA}" stroke-opacity=".6"/>`+T(ax+70+s*70+31,ay+218,'['+(s+1)+'] '+DOCS[CH[i].doc].t.slice(0,6),MA,7.5,'middle'); }); }
+  }
+  return h;
+}
+function wrapText(s,x,y,w,lh,sz,c){ const words=s.split(' '); let line='',ly=y,out=''; const cpl=Math.floor(w/(sz*0.56));
+  for(const wd of words){ if((line+wd).length>cpl){ out+=T(x,ly,line.trim(),c,sz,'start'); ly+=lh; line=''; } line+=wd+' '; }
+  out+=T(x,ly,line.trim(),c,sz,'start'); return out; }
+
+/* ---- render ---- */
+function render(){
+  const s=STAGES[cur], lp=clamp(stageElapsed/PBDUR[cur],0,1);
+  document.querySelectorAll('.mstep').forEach((e,i)=>e.classList.toggle('active',started&&i===cur));
+  const ms=document.getElementById('ms'+cur); if(ms&&started) ms.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'});
+  document.getElementById('phasepill').textContent = s.ph==='off'?'① offline · indexing':'② online · query';
+  document.getElementById('phasepill').style.color = s.ph==='off'?'var(--cyan)':'var(--magenta)';
+  document.getElementById('readout').textContent='stage '+(cur+1)+' / 10 · '+s.n;
+  const b=document.getElementById('badge'); b.innerHTML= started? '● '+s.n : '<span class="dot"></span>at rest'; b.style.borderColor=b.style.color=started?s.ac:'var(--green)';
+  const cap=document.getElementById('cap'); cap.innerHTML=`<b>${s.cap[0]}</b> — ${s.cap[1]}`; cap.style.setProperty('--capc',s.ac);
+  // ribbon
+  const Tg=Tcum[cur]+lp*TW[cur];
+  document.getElementById('rbfill').style.width=(Tg*100)+'%';
+  document.querySelectorAll('.rseg').forEach((r,i)=>r.classList.toggle('active',i===cur));
+  // scene
+  let svg='<defs>'+['arr','art','arv','ara','arg'].map((id,ix)=>`<marker id="${id}" markerWidth="8" markerHeight="8" refX="6" refY="3.5" orient="auto"><path d="M0 0 L7 3.5 L0 7 z" fill="${[CY,TEAL,VI,AM,GR][ix]}"/></marker>`).join('')+'</defs>';
+  svg+= started? scene(s.k, lp) : restScene();
+  document.getElementById('svg').innerHTML=svg;
+}
+function restScene(){ // alive at rest: the four ideas (left) + drifting knowledge base (right)
+  const ns=performance.now()/1000; let h='';
+  h+=T(48,52,'How RAG works — the four ideas',TEAL,14,'start','g');
+  const cards=[
+    ['1 · Chunk &amp; embed','Documents are split into passages and turned into vectors that capture meaning.',CY],
+    ['2 · Retrieve by similarity','The query’s vector finds its nearest chunks — the most relevant passages.',MA],
+    ['3 · Augment the prompt','Retrieved context is injected into the prompt — knowledge, not memorized weights.',AM],
+    ['4 · Grounded generation','The LLM answers from that context and cites it — far less hallucination.',GR],
+  ];
+  const cw=236, ch=118, gx=48, gy=72;
+  cards.forEach((c,i)=>{ const x=gx+(i%2)*(cw+18), y=gy+Math.floor(i/2)*(ch+18);
+    h+=`<rect x="${x}" y="${y}" width="${cw}" height="${ch}" rx="11" fill="var(--surface)" stroke="${c[2]}" stroke-opacity=".5"/>`;
+    h+=`<rect x="${x}" y="${y}" width="4" height="${ch}" rx="2" fill="${c[2]}"/>`;
+    h+=T(x+18,y+28,c[0],c[2],12,'start','b');
+    h+=wrapText(c[1],x+18,y+52,cw-32,16,10.5,'#b8c2d4'); });
+  // right: drifting knowledge base
+  const bx=572, by=72, bw=392, bh=286;
+  h+=`<rect x="${bx}" y="${by}" width="${bw}" height="${bh}" rx="12" fill="rgba(255,255,255,.012)" stroke="${GRID}"/>`;
+  h+=T(bx+bw/2,by-8,'indexed knowledge base · waiting',DIM,9.5,'middle','b');
+  CH.forEach((p,i)=>{ const nx=(p.x-VS.x)/VS.w, ny=(p.y-VS.y)/VS.h;
+    const px=bx+22+nx*(bw-44)+Math.sin(ns*0.5+i)*4, py=by+22+ny*(bh-44)+Math.cos(ns*0.45+i)*4;
+    h+=`<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="5" fill="${DOCS[p.doc].c}" opacity="0.6"/>`; });
+  h+=T(bx+bw/2,by+bh+24,'▶ press Play to run a query through the pipeline',TEAL,11,'middle');
+  return h;
+}
+function buildRibbon(){ const rb=document.getElementById('ribbon'); rb.innerHTML='<div id="rbfill"></div>'+STAGES.map((s,i)=>`<div class="rseg" style="width:${TW[i]*100}%"><span class="rsl">${s.n}</span></div>`).join(''); }
+
+/* ---- flow ---- */
+function frame(ts){ const dt=Math.min(.05,(ts-lastTs)/1000); lastTs=ts;
+  if(playing){ stageElapsed+=dt*(speed/5);
+    if(stageElapsed>=PBDUR[cur]){ if(cur<STAGES.length-1){ cur++; stageElapsed=0; } else { stageElapsed=PBDUR[cur]; playing=false; document.getElementById('btn-play').textContent='↺ Replay'; } } }
+  drawBG(ts/1000); render(); raf=requestAnimationFrame(frame);
+}
+function togglePlay(){ if(playing){ playing=false; document.getElementById('btn-play').textContent='▶ Play'; return; }
+  if(cur>=STAGES.length-1 && stageElapsed>=PBDUR[cur]){ cur=0; stageElapsed=0; } started=true; playing=true; document.getElementById('btn-play').textContent='⏸ Pause'; }
+function step(d){ started=true; playing=false; document.getElementById('btn-play').textContent='▶ Play'; cur=clamp(cur+d,0,STAGES.length-1); stageElapsed=0; }
+function resetAll(){ playing=false; started=false; cur=0; stageElapsed=0; document.getElementById('btn-play').textContent='▶ Play'; }
+
+/* ---- ambient particles ---- */
+const bg=document.getElementById('bg'); let bw=0,bh=0,parts=[];
+function sizeBG(){ const w=document.getElementById('work'); bw=w.clientWidth; bh=w.clientHeight; bg.width=bw; bg.height=bh;
+  if(!parts.length) parts=Array.from({length:26},()=>({x:Math.random()*bw,y:Math.random()*bh,ph:Math.random()*6.28,sp:.1+Math.random()*.25,a:6+Math.random()*16,r:1+Math.random()*2})); }
+function drawBG(ns){ const ctx=bg.getContext('2d'); ctx.clearRect(0,0,bw,bh);
+  for(const p of parts){ const x=p.x+Math.sin(ns*p.sp+p.ph)*p.a, y=p.y+Math.cos(ns*p.sp*.9+p.ph)*p.a; ctx.beginPath(); ctx.arc(x,y,p.r,0,6.2832); ctx.fillStyle='rgba(120,140,180,'+(0.05+0.05*(1+Math.sin(ns+p.ph))).toFixed(3)+')'; ctx.fill(); } }
+
+/* ---- init ---- */
+function init(){ buildData(); buildMap(); buildRibbon(); sizeBG(); lastTs=performance.now(); raf=requestAnimationFrame(frame); }
+window.addEventListener('resize',sizeBG);
+document.addEventListener('visibilitychange',()=>{ if(document.hidden&&raf){cancelAnimationFrame(raf);raf=null;} else if(!document.hidden&&!raf){lastTs=performance.now();raf=requestAnimationFrame(frame);} });
+init();
+</script>
+</body>
+</html>
