@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wildlife · Conversational Agent Console</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --bg: #070B12;
+        --bg-2: #0A1019;
+        --panel: #0E1622;
+        --panel-2: #121C2B;
+        --line: #1E2C3F;
+        --line-soft: #16212F;
+        --ink: #DCE6F2;
+        --ink-dim: #7C8CA3;
+        --ink-faint: #4A5970;
+
+        --cyan: #38E1FF;
+        --teal: #2DE3C0;
+        --green: #4ADE80;
+        --amber: #FBBF24;
+        --rose: #FB5E6D;
+        --violet: #A78BFA;
+
+        --chat-bg: #0A1117;
+        --msg-out: #143A33;
+        --msg-out-line: #1F5A4E;
+        --msg-in: #131E2B;
+
+        --radius: 14px;
+        --radius-sm: 10px;
+        --shadow: 0 18px 50px -22px rgba(0,0,0,0.85);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; }
+
+    body {
+        font-family: "Sora", -apple-system, BlinkMacSystemFont, sans-serif;
+        color: var(--ink);
+        min-height: 100vh;
+        padding: 34px 28px 60px;
+        background:
+            radial-gradient(1100px 600px at 12% -8%, rgba(45,227,192,0.07), transparent 60%),
+            radial-gradient(900px 620px at 92% 0%, rgba(167,139,250,0.06), transparent 58%),
+            radial-gradient(800px 700px at 50% 120%, rgba(56,225,255,0.05), transparent 60%),
+            linear-gradient(180deg, var(--bg), var(--bg-2));
+        background-attachment: fixed;
+        display: flex; flex-direction: column; align-items: center;
+    }
+    body::before {
+        content: ""; position: fixed; inset: 0;
+        background-image:
+            linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
+        background-size: 44px 44px; pointer-events: none; z-index: 0;
+        mask-image: radial-gradient(circle at 50% 35%, #000 0%, transparent 78%);
+    }
+
+    .shell { width: 1240px; max-width: 100%; position: relative; z-index: 1; }
+
+    /* ───────── Masthead ───────── */
+    .masthead {
+        display: flex; align-items: flex-end; justify-content: space-between;
+        margin-bottom: 22px; padding-bottom: 18px; border-bottom: 1px solid var(--line-soft);
+    }
+    .brand { display: flex; align-items: center; gap: 16px; }
+    .glyph {
+        width: 46px; height: 46px; border-radius: 12px;
+        background: linear-gradient(150deg, rgba(45,227,192,0.18), rgba(167,139,250,0.12));
+        border: 1px solid rgba(45,227,192,0.35); display: grid; place-items: center;
+        box-shadow: inset 0 0 18px rgba(45,227,192,0.18), 0 8px 22px -10px rgba(45,227,192,0.5);
+    }
+    .glyph svg { width: 24px; height: 24px; }
+    .brand h1 {
+        font-family: "Space Grotesk", sans-serif; font-size: 1.7rem; font-weight: 700;
+        margin: 0; letter-spacing: -0.01em; line-height: 1;
+        background: linear-gradient(90deg, #F4FAFF, #A8F5E4 70%);
+        -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .brand .tag {
+        font-family: "IBM Plex Mono", monospace; font-size: 0.74rem; letter-spacing: 0.2em;
+        text-transform: uppercase; color: #ffffff; margin-top: 6px;
+    }
+    .masthead-right { text-align: right; display: flex; flex-direction: column; gap: 8px; align-items: flex-end; }
+    .clock { font-family: "IBM Plex Mono", monospace; font-size: 1.05rem; color: var(--ink); letter-spacing: 0.04em; }
+    .clock span { color: var(--ink-dim); }
+    .health-pill {
+        display: inline-flex; align-items: center; gap: 8px; font-family: "IBM Plex Mono", monospace;
+        font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; padding: 5px 12px;
+        border-radius: 999px; border: 1px solid rgba(45,227,192,0.3); color: var(--teal);
+        background: rgba(45,227,192,0.06);
+    }
+    .health-pill .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--teal); box-shadow: 0 0 8px var(--teal); animation: breathe 2s ease-in-out infinite; }
+    @keyframes breathe { 50% { opacity: 0.4; } }
+
+    /* ───────── Workspace ───────── */
+    .workspace { display: flex; gap: 18px; align-items: stretch; }
+
+    /* ── Chat panel ── */
+    .chat-panel {
+        width: 420px; flex-shrink: 0; height: 624px; display: flex; flex-direction: column;
+        background: linear-gradient(180deg, var(--panel-2), var(--panel));
+        border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow);
+    }
+    .chat-head {
+        display: flex; align-items: center; gap: 12px; padding: 14px 16px;
+        background: linear-gradient(180deg, #122029, #0E1820); border-bottom: 1px solid var(--line-soft);
+    }
+    .chat-avatar {
+        width: 42px; height: 42px; border-radius: 12px; flex-shrink: 0;
+        background: linear-gradient(150deg, var(--teal), var(--cyan)); display: grid; place-items: center;
+        box-shadow: 0 6px 16px -6px rgba(45,227,192,0.6);
+    }
+    .chat-avatar svg { width: 22px; height: 22px; }
+    .chat-head h3 { margin: 0; font-family: "Space Grotesk", sans-serif; font-size: 1rem; font-weight: 600; color: #EAF2F0; }
+    .chat-head .status { margin: 3px 0 0; font-family: "IBM Plex Mono", monospace; font-size: 0.7rem; color: var(--teal); display: flex; align-items: center; gap: 5px; }
+    .chat-head .status::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--teal); box-shadow: 0 0 6px var(--teal); }
+
+    .chat-area {
+        flex: 1; padding: 18px 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px;
+        background:
+            radial-gradient(rgba(255,255,255,0.025) 1px, transparent 0);
+        background-size: 20px 20px; background-color: var(--chat-bg);
+    }
+    .chat-area::-webkit-scrollbar { width: 8px; }
+    .chat-area::-webkit-scrollbar-thumb { background: var(--line); border-radius: 8px; }
+
+    .bubble {
+        max-width: 86%; padding: 10px 13px; border-radius: 14px; font-size: 0.9rem; line-height: 1.5;
+        position: relative; word-wrap: break-word; animation: rise .35s cubic-bezier(.2,.8,.2,1);
+    }
+    @keyframes rise { from { opacity: 0; transform: translateY(8px); } }
+    .bubble-out {
+        background: linear-gradient(180deg, var(--msg-out), #0F2C26); border: 1px solid var(--msg-out-line);
+        color: #DDF3EC; align-self: flex-end; border-bottom-right-radius: 4px;
+    }
+    .bubble-in {
+        background: var(--msg-in); border: 1px solid var(--line); color: var(--ink);
+        align-self: flex-start; border-bottom-left-radius: 4px;
+    }
+    .bubble .who { font-family: "IBM Plex Mono", monospace; font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--teal); margin-bottom: 5px; }
+    .bubble-time { font-family: "IBM Plex Mono", monospace; font-size: 0.58rem; color: var(--ink-faint); margin-top: 6px; text-align: right; }
+
+    /* agent reasoning / tool-call trace inside a bubble */
+    .agent-steps { display: flex; flex-direction: column; gap: 6px; margin: 4px 0 2px; }
+    .step {
+        display: flex; align-items: flex-start; gap: 8px; font-family: "IBM Plex Mono", monospace;
+        font-size: 0.72rem; color: var(--ink-dim); opacity: 0; animation: stepIn .3s forwards;
+    }
+    @keyframes stepIn { to { opacity: 1; } }
+    .step .ic { width: 14px; height: 14px; flex-shrink: 0; margin-top: 1px; }
+    .step.done .ic { color: var(--green); }
+    .step.run .ic { color: var(--amber); animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .step .lbl b { color: var(--ink); font-weight: 500; }
+
+    /* typing indicator */
+    .typing { display: inline-flex; gap: 4px; align-items: center; padding: 12px 14px; }
+    .typing span { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-dim); animation: blink 1.2s infinite; }
+    .typing span:nth-child(2) { animation-delay: .2s; } .typing span:nth-child(3) { animation-delay: .4s; }
+    @keyframes blink { 0%,60%,100% { opacity: .3; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-3px); } }
+
+    /* media render in reply */
+    .feed {
+        width: 100%; height: 150px; border-radius: 8px; margin-top: 8px; overflow: hidden;
+        border: 1px solid var(--line); position: relative;
+        background: linear-gradient(160deg, #16321d 0%, #081109 100%);
+    }
+    .feed .scan { position: absolute; top: 0; left: 0; right: 0; height: 24px; background: linear-gradient(180deg, rgba(74,222,128,0.18), transparent); animation: fscan 2.6s linear infinite; }
+    @keyframes fscan { 0% { transform: translateY(-24px);} 100% { transform: translateY(150px);} }
+    .feed .tree { position: absolute; bottom: 0; width: 0; height: 0; border-left: 16px solid transparent; border-right: 16px solid transparent; }
+    .feed .stamp { position: absolute; top: 6px; left: 8px; font-family: "IBM Plex Mono", monospace; font-size: 0.58rem; color: rgba(74,222,128,0.85); letter-spacing: 0.05em; }
+    .feed .verdict { position: absolute; bottom: 8px; right: 10px; font-family: "IBM Plex Mono", monospace; font-size: 0.62rem; padding: 3px 8px; border-radius: 6px; background: rgba(74,222,128,0.18); border: 1px solid rgba(74,222,128,0.5); color: #DFF7E5; }
+    .feed .recdot { position: absolute; top: 6px; right: 8px; font-family: "IBM Plex Mono", monospace; font-size: 0.55rem; color: var(--rose); }
+    .feed .recdot::before { content: "● "; }
+    .meta-row { display: flex; gap: 12px; margin-top: 8px; font-family: "IBM Plex Mono", monospace; font-size: 0.62rem; color: var(--ink-dim); }
+    .meta-row b { color: var(--green); font-weight: 500; }
+
+    /* input bar */
+    .chat-input {
+        display: flex; gap: 10px; align-items: center; padding: 12px 14px;
+        background: linear-gradient(180deg, #101C26, #0C1620); border-top: 1px solid var(--line-soft);
+    }
+    .chat-input input {
+        flex: 1; font-family: "Sora", sans-serif; font-size: 0.88rem; color: var(--ink);
+        background: var(--bg-2); border: 1px solid var(--line); border-radius: 999px; padding: 11px 16px; outline: none;
+        transition: border-color .2s;
+    }
+    .chat-input input:focus { border-color: var(--teal); }
+    .chat-input input::placeholder { color: var(--ink-faint); }
+    .send-btn {
+        width: 44px; height: 44px; flex-shrink: 0; border-radius: 50%; border: none; cursor: pointer;
+        background: linear-gradient(150deg, var(--teal), var(--cyan)); display: grid; place-items: center;
+        transition: transform .15s, box-shadow .2s; box-shadow: 0 6px 16px -6px rgba(45,227,192,0.7);
+    }
+    .send-btn svg { width: 18px; height: 18px; color: #06231D; }
+    .send-btn:hover:not(:disabled) { transform: scale(1.06); }
+    .send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .suggestions { display: flex; gap: 7px; padding: 0 14px 12px; flex-wrap: wrap; background: #0C1620; }
+    .chip {
+        font-family: "IBM Plex Mono", monospace; font-size: 0.66rem; color: var(--ink-dim); cursor: pointer;
+        padding: 6px 11px; border-radius: 999px; border: 1px solid var(--line); background: var(--bg-2); transition: all .18s;
+    }
+    .chip:hover { border-color: var(--teal); color: var(--teal); }
+
+    /* ── Topology canvas ── */
+    .canvas-frame {
+        flex: 1; position: relative; border-radius: var(--radius); padding: 1px;
+        background: linear-gradient(160deg, rgba(45,227,192,0.22), rgba(30,44,63,0.4) 40%, rgba(167,139,250,0.16));
+        box-shadow: var(--shadow);
+    }
+    .canvas {
+        position: relative; width: 100%; height: 624px;
+        background:
+            radial-gradient(640px 420px at 40% 40%, rgba(56,225,255,0.045), transparent 70%),
+            linear-gradient(180deg, rgba(14,22,34,0.96), rgba(10,16,25,0.98));
+        border-radius: calc(var(--radius) - 1px); overflow: hidden;
+    }
+    .canvas-label {
+        position: absolute; top: 14px; left: 18px; font-family: "IBM Plex Mono", monospace;
+        font-size: 0.68rem; letter-spacing: 0.2em; text-transform: uppercase; color: #ffffff; z-index: 5;
+    }
+    .col-cap {
+        position: absolute; font-family: "IBM Plex Mono", monospace; font-size: 0.62rem;
+        letter-spacing: 0.16em; text-transform: uppercase; color: #ffffff; z-index: 5; top: 42px;
+    }
+
+    .node {
+        position: absolute; background: linear-gradient(180deg, var(--panel-2), var(--panel));
+        border: 1px solid var(--line); border-radius: var(--radius-sm);
+        display: flex; flex-direction: column; align-items: center; text-align: center;
+        z-index: 10; box-shadow: 0 12px 30px -16px rgba(0,0,0,0.8); padding: 12px 11px;
+        transition: border-color .35s ease, box-shadow .35s ease, transform .35s ease, background .35s ease;
+    }
+    .node .title { font-family: "Space Grotesk", sans-serif; font-weight: 600; font-size: 0.84rem; letter-spacing: 0.01em; display: flex; align-items: center; gap: 6px; }
+    .node .ico { width: 15px; height: 15px; opacity: 0.85; }
+    .node .desc { font-family: "IBM Plex Mono", monospace; font-size: 0.6rem; color: var(--ink-dim); margin-top: 4px; letter-spacing: 0.03em; }
+
+    #node-wa-gateway { top: 268px; left: 28px; width: 150px; border-color: rgba(45,227,192,0.4); }
+    #node-wa-gateway .title { color: var(--teal); }
+    #node-cloud { top: 260px; left: 246px; width: 168px; border-color: rgba(167,139,250,0.45); background: linear-gradient(180deg, #181428, #110E1C); }
+    #node-cloud .title { color: var(--violet); font-size: 0.9rem; }
+    #node-cloud .brain { margin-top: 8px; display: flex; gap: 4px; }
+    #node-cloud .brain i { width: 6px; height: 6px; border-radius: 50%; background: rgba(167,139,250,0.4); display: inline-block; }
+    #node-cloud.pulse-cloud .brain i { background: var(--violet); box-shadow: 0 0 6px var(--violet); animation: portblink 1s infinite; }
+    #node-cloud .brain i:nth-child(2) { animation-delay: .2s; } #node-cloud .brain i:nth-child(3) { animation-delay: .4s; }
+    @keyframes portblink { 50% { opacity: .3; } }
+
+    .edge-node { width: 178px; }
+    #node-junnar-1 { top: 20px;  right: 66px; }
+    #node-junnar-2 { top: 226px; right: 66px; }
+    #node-junnar-3 { top: 442px; right: 66px; }
+
+    .edge-viewport {
+        width: 100%; height: 56px; margin-top: 9px; border-radius: 6px; position: relative; overflow: hidden;
+        display: flex; align-items: center; justify-content: center;
+        font-family: "IBM Plex Mono", monospace; font-size: 0.6rem; letter-spacing: 0.08em; color: var(--ink-faint);
+        background: repeating-linear-gradient(0deg, rgba(255,255,255,0.02) 0 1px, transparent 1px 3px), #05080C;
+        border: 1px solid var(--line-soft);
+    }
+    .edge-chip {
+        margin-top: 8px; font-family: "IBM Plex Mono", monospace; font-size: 0.56rem; letter-spacing: 0.1em;
+        text-transform: uppercase; padding: 3px 9px; border-radius: 999px;
+        background: rgba(124,140,163,0.12); color: var(--ink-dim); border: 1px solid var(--line);
+    }
+
+    .pulse-gateway { border-color: var(--teal) !important; box-shadow: 0 0 26px -6px rgba(45,227,192,0.6) !important; }
+    .pulse-cloud { border-color: var(--violet) !important; box-shadow: 0 0 30px -6px rgba(167,139,250,0.65) !important; transform: translateY(-2px); }
+    .pulse-edge-active { border-color: var(--green) !important; box-shadow: 0 0 0 1px rgba(74,222,128,0.4), 0 0 30px -6px rgba(74,222,128,0.55) !important; transform: translateY(-2px); }
+    .pulse-edge-active .title { color: var(--green); }
+    .pulse-edge-active .edge-viewport { border-color: rgba(74,222,128,0.5); color: var(--green); }
+    .pulse-edge-active .edge-chip { background: rgba(74,222,128,0.14); color: var(--green); border-color: rgba(74,222,128,0.4); }
+
+    svg.links { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 2; pointer-events: none; }
+    svg.links path { stroke: var(--line); stroke-width: 1.6; fill: none; }
+    .packet { position: absolute; width: 11px; height: 11px; border-radius: 50%; z-index: 20; }
+
+    /* mini forest render for edge viewport */
+    .forest { width: 100%; height: 100%; position: relative; background: linear-gradient(160deg, #16321d, #081109); }
+    .forest .tree { position: absolute; bottom: 0; width: 0; height: 0; border-left: 13px solid transparent; border-right: 13px solid transparent; }
+    .forest .stamp { position: absolute; top: 4px; left: 5px; font-family: "IBM Plex Mono", monospace; font-size: 0.5rem; color: rgba(74,222,128,0.85); }
+
+    /* ───────── Bottom deck ───────── */
+    .deck { display: grid; grid-template-columns: 420px 1fr; gap: 18px; margin-top: 18px; }
+    .panel { background: linear-gradient(180deg, var(--panel-2), var(--panel)); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+    .info-card { padding: 16px 18px; }
+    .info-card .lead { font-family: "IBM Plex Mono", monospace; font-size: 0.62rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-faint); }
+    .info-card p { font-size: 0.84rem; color: var(--ink-dim); line-height: 1.55; margin: 10px 0 14px; }
+    .info-card .stats { display: flex; gap: 18px; }
+    .info-card .stats .s { font-size: 0.74rem; color: var(--ink-dim); }
+    .info-card .stats .s b { display: block; font-family: "Space Grotesk", sans-serif; font-size: 1.4rem; color: var(--ink); font-weight: 700; }
+    .ghost-btn {
+        margin-top: 4px; font-family: "Sora", sans-serif; font-weight: 600; font-size: 0.82rem; cursor: pointer;
+        padding: 10px 16px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg-2); color: var(--ink); transition: all .2s;
+    }
+    .ghost-btn:hover { border-color: var(--ink-dim); transform: translateY(-1px); }
+
+    .terminal { padding: 14px 16px; height: 100%; min-height: 168px; overflow-y: auto; font-family: "IBM Plex Mono", monospace; font-size: 0.78rem; line-height: 1.7; color: var(--teal); background: linear-gradient(180deg, #05080D, #04060A); border-radius: var(--radius); }
+    .terminal::-webkit-scrollbar { width: 8px; } .terminal::-webkit-scrollbar-thumb { background: var(--line); border-radius: 8px; }
+    .term-head { display: flex; align-items: center; gap: 7px; margin-bottom: 8px; color: var(--ink-faint); font-size: 0.62rem; letter-spacing: 0.2em; text-transform: uppercase; }
+    .term-head .dots { display: flex; gap: 5px; } .term-head .dots i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; }
+    .log-entry { margin-bottom: 3px; }
+    .log-time { color: var(--ink-faint); margin-right: 8px; }
+
+    @media (max-width: 1280px) { .shell { width: 100%; } .workspace { flex-direction: column; } .chat-panel { width: 100%; } .deck { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div class="shell">
+
+    <header class="masthead">
+        <div class="brand">
+            <div class="glyph">
+                <svg viewBox="0 0 24 24" fill="none" stroke="#A8F5E4" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 3a4 4 0 0 0-4 4c-1.5.5-2.5 2-2.5 3.7 0 1 .4 2 1 2.7-.3.6-.5 1.3-.5 2 0 2.2 1.8 4 4 4h.5"/>
+                    <path d="M12 3a4 4 0 0 1 4 4c1.5.5 2.5 2 2.5 3.7 0 1-.4 2-1 2.7.3.6.5 1.3.5 2 0 2.2-1.8 4-4 4H13"/>
+                    <path d="M12 3v16"/>
+                </svg>
+            </div>
+            <div>
+                <h1>Wildlife Agent Console</h1>
+                <div class="tag">Conversational Infrastructure Agent · Junnar Edge Mesh</div>
+            </div>
+        </div>
+        <div class="masthead-right">
+            <div class="clock" id="clock"><span>UTC+05:30</span> 00:00:00</div>
+            <div class="health-pill"><span class="dot"></span> Agent Online · 3 Edge Nodes</div>
+        </div>
+    </header>
+
+    <div class="workspace">
+        <!-- Chat -->
+        <div class="chat-panel">
+            <div class="chat-head">
+                <div class="chat-avatar">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="#06231D" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a4 4 0 0 0-4 4c-1.5.5-2.5 2-2.5 3.7 0 2.4 2 4.3 4.5 4.3H12V3z"/><path d="M12 3a4 4 0 0 1 4 4c1.5.5 2.5 2 2.5 3.7 0 2.4-2 4.3-4.5 4.3H12"/><path d="M9 21h6"/><path d="M12 15v6"/></svg>
+                </div>
+                <div>
+                    <h3>Wildlife Infrawatch</h3>
+                    <div class="status">Conversational agent online</div>
+                </div>
+            </div>
+
+            <div class="chat-area" id="chat-scroller">
+                <div class="bubble bubble-in">
+                    <div class="who">Agent</div>
+                    Namaste — I'm the Wildlife field agent. Ask me to check a camera node's health or pull a live frame from any Junnar zone, and I'll route the request across the edge mesh for you.
+                </div>
+            </div>
+
+            <div class="chat-input">
+                <input id="chat-text" type="text" placeholder="Ask about a camera node…" autocomplete="off" />
+                <button class="send-btn" id="btn-send" onclick="handleSend()">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/></svg>
+                </button>
+            </div>
+            <div class="suggestions" id="suggestions">
+                <span class="chip" onclick="useSuggestion(this)">Is the camera at Junnar 1 working?</span>
+                <span class="chip" onclick="useSuggestion(this)">Check Junnar 2 node health</span>
+                <span class="chip" onclick="useSuggestion(this)">Pull a live frame from Junnar 3</span>
+            </div>
+        </div>
+
+        <!-- Topology -->
+        <div class="canvas-frame">
+            <div class="canvas" id="canvas-container">
+                <div class="canvas-label">Agentic Request Trace · Live</div>
+                <span class="col-cap" style="left:44px;">Ingress</span>
+                <span class="col-cap" style="left:262px;">Agent Core</span>
+                <span class="col-cap" style="right:80px;">Edge Cameras</span>
+
+                <svg class="links" id="links">
+                    <path id="path-wa-cloud" d="M 178 300 L 246 300" />
+                    <path id="path-cloud-junnar1" d="M 414 300 L 470 300 L 470 100 L 558 100" />
+                    <path id="path-cloud-junnar2" d="M 414 300 L 558 300" />
+                    <path id="path-cloud-junnar3" d="M 414 300 L 470 300 L 470 520 L 558 520" />
+                </svg>
+
+                <div class="node" id="node-wa-gateway">
+                    <div class="title"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M21 11.5a8.4 8.4 0 0 1-12 7.5L3 21l2-6a8.4 8.4 0 1 1 16-3.5z"/></svg>Chat Gateway</div>
+                    <div class="desc">Ingress Webhook</div>
+                </div>
+
+                <div class="node" id="node-cloud">
+                    <div class="title"><svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M9 9h6v6H9z"/></svg>Agent Core</div>
+                    <div class="desc">LLM · Tool Router</div>
+                    <div class="brain"><i></i><i></i><i></i></div>
+                </div>
+
+                <div class="node edge-node" id="node-junnar-1">
+                    <div class="title">Junnar 01</div>
+                    <div class="desc">Sector Alpha</div>
+                    <div class="edge-viewport" id="view-junnar-1">[ IDLE MONITOR ]</div>
+                    <div class="edge-chip" id="chip-junnar-1">STANDBY</div>
+                </div>
+                <div class="node edge-node" id="node-junnar-2">
+                    <div class="title">Junnar 02</div>
+                    <div class="desc">Sector Bravo</div>
+                    <div class="edge-viewport" id="view-junnar-2">[ IDLE MONITOR ]</div>
+                    <div class="edge-chip" id="chip-junnar-2">STANDBY</div>
+                </div>
+                <div class="node edge-node" id="node-junnar-3">
+                    <div class="title">Junnar 03</div>
+                    <div class="desc">Sector Charlie</div>
+                    <div class="edge-viewport" id="view-junnar-3">[ IDLE MONITOR ]</div>
+                    <div class="edge-chip" id="chip-junnar-3">STANDBY</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bottom deck -->
+    <div class="deck">
+        <div class="panel info-card">
+            <div class="lead">About this trace</div>
+            <p>Each message runs a live agentic loop: the gateway ingests natural language, the Agent Core classifies intent and selects a tool, then dispatches a telemetry fetch to the target edge camera and streams the captured frame back into chat.</p>
+            <div class="stats">
+                <div class="s">queries<b id="stat-queries">0</b></div>
+                <div class="s">frames pulled<b id="stat-frames">0</b></div>
+                <div class="s">avg latency<b id="stat-latency">—</b></div>
+            </div>
+            <button class="ghost-btn" onclick="clearChatThread()">Clear conversation</button>
+        </div>
+        <div class="panel terminal" id="terminal-screen">
+            <div class="term-head"><span class="dots"><i style="background:var(--rose)"></i><i style="background:var(--amber)"></i><i style="background:var(--green)"></i></span> agent trace · aranya-agent.log</div>
+            <div class="log-entry"><span class="log-time">[SYSTEM]</span> <span style="color:var(--teal)">Broker endpoints bound · conversational agent pool operational.</span></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const logScreen = document.getElementById('terminal-screen');
+    const canvas = document.getElementById('canvas-container');
+    const chatScroller = document.getElementById('chat-scroller');
+    const sendBtn = document.getElementById('btn-send');
+    const input = document.getElementById('chat-text');
+
+    let busy = false;
+    let queryCount = 0, frameCount = 0;
+    const treeColors = ["#2a522f", "#1c3820", "#356b3c"];
+
+    setInterval(() => {
+        const d = new Date();
+        document.getElementById('clock').innerHTML = '<span>UTC+05:30</span> ' + d.toTimeString().split(' ')[0];
+    }, 1000);
+
+    function nowTime() {
+        const d = new Date();
+        return d.toTimeString().split(' ')[0] + '.' + String(d.getMilliseconds()).padStart(3,'0');
+    }
+    function clockShort() { const d=new Date(); return d.toTimeString().slice(0,5); }
+
+    function appendLog(message, color = "var(--teal)") {
+        const entry = document.createElement('div');
+        entry.className = "log-entry";
+        entry.innerHTML = `<span class="log-time">[${nowTime()}]</span> <span style="color:${color}">${message}</span>`;
+        logScreen.appendChild(entry);
+        logScreen.scrollTop = logScreen.scrollHeight;
+    }
+
+    function scrollChat() { chatScroller.scrollTop = chatScroller.scrollHeight; }
+
+    function createAndAnimatePacket(pathId, duration, color, reverse, callback) {
+        const path = document.getElementById(pathId);
+        if (!path) { if (callback) callback(); return; }
+        const len = path.getTotalLength();
+        const packet = document.createElement('div');
+        packet.className = 'packet';
+        packet.style.backgroundColor = color;
+        packet.style.boxShadow = `0 0 12px ${color}, 0 0 4px ${color}`;
+        canvas.appendChild(packet);
+        let start = null;
+        function step(ts) {
+            if (!start) start = ts;
+            let p = (ts - start) / duration; if (p > 1) p = 1;
+            const t = reverse ? len * (1 - p) : len * p;
+            const pt = path.getPointAtLength(t);
+            packet.style.left = (pt.x - 5.5) + 'px';
+            packet.style.top = (pt.y - 5.5) + 'px';
+            if (p < 1) requestAnimationFrame(step); else { packet.remove(); if (callback) callback(); }
+        }
+        requestAnimationFrame(step);
+    }
+
+    // intent parser: pull a zone number 1-3 from free text
+    function parseZone(text) {
+        const m = text.match(/\b(?:junnar|zone|node|cam(?:era)?|sector)?\s*0?([1-3])\b/i);
+        if (m) return parseInt(m[1]);
+        if (/alpha/i.test(text)) return 1;
+        if (/bravo/i.test(text)) return 2;
+        if (/charlie/i.test(text)) return 3;
+        return null;
+    }
+
+    function userBubble(text) {
+        const b = document.createElement('div');
+        b.className = "bubble bubble-out";
+        b.innerHTML = `${escapeHtml(text)}<div class="bubble-time">${clockShort()}</div>`;
+        chatScroller.appendChild(b); scrollChat();
+    }
+    function escapeHtml(s){ return s.replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+
+    function typingBubble() {
+        const b = document.createElement('div');
+        b.className = "bubble bubble-in"; b.id = "typing-bubble";
+        b.innerHTML = `<div class="typing"><span></span><span></span><span></span></div>`;
+        chatScroller.appendChild(b); scrollChat();
+        return b;
+    }
+
+    function handleSend() {
+        if (busy) return;
+        const text = input.value.trim();
+        if (!text) return;
+        input.value = "";
+        runAgent(text);
+    }
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') handleSend(); });
+    function useSuggestion(el) { input.value = el.innerText; handleSend(); }
+
+    function runAgent(text) {
+        busy = true; sendBtn.disabled = true;
+        const t0 = performance.now();
+        userBubble(text);
+
+        const zone = parseZone(text);
+        appendLog(`[gateway] webhook triggered · parsing natural-language payload…`, "var(--teal)");
+        document.getElementById('node-wa-gateway').classList.add('pulse-gateway');
+
+        // build the agent "thinking" bubble with streaming steps
+        const think = typingBubble();
+
+        createAndAnimatePacket('path-wa-cloud', 1100, "var(--teal)", false, () => {
+            document.getElementById('node-wa-gateway').classList.remove('pulse-gateway');
+            document.getElementById('node-cloud').classList.add('pulse-cloud');
+
+            // swap typing → reasoning steps
+            think.classList.remove('bubble-in'); think.classList.add('bubble-in');
+            think.id = "";
+
+            if (zone === null) {
+                appendLog(`[agent] intent unresolved · no target zone in query.`, "var(--amber)");
+                think.innerHTML = `<div class="who">Agent</div>I can check Junnar zones 1–3. Which camera would you like me to inspect? You can say "check Junnar 2", for example.`;
+                document.getElementById('node-cloud').classList.remove('pulse-cloud');
+                finish(t0, false);
+                return;
+            }
+
+            think.innerHTML = `<div class="who">Agent</div>
+                <div class="agent-steps" id="steps"></div>`;
+            const steps = think.querySelector('#steps');
+
+            const reason = [
+                { txt: `Parsing intent → <b>CAMERA_STATUS_CHECK</b>`, delay: 0 },
+                { txt: `Resolving target → <b>JUNNAR_0${zone}</b> (Sector ${['Alpha','Bravo','Charlie'][zone-1]})`, delay: 500 },
+                { txt: `Selecting tool → <b>edge.fetch_frame()</b>`, delay: 1000 },
+            ];
+            reason.forEach((r, i) => {
+                const s = document.createElement('div');
+                s.className = "step run"; s.style.animationDelay = (r.delay) + "ms";
+                s.innerHTML = `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 1 1-6.2-8.5"/></svg><span class="lbl">${r.txt}</span>`;
+                steps.appendChild(s);
+                setTimeout(() => { s.classList.remove('run'); s.classList.add('done'); s.querySelector('.ic').outerHTML = `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg>`; }, r.delay + 450);
+                scrollChat();
+            });
+
+            appendLog(`[agent] LLM intent: CAMERA_STATUS_CHECK · target JUNNAR_0${zone}`, "var(--violet)");
+
+            setTimeout(() => {
+                appendLog(`[router] dispatching edge.fetch_frame() over broker socket…`, "var(--violet)");
+                createAndAnimatePacket(`path-cloud-junnar${zone}`, 1400, "var(--violet)", false, () => {
+                    document.getElementById('node-cloud').classList.remove('pulse-cloud');
+
+                    const node = document.getElementById(`node-junnar-${zone}`);
+                    const view = document.getElementById(`view-junnar-${zone}`);
+                    const chip = document.getElementById(`chip-junnar-${zone}`);
+                    node.classList.add('pulse-edge-active');
+                    chip.innerText = "CAPTURING";
+                    view.innerHTML = `<div class="forest"><div class="stamp">CAM_0${zone} LIVE</div>
+                        <div class="tree" style="left:18px; border-bottom:36px solid ${treeColors[0]};"></div>
+                        <div class="tree" style="left:64px; border-bottom:48px solid ${treeColors[1]};"></div>
+                        <div class="tree" style="left:110px; border-bottom:30px solid ${treeColors[2]};"></div></div>`;
+
+                    appendLog(`[edge JUNNAR_0${zone}] frame acquisition loop · RTSP keyframe extracted (JPEG).`, "var(--green)");
+
+                    setTimeout(() => {
+                        appendLog(`[edge JUNNAR_0${zone}] serializing byte-stream · piping back over websocket…`, "var(--green)");
+                        document.getElementById('node-cloud').classList.add('pulse-cloud');
+                        createAndAnimatePacket(`path-cloud-junnar${zone}`, 1400, "var(--green)", true, () => {
+                            node.classList.remove('pulse-edge-active');
+                            chip.innerText = "STANDBY";
+                            view.innerHTML = "[ IDLE MONITOR ]";
+                            appendLog(`[agent] frame cached · composing conversational response object…`, "var(--violet)");
+
+                            createAndAnimatePacket('path-wa-cloud', 1100, "var(--teal)", true, () => {
+                                document.getElementById('node-cloud').classList.remove('pulse-cloud');
+                                appendLog(`[gateway] media + text confirmation transmitted · loop complete.`, "var(--teal)");
+                                renderAgentReply(zone);
+                                frameCount++; document.getElementById('stat-frames').innerText = frameCount;
+                                finish(t0, true);
+                            });
+                        });
+                    }, 1400);
+                });
+            }, 1700);
+        });
+    }
+
+    function renderAgentReply(zone) {
+        const b = document.createElement('div');
+        b.className = "bubble bubble-in";
+        b.innerHTML = `
+            <div class="who">Agent</div>
+            Camera node <b>JUNNAR_0${zone}</b> is <b style="color:var(--green)">online</b> and processing tracking loops at 30 fps. Here's the latest live frame:
+            <div class="feed">
+                <div class="scan"></div>
+                <div class="stamp">JUNNAR_0${zone} // LIVE_FEED</div>
+                <div class="recdot">REC</div>
+                <div class="tree" style="left:36px; border-bottom:70px solid #2a522f;"></div>
+                <div class="tree" style="left:96px; border-bottom:92px solid #1c3820;"></div>
+                <div class="tree" style="left:150px; border-bottom:58px solid #356b3c;"></div>
+                <div class="verdict">No detections</div>
+            </div>
+            <div class="meta-row"><span>resolution <b>1920×1080</b></span><span>latency <b id="reply-lat">—</b></span></div>
+            <div class="bubble-time">${clockShort()}</div>`;
+        chatScroller.appendChild(b); scrollChat();
+        b._latNode = b.querySelector('#reply-lat'); b.removeAttribute('id');
+        window._lastReply = b;
+    }
+
+    function finish(t0, ok) {
+        const ms = Math.round(performance.now() - t0);
+        if (ok) {
+            queryCount++;
+            document.getElementById('stat-queries').innerText = queryCount;
+            document.getElementById('stat-latency').innerText = (ms/1000).toFixed(1) + "s";
+            if (window._lastReply && window._lastReply._latNode) window._lastReply._latNode.innerText = (ms/1000).toFixed(1) + "s";
+        }
+        busy = false; sendBtn.disabled = false; input.focus();
+    }
+
+    function clearChatThread() {
+        chatScroller.innerHTML = `<div class="bubble bubble-in"><div class="who">Agent</div>Conversation cleared. Ask me to check any Junnar camera node whenever you're ready.</div>`;
+        appendLog("conversational context history purged from buffer.", "var(--ink-dim)");
+        scrollChat();
+    }
+</script>
+</body>
+</html>

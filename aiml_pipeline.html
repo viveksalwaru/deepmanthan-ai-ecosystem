@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI/ML Training Pipeline · Leopard Detection Model</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Sora:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#070B12; --bg-2:#0A1019; --panel:#0E1622; --panel-2:#121C2B;
+  --line:#1E2C3F; --line-soft:#16212F;
+  --ink:#DCE6F2; --ink-dim:#7C8CA3; --ink-faint:#4A5970;
+  --cyan:#38E1FF; --teal:#2DE3C0; --green:#4ADE80;
+  --amber:#FBBF24; --rose:#FB5E6D; --violet:#A78BFA;
+  --magenta:#E879F9; --orange:#FB923C;
+  --radius:14px; --radius-sm:9px;
+  --shadow:0 18px 50px -22px rgba(0,0,0,0.85);
+}
+*{box-sizing:border-box;} html,body{margin:0;}
+body{
+  font-family:"Sora",-apple-system,sans-serif; color:var(--ink);
+  min-height:100vh; padding:34px 28px 60px;
+  background:
+    radial-gradient(1100px 600px at 12% -8%,rgba(167,139,250,.07),transparent 60%),
+    radial-gradient(900px 620px at 92% 0%,rgba(56,225,255,.06),transparent 58%),
+    radial-gradient(800px 700px at 50% 120%,rgba(251,146,60,.05),transparent 60%),
+    linear-gradient(180deg,var(--bg),var(--bg-2));
+  background-attachment:fixed;
+  display:flex; flex-direction:column; align-items:center;
+}
+body::before{
+  content:""; position:fixed; inset:0;
+  background-image:linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px);
+  background-size:44px 44px; pointer-events:none; z-index:0;
+  mask-image:radial-gradient(circle at 50% 35%,#000 0%,transparent 78%);
+}
+.shell{width:1220px;max-width:100%;position:relative;z-index:1;}
+
+/* ── Masthead ── */
+.masthead{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:22px;padding-bottom:18px;border-bottom:1px solid var(--line-soft);}
+.brand{display:flex;align-items:center;gap:16px;}
+.glyph{width:46px;height:46px;border-radius:12px;background:linear-gradient(150deg,rgba(167,139,250,.18),rgba(56,225,255,.12));border:1px solid rgba(167,139,250,.35);display:grid;place-items:center;box-shadow:inset 0 0 18px rgba(167,139,250,.18),0 8px 22px -10px rgba(167,139,250,.5);}
+.glyph svg{width:24px;height:24px;}
+.brand h1{font-family:"Space Grotesk",sans-serif;font-size:1.83rem;font-weight:700;margin:0;letter-spacing:-.01em;line-height:1;background:linear-gradient(90deg,#F4FAFF,#C4B5FD 70%);-webkit-background-clip:text;background-clip:text;color:transparent;}
+.brand .tag{font-family:"IBM Plex Mono",monospace;font-size:.8rem;letter-spacing:.22em;text-transform:uppercase;color:#ffffff;margin-top:6px;}
+.masthead-right{text-align:right;display:flex;flex-direction:column;gap:8px;align-items:flex-end;}
+.clock{font-family:"IBM Plex Mono",monospace;font-size:1.12rem;color:var(--ink);letter-spacing:.04em;}
+.clock span{color:var(--ink-dim);}
+.health-pill{display:inline-flex;align-items:center;gap:8px;font-family:"IBM Plex Mono",monospace;font-size:.83rem;letter-spacing:.12em;text-transform:uppercase;padding:5px 12px;border-radius:999px;border:1px solid rgba(74,222,128,.3);color:var(--green);background:rgba(74,222,128,.07);}
+.health-pill .dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:breathe 2s ease-in-out infinite;}
+@keyframes breathe{50%{opacity:.4;}}
+
+/* ── Canvas frame ── */
+.canvas-frame{position:relative;border-radius:var(--radius);padding:1px;background:linear-gradient(160deg,rgba(167,139,250,.22),rgba(30,44,63,.4) 40%,rgba(56,225,255,.16));box-shadow:var(--shadow);}
+.run-overlay-btn{position:absolute;top:14px;right:14px;z-index:10;}
+.canvas{position:relative;width:100%;height:560px;background:radial-gradient(700px 420px at 30% 30%,rgba(167,139,250,.04),transparent 70%),linear-gradient(180deg,rgba(14,22,34,.96),rgba(10,16,25,.98));border-radius:calc(var(--radius) - 1px);overflow:hidden;}
+.canvas-label{position:absolute;top:14px;left:18px;font-family:"IBM Plex Mono",monospace;font-size:.76rem;letter-spacing:.2em;text-transform:uppercase;color:#ffffff;z-index:5;}
+
+/* ── THE PIPE ── */
+/* Rendered as SVG in the canvas. Nodes sit above/below and connect via vertical stems. */
+#pipe-svg{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none;}
+
+/* ── Stage node cards ── */
+.stage{
+  position:absolute; z-index:10;
+  background:linear-gradient(180deg,var(--panel-2),var(--panel));
+  border:1.5px solid var(--line); border-radius:var(--radius-sm);
+  display:flex; flex-direction:column; align-items:center; text-align:center;
+  padding:10px 9px 10px;
+  box-shadow:0 12px 30px -16px rgba(0,0,0,.8);
+  transition:border-color .35s,box-shadow .35s,transform .35s;
+}
+.stage .s-icon{font-size:1.4rem;line-height:1;margin-bottom:3px;}
+.stage .s-title{font-family:"Space Grotesk",sans-serif;font-weight:600;font-size:.82rem;letter-spacing:.02em;}
+.stage .s-sub{font-family:"IBM Plex Mono",monospace;font-size:.58rem;color:var(--ink-dim);margin-top:3px;letter-spacing:.04em;line-height:1.5;}
+.stage .s-chip{margin-top:6px;font-family:"IBM Plex Mono",monospace;font-size:.56rem;letter-spacing:.1em;text-transform:uppercase;padding:2px 7px;border-radius:999px;}
+
+/* color variants */
+.stage-disk  {border-color:rgba(251,191,36,.4);}  .stage-disk .s-title{color:var(--amber);}  .stage-disk .s-chip{background:rgba(251,191,36,.1);color:var(--amber);border:1px solid rgba(251,191,36,.3);}
+.stage-cpu   {border-color:rgba(56,225,255,.4);}   .stage-cpu .s-title{color:var(--cyan);}    .stage-cpu .s-chip{background:rgba(56,225,255,.1);color:var(--cyan);border:1px solid rgba(56,225,255,.3);}
+.stage-xfer  {border-color:rgba(232,121,249,.4);}  .stage-xfer .s-title{color:var(--magenta);} .stage-xfer .s-chip{background:rgba(232,121,249,.1);color:var(--magenta);border:1px solid rgba(232,121,249,.3);}
+.stage-gpu   {border-color:rgba(74,222,128,.4);}   .stage-gpu .s-title{color:var(--green);}   .stage-gpu .s-chip{background:rgba(74,222,128,.1);color:var(--green);border:1px solid rgba(74,222,128,.3);}
+.stage-out   {border-color:rgba(167,139,250,.4);}  .stage-out .s-title{color:var(--violet);}  .stage-out .s-chip{background:rgba(167,139,250,.1);color:var(--violet);border:1px solid rgba(167,139,250,.3);}
+.stage-edge  {border-color:rgba(251,146,60,.4);}   .stage-edge .s-title{color:var(--orange);} .stage-edge .s-chip{background:rgba(251,146,60,.1);color:var(--orange);border:1px solid rgba(251,146,60,.3);}
+
+/* glow states */
+.stage-active-disk {border-color:var(--amber)!important;box-shadow:0 0 0 1px rgba(251,191,36,.4),0 0 28px -4px rgba(251,191,36,.6)!important;transform:translateY(-3px);}
+.stage-active-cpu  {border-color:var(--cyan)!important; box-shadow:0 0 0 1px rgba(56,225,255,.4),0 0 28px -4px rgba(56,225,255,.6)!important;transform:translateY(-3px);}
+.stage-active-xfer {border-color:var(--magenta)!important;box-shadow:0 0 0 1px rgba(232,121,249,.4),0 0 28px -4px rgba(232,121,249,.6)!important;transform:translateY(-3px);}
+.stage-active-gpu  {border-color:var(--green)!important; box-shadow:0 0 0 1px rgba(74,222,128,.4),0 0 28px -4px rgba(74,222,128,.6)!important;transform:translateY(-3px);}
+.stage-active-out  {border-color:var(--violet)!important;box-shadow:0 0 0 1px rgba(167,139,250,.4),0 0 28px -4px rgba(167,139,250,.6)!important;transform:translateY(-3px);}
+.stage-active-edge {border-color:var(--orange)!important;box-shadow:0 0 0 1px rgba(251,146,60,.4),0 0 28px -4px rgba(251,146,60,.6)!important;transform:translateY(-3px);}
+
+/* GPU sub-steps */
+.gpu-steps{display:flex;flex-direction:column;gap:2px;margin-top:5px;width:100%;}
+.gpu-step{font-family:"IBM Plex Mono",monospace;font-size:.54rem;letter-spacing:.05em;padding:2px 5px;border-radius:3px;text-align:left;color:var(--ink-dim);background:rgba(255,255,255,.03);border-left:2px solid transparent;transition:border-color .3s,color .3s,background .3s;}
+.gpu-step.fwd{border-color:var(--teal);}
+.gpu-step.loss{border-color:var(--amber);}
+.gpu-step.back{border-color:var(--rose);}
+.gpu-step.upd{border-color:var(--green);}
+.gpu-step.active{color:var(--ink);background:rgba(255,255,255,.06);}
+
+/* img thumbs */
+.img-strip{display:flex;gap:3px;margin-top:6px;flex-wrap:wrap;justify-content:center;}
+.img-thumb{width:17px;height:13px;border-radius:2px;background:linear-gradient(135deg,#1a2a1a,#0d1f0d);border:1px solid rgba(74,222,128,.2);position:relative;overflow:hidden;animation:imgFlicker 3s ease-in-out infinite;}
+.img-thumb:nth-child(2){animation-delay:.4s;} .img-thumb:nth-child(3){animation-delay:.9s;} .img-thumb:nth-child(4){animation-delay:1.4s;}
+@keyframes imgFlicker{0%,100%{opacity:.6;}50%{opacity:1;}}
+.img-thumb::after{content:"";position:absolute;width:6px;height:4px;border-radius:1px;background:rgba(74,222,128,.5);top:3px;left:5px;}
+
+/* epoch progress */
+.epoch-bar-wrap{margin-top:7px;background:var(--bg-2);border-radius:999px;height:5px;overflow:hidden;border:1px solid var(--line-soft);width:100%;}
+.epoch-bar{height:100%;width:0%;background:linear-gradient(90deg,var(--violet),var(--cyan));transition:width .4s ease;border-radius:999px;}
+
+/* ── Node positions (cards above/below the pipe) ── */
+/* pipe Y centre = 290 */
+/* above: bottom of card touches ~250 (pipe top minus gap) */
+/* below: top of card at ~330 (pipe bottom plus gap) */
+#node-disk    {width:116px; left:5;   top:150px;}
+#node-loader  {width:130px; left:130px;  top:55px;}
+#node-decode  {width:130px; left:296px;  top:320px;}
+#node-xfer    {width:130px; left:482px;  top:55px;}
+#node-gpu     {width:152px; left:648px;  top:325px;}
+#node-save    {width:128px; left:816px;  top:55px;}
+#node-edge    {width:128px; left:1060px; top:55px;}
+
+/* ── Server bracket label ── */
+.server-bracket{
+  position:absolute; left:128px; top:30px; width:900px; height:500px;
+  border:1.5px dashed rgba(56,225,255,.15); border-radius:16px;
+  background:rgba(56,225,255,.015); z-index:1; pointer-events:none;
+}
+.server-bracket-label{
+  position:absolute; top:-12px; left:20px;
+  font-family:"IBM Plex Mono",monospace; font-size:.66rem; letter-spacing:.2em;
+  text-transform:uppercase; color:var(--cyan); background:var(--bg-2); padding:0 8px;
+}
+
+/* ── Bottom layout ── */
+.gloss-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:22px;}
+.gloss-card{background:linear-gradient(180deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:var(--radius);padding:14px 15px;box-shadow:var(--shadow);}
+.gloss-card .g-label{font-family:"IBM Plex Mono",monospace;font-size:.66rem;letter-spacing:.18em;text-transform:uppercase;margin-bottom:5px;}
+.gloss-card .g-val{font-family:"Space Grotesk",sans-serif;font-size:1.4rem;font-weight:700;letter-spacing:-.02em;margin-bottom:3px;}
+.gloss-card .g-desc{font-size:.76rem;color:var(--ink-dim);line-height:1.5;}
+
+.grid-bottom{display:grid;grid-template-columns:1.15fr 1fr 1fr;gap:14px;margin-top:22px;}
+.panel{background:linear-gradient(180deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);}
+.panel .p-title{font-family:"IBM Plex Mono",monospace;font-size:.71rem;letter-spacing:.2em;text-transform:uppercase;color:#ffffff;margin-bottom:14px;}
+.stat{margin-bottom:11px;} .stat:last-child{margin-bottom:0;}
+.stat .lbl{display:flex;justify-content:space-between;font-size:.78rem;color:var(--ink-dim);margin-bottom:4px;}
+.stat .lbl span:last-child{font-family:"IBM Plex Mono",monospace;color:var(--ink);}
+.track{width:100%;height:5px;background:var(--bg-2);border-radius:999px;overflow:hidden;}
+.fill{height:100%;width:0%;border-radius:999px;background:linear-gradient(90deg,var(--cyan),var(--teal));transition:width .5s cubic-bezier(.4,0,.2,1);}
+.big-stat{font-family:"Space Grotesk",sans-serif;font-size:2.4rem;font-weight:700;margin:6px 0 0;letter-spacing:-.02em;}
+.big-stat small{font-size:1rem;color:var(--ink-dim);font-weight:400;}
+.summary-rows{margin-top:14px;display:flex;flex-direction:column;gap:9px;}
+.summary-rows .r{display:flex;justify-content:space-between;font-size:.87rem;color:var(--ink-dim);}
+.summary-rows .r b{color:var(--ink);font-weight:500;font-family:"IBM Plex Mono",monospace;}
+.summary-rows .r b.ok{color:var(--green);} .summary-rows .r b.warn{color:var(--amber);}
+
+.btable{width:100%;border-collapse:collapse;margin-top:8px;}
+.btable th{font-family:"IBM Plex Mono",monospace;font-size:.63rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-dim);text-align:left;padding:5px 9px;border-bottom:1px solid var(--line-soft);}
+.btable td{font-family:"IBM Plex Mono",monospace;font-size:.68rem;padding:6px 9px;border-bottom:1px solid var(--line-soft);vertical-align:top;}
+.btable tr:last-child td{border-bottom:none;}
+.btable td:first-child{color:var(--rose);font-weight:600;}
+.btable td:last-child{color:var(--amber);}
+
+.controls{margin-top:22px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:linear-gradient(180deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-radius:var(--radius);padding:16px 20px;box-shadow:var(--shadow);}
+.controls label{font-family:"IBM Plex Mono",monospace;font-size:.78rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-dim);}
+select{font-family:"Sora",sans-serif;background:var(--bg-2);color:var(--ink);border:1px solid var(--line);padding:11px 14px;border-radius:10px;font-size:.95rem;outline:none;cursor:pointer;transition:border-color .2s;}
+select:hover,select:focus{border-color:var(--violet);}
+.spacer{flex:1;}
+button{font-family:"Sora",sans-serif;font-weight:600;font-size:.95rem;cursor:pointer;padding:12px 22px;border-radius:10px;border:1px solid var(--line);background:var(--bg-2);color:var(--ink);transition:all .2s ease;display:inline-flex;align-items:center;gap:8px;}
+button:hover{border-color:var(--ink-dim);transform:translateY(-1px);}
+button:disabled{opacity:.45;cursor:not-allowed;transform:none;}
+#btn-train{background:linear-gradient(180deg,#A78BFA,#7C3AED);color:#fff;border:none;box-shadow:0 10px 24px -10px rgba(167,139,250,.8);}
+#btn-train:hover:not(:disabled){box-shadow:0 14px 30px -10px rgba(167,139,250,.9);}
+#btn-train svg{width:15px;height:15px;}
+
+.terminal{margin-top:16px;height:155px;overflow-y:auto;background:linear-gradient(180deg,#05080D,#04060A);border:1px solid var(--line);border-radius:var(--radius);font-family:"IBM Plex Mono",monospace;font-size:.87rem;line-height:1.65;padding:14px 16px;color:var(--teal);}
+.terminal::-webkit-scrollbar{width:8px;}
+.terminal::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px;}
+.term-head{display:flex;align-items:center;gap:7px;margin-bottom:8px;color:var(--ink-faint);font-size:.71rem;letter-spacing:.2em;text-transform:uppercase;}
+.term-head .dots{display:flex;gap:5px;}
+.term-head .dots i{width:9px;height:9px;border-radius:50%;display:inline-block;}
+.log-entry{margin-bottom:3px;}
+.log-time{color:var(--ink-faint);margin-right:8px;}
+</style>
+</head>
+<body>
+<div class="shell">
+
+<!-- Masthead -->
+<header class="masthead">
+  <div class="brand">
+    <div class="glyph">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#C4B5FD" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2l2 7h7l-5.5 4 2 7L12 16l-5.5 4 2-7L3 9h7z"/>
+      </svg>
+    </div>
+    <div>
+      <h1>AI/ML Training Pipeline</h1>
+      <div class="tag">Leopard Detection Model · Optimised GPU Training on AI Server</div>
+    </div>
+  </div>
+  <div class="masthead-right">
+    <div class="clock" id="clock"><span>UTC+05:30</span> 00:00:00</div>
+    <div class="health-pill"><span class="dot"></span> Training Ready · GPU Online</div>
+  </div>
+</header>
+
+<!-- Pipeline Canvas -->
+<div class="canvas-frame">
+  <div class="canvas" id="canvas-container">
+    <div class="canvas-label">Training Data Flow · Live Epoch Simulation</div>
+
+    <!-- THE PIPE + stems rendered as SVG -->
+    <svg id="pipe-svg" viewBox="0 0 1200 560" preserveAspectRatio="none">
+      <defs>
+        <!-- main pipe gradient -->
+        <linearGradient id="pipeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%"   stop-color="#FBBF24" stop-opacity="0.7"/>
+          <stop offset="18%"  stop-color="#38E1FF" stop-opacity="0.8"/>
+          <stop offset="40%"  stop-color="#38E1FF" stop-opacity="0.8"/>
+          <stop offset="58%"  stop-color="#E879F9" stop-opacity="0.8"/>
+          <stop offset="72%"  stop-color="#4ADE80" stop-opacity="0.9"/>
+          <stop offset="88%"  stop-color="#A78BFA" stop-opacity="0.8"/>
+          <stop offset="100%" stop-color="#FB923C" stop-opacity="0.7"/>
+        </linearGradient>
+        <!-- pipe inner glow -->
+        <linearGradient id="pipeInner" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%"   stop-color="#FBBF24" stop-opacity="0.15"/>
+          <stop offset="18%"  stop-color="#38E1FF" stop-opacity="0.18"/>
+          <stop offset="58%"  stop-color="#E879F9" stop-opacity="0.15"/>
+          <stop offset="72%"  stop-color="#4ADE80" stop-opacity="0.2"/>
+          <stop offset="88%"  stop-color="#A78BFA" stop-opacity="0.15"/>
+          <stop offset="100%" stop-color="#FB923C" stop-opacity="0.15"/>
+        </linearGradient>
+        <!-- pipe top sheen -->
+        <linearGradient id="pipeSheen" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%"   stop-color="white" stop-opacity="0.18"/>
+          <stop offset="40%"  stop-color="white" stop-opacity="0.04"/>
+          <stop offset="100%" stop-color="black" stop-opacity="0.2"/>
+        </linearGradient>
+
+        <!-- stem gradients (vertical connectors) -->
+        <linearGradient id="stemDisk"  x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#FBBF24" stop-opacity="0.6"/>
+          <stop offset="100%" stop-color="#FBBF24" stop-opacity="0.15"/>
+        </linearGradient>
+        <linearGradient id="stemLoader" x1="0%" y1="100%" x2="0%" y2="0%">
+          <stop offset="0%" stop-color="#38E1FF" stop-opacity="0.6"/>
+          <stop offset="100%" stop-color="#38E1FF" stop-opacity="0.15"/>
+        </linearGradient>
+        <linearGradient id="stemDecode" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#38E1FF" stop-opacity="0.6"/>
+          <stop offset="100%" stop-color="#38E1FF" stop-opacity="0.15"/>
+        </linearGradient>
+        <linearGradient id="stemXfer" x1="0%" y1="100%" x2="0%" y2="0%">
+          <stop offset="0%" stop-color="#E879F9" stop-opacity="0.6"/>
+          <stop offset="100%" stop-color="#E879F9" stop-opacity="0.15"/>
+        </linearGradient>
+        <linearGradient id="stemGpu" x1="0%" y1="100%" x2="0%" y2="0%">
+          <stop offset="0%" stop-color="#4ADE80" stop-opacity="0.6"/>
+          <stop offset="100%" stop-color="#4ADE80" stop-opacity="0.15"/>
+        </linearGradient>
+        <linearGradient id="stemSave" x1="0%" y1="100%" x2="0%" y2="0%">
+          <stop offset="0%" stop-color="#A78BFA" stop-opacity="0.6"/>
+          <stop offset="100%" stop-color="#A78BFA" stop-opacity="0.15"/>
+        </linearGradient>
+        <linearGradient id="stemEdge" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#FB923C" stop-opacity="0.6"/>
+          <stop offset="100%" stop-color="#FB923C" stop-opacity="0.15"/>
+        </linearGradient>
+
+        <!-- particle glow filter -->
+        <filter id="glow" x="-80%" y="-80%" width="260%" height="260%">
+          <feGaussianBlur stdDeviation="4" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="glowStrong" x="-100%" y="-100%" width="300%" height="300%">
+          <feGaussianBlur stdDeviation="7" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="pipeGlow" x="-5%" y="-60%" width="110%" height="220%">
+          <feGaussianBlur stdDeviation="6" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+
+        <!-- clipping for pipe interior -->
+        <clipPath id="pipeClip">
+          <rect x="70" y="273" width="1080" height="34" rx="17"/>
+        </clipPath>
+
+        <!-- arrow marker -->
+        <marker id="arrowEdge" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#FB923C" opacity="0.7"/>
+        </marker>
+      </defs>
+
+      <!-- ═══════════ PIPE BODY ═══════════ -->
+      <!-- outer shadow/glow -->
+      <rect x="70" y="271" width="1080" height="38" rx="19" fill="url(#pipeGrad)" opacity="0.25" filter="url(#pipeGlow)"/>
+      <!-- main pipe wall -->
+      <rect x="70" y="273" width="1080" height="34" rx="17" fill="#0D1824" stroke="url(#pipeGrad)" stroke-width="1.8"/>
+      <!-- interior fill (the glow inside) -->
+      <rect x="70" y="273" width="1080" height="34" rx="17" fill="url(#pipeInner)"/>
+      <!-- top sheen highlight -->
+      <rect x="72" y="275" width="1076" height="30" rx="15" fill="url(#pipeSheen)"/>
+      <!-- inner pipe highlight strip -->
+      <rect x="80" y="277" width="1060" height="6" rx="3" fill="white" opacity="0.06"/>
+
+      <!-- Pipe segment colour bands (subtle) -->
+      <rect x="70"  y="273" width="130" height="34" rx="0" fill="#FBBF24" opacity="0.05" clip-path="url(#pipeClip)"/>
+      <rect x="200" y="273" width="220" height="34" rx="0" fill="#38E1FF" opacity="0.05" clip-path="url(#pipeClip)"/>
+      <rect x="420" y="273" width="180" height="34" rx="0" fill="#E879F9" opacity="0.05" clip-path="url(#pipeClip)"/>
+      <rect x="600" y="273" width="195" height="34" rx="0" fill="#4ADE80" opacity="0.06" clip-path="url(#pipeClip)"/>
+      <rect x="795" y="273" width="180" height="34" rx="0" fill="#A78BFA" opacity="0.05" clip-path="url(#pipeClip)"/>
+      <rect x="975" y="273" width="175" height="34" rx="0" fill="#FB923C" opacity="0.05" clip-path="url(#pipeClip)"/>
+
+      <!-- Pipe joint rings (visual depth) -->
+      <line x1="200" y1="274" x2="200" y2="306" stroke="rgba(255,255,255,0.08)" stroke-width="2"/>
+      <line x1="420" y1="274" x2="420" y2="306" stroke="rgba(255,255,255,0.08)" stroke-width="2"/>
+      <line x1="600" y1="274" x2="600" y2="306" stroke="rgba(255,255,255,0.08)" stroke-width="2"/>
+      <line x1="795" y1="274" x2="795" y2="306" stroke="rgba(255,255,255,0.08)" stroke-width="2"/>
+      <line x1="975" y1="274" x2="975" y2="306" stroke="rgba(255,255,255,0.08)" stroke-width="2"/>
+
+      <!-- pipe flow label -->
+      <text x="595" y="295" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="9" fill="rgba(255,255,255,0.18)" letter-spacing="3">DATA FLOW →</text>
+
+      <!-- ═══════════ VERTICAL STEMS ═══════════ -->
+      <!-- disk stem (right side of disk node → pipe) -->
+      <line id="stem-disk"   x1="130" y1="230" x2="130" y2="273" stroke="url(#stemDisk)"   stroke-width="3" stroke-linecap="round"/>
+      <!-- loader stem (above → pipe) -->
+      <line id="stem-loader" x1="260" y1="196" x2="260" y2="273" stroke="url(#stemLoader)" stroke-width="3" stroke-linecap="round"/>
+      <!-- decode stem (pipe → below) -->
+      <line id="stem-decode" x1="395" y1="307" x2="395" y2="320" stroke="url(#stemDecode)" stroke-width="3" stroke-linecap="round"/>
+      <!-- xfer stem (above → pipe) -->
+      <line id="stem-xfer"   x1="545" y1="196" x2="545" y2="273" stroke="url(#stemXfer)"   stroke-width="3" stroke-linecap="round"/>
+      <!-- gpu stem (above → pipe) -->
+      <line id="stem-gpu"    x1="720" y1="196" x2="720" y2="273" stroke="url(#stemGpu)"     stroke-width="3" stroke-linecap="round"/>
+      <!-- save stem (above → pipe) -->
+      <line id="stem-save"   x1="882" y1="196" x2="882" y2="273" stroke="url(#stemSave)"   stroke-width="3" stroke-linecap="round"/>
+      <!-- edge connection: pipe → right side, then down/right to edge node -->
+      <path id="stem-edge" d="M 1150 290 L 1185 290 L 1185 200" stroke="url(#stemEdge)" stroke-width="3" stroke-linecap="round" fill="none" stroke-dasharray="8 5" marker-end="url(#arrowEdge)"/>
+
+      <!-- stem connector dots on pipe (tap points) -->
+      <circle cx="130" cy="290" r="5" fill="#FBBF24" opacity="0.7" filter="url(#glow)"/>
+      <circle cx="260" cy="290" r="5" fill="#38E1FF" opacity="0.7" filter="url(#glow)"/>
+      <circle cx="395" cy="290" r="5" fill="#38E1FF" opacity="0.7" filter="url(#glow)"/>
+      <circle cx="545" cy="290" r="5" fill="#E879F9" opacity="0.7" filter="url(#glow)"/>
+      <circle cx="720" cy="290" r="5" fill="#4ADE80" opacity="0.7" filter="url(#glow)"/>
+      <circle cx="882" cy="290" r="5" fill="#A78BFA" opacity="0.7" filter="url(#glow)"/>
+      <circle cx="1150" cy="290" r="5" fill="#FB923C" opacity="0.7" filter="url(#glow)"/>
+
+      <!-- ═══════════ PHASE LABELS below pipe ═══════════ -->
+      <text x="130" y="322" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="8.5" fill="#FBBF24" opacity="0.8" letter-spacing="1">DISK</text>
+      <text x="260" y="322" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="8.5" fill="#38E1FF" opacity="0.8" letter-spacing="1">LOAD</text>
+      <text x="395" y="340" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="8.5" fill="#38E1FF" opacity="0.8" letter-spacing="1">DECODE</text>
+      <text x="545" y="322" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="8.5" fill="#E879F9" opacity="0.8" letter-spacing="1">XFER</text>
+      <text x="720" y="322" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="8.5" fill="#4ADE80" opacity="0.8" letter-spacing="1">GPU</text>
+      <text x="882" y="322" text-anchor="middle" font-family="IBM Plex Mono,monospace" font-size="8.5" fill="#A78BFA" opacity="0.8" letter-spacing="1">SAVE</text>
+
+      <!-- ═══════════ ANIMATED PARTICLES (JS will position these) ═══════════ -->
+      <!-- The pipe path used for particle animation (invisible guide) -->
+      <path id="pipe-path" d="M 70 290 L 1150 290" fill="none" stroke="none"/>
+    </svg>
+
+    <!-- NODE CARDS -->
+    <!-- 1. Disk -->
+    <div class="stage stage-disk" id="node-disk">
+      <div class="s-icon">💾</div>
+      <div class="s-title">Dataset Disk</div>
+      <div class="s-sub">Leopard images<br>Labels / Annotations<br>~50,000 images</div>
+      <div class="s-chip">STORAGE</div>
+      <div class="img-strip">
+        <div class="img-thumb"></div><div class="img-thumb"></div>
+        <div class="img-thumb"></div><div class="img-thumb"></div>
+      </div>
+    </div>
+
+    <!-- 2. DataLoader -->
+    <div class="stage stage-cpu" id="node-loader">
+      <div class="s-icon">⚙️</div>
+      <div class="s-title">DataLoader</div>
+      <div class="s-sub">batch_size = <span id="txt-batch">32</span><br>num_workers = <span id="txt-workers">4</span><br>pinned_memory = True<br>Parallel disk reads</div>
+      <div class="s-chip">CPU · RAM</div>
+    </div>
+
+    <!-- 3. Decode/Augment -->
+    <div class="stage stage-cpu" id="node-decode">
+      <div class="s-icon">🔄</div>
+      <div class="s-title">Decode · Augment</div>
+      <div class="s-sub">JPEG → RGB Tensor<br>Resize · Normalize<br>Flip · Rotate · Crop<br>0.0 → 1.0</div>
+      <div class="s-chip">CPU · PREPROCESS</div>
+    </div>
+
+    <!-- 4. CPU→GPU Transfer -->
+    <div class="stage stage-xfer" id="node-xfer">
+      <div class="s-icon">⚡</div>
+      <div class="s-title">CPU → GPU Copy</div>
+      <div class="s-sub">Pinned Memory<br>non_blocking=True<br>Async PCIe transfer<br>CPU keeps loading</div>
+      <div class="s-chip">PCIE · ASYNC</div>
+    </div>
+
+    <!-- 5. GPU -->
+    <div class="stage stage-gpu" id="node-gpu">
+      <div class="s-icon">🚀</div>
+      <div class="s-title">GPU Training Core</div>
+      <div class="gpu-steps">
+        <div class="gpu-step fwd"  id="step-fwd">▶ Forward Pass — predict</div>
+        <div class="gpu-step loss" id="step-loss">▶ Loss — measure error</div>
+        <div class="gpu-step back" id="step-back">▶ Backprop — gradients</div>
+        <div class="gpu-step upd"  id="step-upd">▶ Optimizer — update</div>
+      </div>
+      <div class="s-chip" style="margin-top:7px;">GPU · VRAM</div>
+    </div>
+
+    <!-- 6. Checkpoint -->
+    <div class="stage stage-out" id="node-save">
+      <div class="s-icon">📦</div>
+      <div class="s-title">Checkpoint</div>
+      <div class="s-sub">model.pt saved<br>Log loss / accuracy<br>Epoch <span id="txt-epoch">0</span> / 50</div>
+      <div class="s-chip">SAVE · LOG</div>
+      <div class="epoch-bar-wrap"><div class="epoch-bar" id="epoch-bar"></div></div>
+    </div>
+
+    <!-- 7. Edge Device -->
+    <div class="stage stage-edge" id="node-edge">
+      <div class="s-icon">📷</div>
+      <div class="s-title">Edge Device</div>
+      <div class="s-sub">NVIDIA Jetson<br>Runs trained model<br>Leopard detection<br>On-site · Low power</div>
+      <div class="s-chip">DEPLOYMENT</div>
+    </div>
+
+  </div><!-- /canvas -->
+  <button id="btn-train" class="run-overlay-btn" onclick="runTraining()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2 3 14h7l-1 8 10-12h-7z"/></svg>
+    Run Training Epoch
+  </button>
+</div><!-- /canvas-frame -->
+
+<!-- Glossary -->
+<div class="gloss-grid">
+  <div class="gloss-card"><div class="g-label" style="color:var(--cyan)">batch_size</div><div class="g-val" style="color:var(--cyan)">32</div><div class="g-desc">Images processed by GPU at once. Larger = faster, but needs more VRAM. Out of Memory? Reduce this first.</div></div>
+  <div class="gloss-card"><div class="g-label" style="color:var(--teal)">num_workers</div><div class="g-val" style="color:var(--teal)">4</div><div class="g-desc">CPU threads reading images from disk in parallel. Too few = GPU waits idle. Think of workers as librarians fetching books simultaneously.</div></div>
+  <div class="gloss-card"><div class="g-label" style="color:var(--magenta)">pinned_memory</div><div class="g-val" style="color:var(--magenta)">True</div><div class="g-desc">Reserves fast CPU RAM for GPU transfers — like a dedicated highway lane instead of shared road. Makes PCIe transfer significantly faster.</div></div>
+  <div class="gloss-card"><div class="g-label" style="color:var(--amber)">non_blocking</div><div class="g-val" style="color:var(--amber)">True</div><div class="g-desc">CPU doesn't wait for GPU transfer to finish — immediately loads the next batch. GPU and CPU run simultaneously = maximum efficiency.</div></div>
+  <div class="gloss-card"><div class="g-label" style="color:var(--green)">Forward Pass</div><div class="g-val" style="color:var(--green)">→ ŷ</div><div class="g-desc">Model sees the image, runs through all neural network layers and makes a prediction: "Is this a leopard? Where is it?"</div></div>
+  <div class="gloss-card"><div class="g-label" style="color:var(--amber)">Loss Function</div><div class="g-val" style="color:var(--amber)">ℒ</div><div class="g-desc">Measures how wrong the prediction was. Lower loss = smarter model. Goal of training is to reduce this number every epoch.</div></div>
+  <div class="gloss-card"><div class="g-label" style="color:var(--rose)">Backpropagation</div><div class="g-val" style="color:var(--rose)">∇</div><div class="g-desc">Maths that traces the error backwards through every layer, calculating how much each weight contributed to the mistake (gradient).</div></div>
+  <div class="gloss-card"><div class="g-label" style="color:var(--violet)">Weight Update</div><div class="g-val" style="color:var(--violet)">w←</div><div class="g-desc">Optimizer (Adam/SGD) nudges each weight slightly to reduce loss. After thousands of iterations, the model learns to detect leopards accurately.</div></div>
+</div>
+
+<!-- Metrics + Bottleneck -->
+<div class="grid-bottom">
+  <div class="panel">
+    <div class="p-title">Training Run Summary</div>
+    <div class="big-stat" style="color:var(--violet)" id="stat-loss">—<small> loss</small></div>
+    <div class="summary-rows">
+      <div class="r"><span>Current Epoch</span><b id="sum-epoch">—</b></div>
+      <div class="r"><span>GPU Utilisation</span><b class="ok" id="sum-gpu">—</b></div>
+      <div class="r"><span>Batches / sec</span><b id="sum-bps">—</b></div>
+      <div class="r"><span>Est. time remaining</span><b class="warn" id="sum-eta">—</b></div>
+      <div class="r"><span>Model accuracy</span><b class="ok" id="sum-acc">—</b></div>
+    </div>
+  </div>
+  <div class="panel">
+    <div class="p-title">GPU Resource Monitor</div>
+    <div class="stat"><div class="lbl"><span>GPU Utilisation</span><span id="txt-gpu">0%</span></div><div class="track"><div class="fill" id="bar-gpu" style="background:linear-gradient(90deg,var(--teal),var(--green))"></div></div></div>
+    <div class="stat"><div class="lbl"><span>VRAM Usage</span><span id="txt-vram">0%</span></div><div class="track"><div class="fill" id="bar-vram" style="background:linear-gradient(90deg,var(--violet),var(--magenta))"></div></div></div>
+    <div class="stat"><div class="lbl"><span>CPU Dataloader</span><span id="txt-cpu">0%</span></div><div class="track"><div class="fill" id="bar-cpu"></div></div></div>
+    <div class="stat"><div class="lbl"><span>PCIe Bandwidth</span><span id="txt-pcie">0%</span></div><div class="track"><div class="fill" id="bar-pcie" style="background:linear-gradient(90deg,var(--magenta),var(--violet))"></div></div></div>
+  </div>
+  <div class="panel">
+    <div class="p-title">Common Bottlenecks · Student Guide</div>
+    <table class="btable">
+      <thead><tr><th>Bottleneck</th><th>Symptom</th></tr></thead>
+      <tbody>
+        <tr><td>CPU DataLoader</td><td>GPU idles, low utilisation</td></tr>
+        <tr><td>Too few workers</td><td>&lt;50% GPU usage</td></tr>
+        <tr><td>Heavy augmentation</td><td>Slow epochs, CPU maxed</td></tr>
+        <tr><td>Large batch_size</td><td>Out-of-Memory (OOM)</td></tr>
+        <tr><td>Many negatives</td><td>Slow convergence</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Controls -->
+<div class="controls">
+  <label for="speed-select">Speed</label>
+  <select id="speed-select">
+    <option value="1">1× — Step by step</option>
+    <option value="2" selected>2× — Normal</option>
+    <option value="4">4× — Fast</option>
+  </select>
+  <label for="batch-select" style="margin-left:10px;">Batch Size</label>
+  <select id="batch-select">
+    <option value="8">8 — Small (safe)</option>
+    <option value="32" selected>32 — Medium</option>
+    <option value="128">128 — Large (may OOM)</option>
+  </select>
+  <button onclick="resetTraining()">Reset</button>
+</div>
+
+<!-- Terminal -->
+<div class="terminal" id="terminal-screen">
+  <div class="term-head">
+    <span class="dots"><i style="background:var(--rose)"></i><i style="background:var(--amber)"></i><i style="background:var(--green)"></i></span>
+    training.log · ai-server-01
+  </div>
+  <div class="log-entry"><span class="log-time">[SYSTEM]</span> <span style="color:#ffffff">AI Training Server online · NVIDIA GPU ready · CUDA initialised · Press "Run Training Epoch" to start.</span></div>
+</div>
+
+</div><!-- /shell -->
+
+<script>
+const logScreen = document.getElementById('terminal-screen');
+const canvas    = document.getElementById('canvas-container');
+let trainingActive = false;
+let epoch = 0;
+let lossVal = 3.8;
+
+/* clock */
+setInterval(()=>{
+  const d=new Date();
+  document.getElementById('clock').innerHTML='<span>UTC+05:30</span> '+d.toTimeString().split(' ')[0];
+},1000);
+
+function appendLog(msg,color='var(--teal)'){
+  const now=new Date();
+  const t=now.toTimeString().split(' ')[0]+'.'+String(now.getMilliseconds()).padStart(3,'0');
+  const e=document.createElement('div');
+  e.className='log-entry';
+  e.innerHTML=`<span class="log-time">[${t}]</span> <span style="color:${color}">${msg}</span>`;
+  logScreen.appendChild(e);
+  logScreen.scrollTop=logScreen.scrollHeight;
+}
+
+/* ── Pipe particle system ── */
+const PIPE_Y = 290; // SVG coordinate y of pipe centre
+const PIPE_X_START = 70;
+const PIPE_X_END   = 1150;
+
+// Scale SVG coords to canvas px (canvas is 1220px wide, SVG viewBox 1200)
+function svgToPx(svgX, svgY){
+  const cw = canvas.offsetWidth;
+  const ch = canvas.offsetHeight;
+  return { x: (svgX/1200)*cw, y: (svgY/560)*ch };
+}
+
+function spawnParticle(fromX, toX, color, durationMs, onDone){
+  const p = document.createElement('div');
+  p.style.cssText=`position:absolute;width:10px;height:10px;border-radius:50%;z-index:25;pointer-events:none;background:${color};box-shadow:0 0 14px ${color},0 0 5px ${color};`;
+  canvas.appendChild(p);
+  let startTs=null;
+  function step(ts){
+    if(!startTs) startTs=ts;
+    let pct=Math.min((ts-startTs)/durationMs,1);
+    // ease in-out
+    pct = pct<0.5 ? 2*pct*pct : -1+(4-2*pct)*pct;
+    const svgX = fromX+(toX-fromX)*((ts-startTs)/durationMs);
+    const px=svgToPx(Math.min(svgX, toX), PIPE_Y);
+    p.style.left=(px.x-5)+'px';
+    p.style.top=(px.y-5)+'px';
+    if((ts-startTs)<durationMs) requestAnimationFrame(step);
+    else{ p.remove(); if(onDone) onDone(); }
+  }
+  requestAnimationFrame(step);
+}
+
+// Continuous ambient particles flowing through pipe
+let ambientInterval=null;
+function startAmbient(){
+  if(ambientInterval) return;
+  ambientInterval=setInterval(()=>{
+    if(trainingActive) return;
+    const colours=['rgba(56,225,255,0.35)','rgba(167,139,250,0.3)','rgba(74,222,128,0.3)','rgba(251,191,36,0.3)'];
+    const c=colours[Math.floor(Math.random()*colours.length)];
+    spawnParticle(PIPE_X_START+Math.random()*200, PIPE_X_END, c, 5000+Math.random()*3000, null);
+  },900);
+}
+startAmbient();
+
+function setMetrics(gpu,vram,cpu,pcie){
+  document.getElementById('txt-gpu').innerText=gpu+'%';  document.getElementById('bar-gpu').style.width=gpu+'%';
+  document.getElementById('txt-vram').innerText=vram+'%';document.getElementById('bar-vram').style.width=vram+'%';
+  document.getElementById('txt-cpu').innerText=cpu+'%';  document.getElementById('bar-cpu').style.width=cpu+'%';
+  document.getElementById('txt-pcie').innerText=pcie+'%';document.getElementById('bar-pcie').style.width=pcie+'%';
+}
+
+function activate(id,cls){document.getElementById(id).classList.add(cls);}
+function deactivate(id,cls){document.getElementById(id).classList.remove(cls);}
+function setGpuStep(s){
+  ['step-fwd','step-loss','step-back','step-upd'].forEach(x=>document.getElementById(x).classList.remove('active'));
+  if(s) document.getElementById(s).classList.add('active');
+}
+function delay(ms){return new Promise(r=>setTimeout(r,ms));}
+
+async function runTraining(){
+  if(trainingActive) return;
+  trainingActive=true;
+  document.getElementById('btn-train').disabled=true;
+
+  const speed=parseFloat(document.getElementById('speed-select').value);
+  const bsz=parseInt(document.getElementById('batch-select').value);
+  const t=ms=>ms/speed;
+
+  document.getElementById('txt-batch').innerText=bsz;
+  document.getElementById('txt-workers').innerText=bsz<=8?2:bsz<=32?4:8;
+
+  /* helper: fire N particles along a pipe segment */
+  function pipeFlow(x1,x2,color,durMs,count=3){
+    for(let i=0;i<count;i++){
+      setTimeout(()=>spawnParticle(x1,x2,color,durMs,null), i*(durMs/count*0.6));
+    }
+  }
+
+  // ── PHASE 1: Disk → Loader ──
+  activate('node-disk','stage-active-disk');
+  appendLog(`[epoch ${epoch+1}] DataLoader · ${bsz<=8?2:4} worker threads reading ${bsz} images from disk…`,'var(--amber)');
+  setMetrics(5,bsz*0.4|0,65,10);
+  pipeFlow(70, 260, '#FBBF24', t(1800), 4);
+  await delay(t(1800));
+  deactivate('node-disk','stage-active-disk');
+
+  // ── PHASE 2: Loader → Decode ──
+  activate('node-loader','stage-active-cpu');
+  appendLog(`[dataloader] batch ready · passing to CPU decode & augmentation pipeline…`,'var(--cyan)');
+  setMetrics(8,bsz*0.5|0,78,12);
+  pipeFlow(200, 420, '#38E1FF', t(1400), 4);
+  await delay(t(1000));
+  activate('node-decode','stage-active-cpu');
+  appendLog(`[preprocess] JPEG decode · resize 640×640 · normalize · random flip/crop augmentation…`,'var(--cyan)');
+  setMetrics(12,bsz*0.6|0,88,14);
+  await delay(t(1200));
+  deactivate('node-loader','stage-active-cpu');
+
+  // ── PHASE 3: CPU → GPU transfer ──
+  deactivate('node-decode','stage-active-cpu');
+  activate('node-xfer','stage-active-xfer');
+  appendLog(`[transfer] pinned tensors → GPU via PCIe · non_blocking=True · async copy in progress…`,'var(--magenta)');
+  setMetrics(20,bsz*0.7|0,72,88);
+  pipeFlow(420, 720, '#E879F9', t(1600), 5);
+  await delay(t(1600));
+  deactivate('node-xfer','stage-active-xfer');
+
+  // ── PHASE 4: GPU ──
+  activate('node-gpu','stage-active-gpu');
+  setMetrics(92, bsz<=8?42:bsz<=32?68:91, 45, 30);
+  pipeFlow(600, 900, '#4ADE80', t(5500), 6);
+
+  setGpuStep('step-fwd');
+  appendLog(`[gpu] ► Forward Pass — model predicts bounding boxes on ${bsz} images…`,'var(--green)');
+  await delay(t(1500));
+
+  setGpuStep('step-loss');
+  const currLoss=(lossVal-Math.random()*0.12).toFixed(4);
+  appendLog(`[gpu] ► Loss = ${currLoss}  (how wrong the predictions are — lower is better)`,'var(--amber)');
+  setMetrics(95,bsz<=8?44:bsz<=32?70:92,43,28);
+  await delay(t(1400));
+
+  setGpuStep('step-back');
+  appendLog(`[gpu] ► Backpropagation — computing gradients across all network layers…`,'var(--rose)');
+  setMetrics(98,bsz<=8?46:bsz<=32?72:93,42,25);
+  await delay(t(1500));
+
+  setGpuStep('step-upd');
+  appendLog(`[gpu] ► Adam optimizer updating weights · learning_rate=0.001`,'var(--teal)');
+  setMetrics(85,bsz<=8?44:bsz<=32?70:91,40,20);
+  await delay(t(1200));
+  setGpuStep(null);
+  deactivate('node-gpu','stage-active-gpu');
+
+  // ── PHASE 5: Save ──
+  epoch++;
+  lossVal=parseFloat(currLoss);
+  activate('node-save','stage-active-out');
+  pipeFlow(795, 1000, '#A78BFA', t(1200), 3);
+  await delay(t(600));
+  appendLog(`[checkpoint] epoch ${epoch} complete · loss=${currLoss} · accuracy ${Math.min(55+epoch*3,96)}% · model.pt saved`,'var(--violet)');
+
+  document.getElementById('txt-epoch').innerText=epoch;
+  document.getElementById('epoch-bar').style.width=Math.min(epoch*2,100)+'%';
+  document.getElementById('stat-loss').innerHTML=currLoss+'<small> loss</small>';
+  document.getElementById('sum-epoch').innerText=`${epoch} / 50`;
+  document.getElementById('sum-gpu').innerText='92%';
+  document.getElementById('sum-bps').innerText=(bsz/0.18).toFixed(0);
+  document.getElementById('sum-eta').innerText=`~${Math.max(50-epoch,0)*4} min`;
+  document.getElementById('sum-acc').innerText=`${Math.min(55+epoch*3,96)}%`;
+  setMetrics(30,40,35,10);
+  await delay(t(1000));
+  deactivate('node-save','stage-active-out');
+
+  // ── PHASE 6: Deploy to edge (after epoch 3) ──
+  if(epoch>=3){
+    appendLog(`[deploy] exporting model.pt → TensorRT · sending to Edge Device…`,'var(--orange)');
+    activate('node-edge','stage-active-edge');
+    // pipe particle shoots to end
+    pipeFlow(975, 1150, '#FB923C', t(2000), 4);
+    await delay(t(2400));
+    appendLog(`[edge] model live on NVIDIA Jetson · leopard detection running on-site! 🐆`,'var(--orange)');
+    await delay(t(1200));
+    deactivate('node-edge','stage-active-edge');
+  }
+
+  if(bsz===128 && Math.random()>0.4)
+    appendLog(`[ERROR] CUDA out of memory — batch_size=128 exceeds VRAM! Reduce to 32 and retry.`,'var(--rose)');
+
+  trainingActive=false;
+  document.getElementById('btn-train').disabled=false;
+  appendLog(`[ready] epoch ${epoch} done · click "Run Training Epoch" for next epoch.`,'var(--ink-dim)');
+}
+
+function resetTraining(){
+  trainingActive=false; epoch=0; lossVal=3.8;
+  document.getElementById('btn-train').disabled=false;
+  document.getElementById('epoch-bar').style.width='0%';
+  document.getElementById('txt-epoch').innerText='0';
+  document.getElementById('stat-loss').innerHTML='—<small> loss</small>';
+  ['sum-epoch','sum-gpu','sum-bps','sum-eta','sum-acc'].forEach(id=>document.getElementById(id).innerText='—');
+  setMetrics(0,0,0,0);
+  setGpuStep(null);
+  ['node-disk','node-loader','node-decode','node-xfer','node-gpu','node-save','node-edge'].forEach(id=>{
+    const el=document.getElementById(id);
+    ['stage-active-disk','stage-active-cpu','stage-active-xfer','stage-active-gpu','stage-active-out','stage-active-edge'].forEach(c=>el.classList.remove(c));
+  });
+  document.querySelectorAll('.packet').forEach(p=>p.remove());
+  appendLog('pipeline reset · ready for new training run.','var(--ink-dim)');
+}
+</script>
+</body>
+</html>
