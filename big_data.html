@@ -98,7 +98,7 @@ body{font-family:"Sora",sans-serif;color:var(--ink);display:flex;flex-direction:
   <div class="hdr-ico">📊</div>
   <div>
     <div class="hdr-title">Big Data — Distributed Bank Analytics</div>
-    <div class="hdr-sub">HDFC Bank · 5 Data Nodes · 847M Transactions · Parallel Processing · Fraud Detection</div>
+    <div class="hdr-sub">Bank · 5 Data Nodes · 847M Transactions · Parallel Processing · Fraud Detection</div>
   </div>
   <div class="pill" id="mpill"><div class="dot"></div><span id="ptxt">Cluster READY</span></div>
 </div>
@@ -121,7 +121,7 @@ body{font-family:"Sora",sans-serif;color:var(--ink);display:flex;flex-direction:
       <!-- ── HDFC BANK HORIZONTAL TRANSACTION SOURCES ── -->
       <!-- Enclosing label -->
       <rect x="10" y="8" width="560" height="76" rx="8" fill="#060E1A" stroke="#1E3A50" stroke-width="1" stroke-dasharray="4 4" opacity=".7"/>
-      <text x="290" y="20" text-anchor="middle" font-family="Sora" font-size="8" fill="#ffffff" letter-spacing=".15em">HDFC BANK — TRANSACTION SOURCES (HORIZONTAL SCALING)</text>
+      <text x="290" y="20" text-anchor="middle" font-family="Sora" font-size="8" fill="#ffffff" letter-spacing=".15em">BANK — TRANSACTION SOURCES (HORIZONTAL SCALING)</text>
 
       <!-- Source 1: UPI Gateway -->
       <g id="src-upi" transform="translate(72,52)">
@@ -461,7 +461,7 @@ const nodeX=[64,168,290,412,516];
 const nodeCols=['#A78BFA','#4ADE80','#FBBF24','#38E1FF','#FB5E6D'];
 
 function stageStream(){
-  log('HDFC Bank transaction feed LIVE — 12,430 transactions/sec ingesting','ok');
+  log('Bank transaction feed LIVE — 12,430 transactions/sec ingesting','ok');
   log('Coordinator node receiving and routing to data cluster','inf');
   pill('Ingesting','proc');
   s('m-ing').textContent='12,430 /s';s('m-thr').textContent='4.2 GB/s';
