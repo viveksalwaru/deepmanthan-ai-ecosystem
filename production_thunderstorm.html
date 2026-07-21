@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Production-Grade AI Ecosystem · Thunderstorm Prediction</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+:root{
+  --bg:#070B12; --panel:#0E1622; --panel2:#121C2B; --line:#1E2C3F; --line-soft:#16212F;
+  --ink:#DCE6F2; --ink-dim:#7C8CA3; --ink-faint:#3D4F63;
+  --cyan:#38E1FF; --teal:#2DD4BF; --green:#4ADE80; --amber:#FBBF24; --violet:#A78BFA; --magenta:#E879F9; --rose:#FB5E6D; --orange:#FB923C; --blue:#5B9DFF; --gold:#FCD34D;
+}
+html,body{ min-height:100%; font-family:"Sora",sans-serif; background:var(--bg); color:var(--ink); }
+.top-header{ height:56px; background:linear-gradient(90deg,#08101E,#0A0F1A); border-bottom:1px solid var(--line);
+  display:flex; align-items:center; padding:0 20px; gap:12px; position:sticky; top:0; z-index:50; }
+.logo-glyph{ width:34px;height:34px;border-radius:9px; background:linear-gradient(150deg,rgba(74,222,128,.22),rgba(251,191,36,.14));
+  border:1px solid rgba(74,222,128,.45); display:grid; place-items:center; font-size:1.05rem; }
+.logo-txt b{ font-family:"Space Grotesk"; font-weight:700; font-size:1rem; }
+.logo-txt span{ display:block; font-size:.6rem; color:var(--ink-dim); letter-spacing:1.1px; text-transform:uppercase; }
+.hdr-spacer{ flex:1; }
+.home-btn{ font-family:"IBM Plex Mono"; font-size:.72rem; color:var(--cyan); text-decoration:none; border:1px solid rgba(56,225,255,.4); border-radius:8px; padding:6px 13px; } .home-btn:hover{ background:rgba(56,225,255,.12); }
+
+.wrap{ max-width:1180px; margin:0 auto; padding:20px 22px 40px; }
+.hero{ text-align:center; margin-bottom:8px; }
+.hero h1{ font-family:"Space Grotesk"; font-size:1.7rem; font-weight:700; }
+.hero h1 .g{ background:linear-gradient(90deg,var(--cyan),var(--violet)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+.hero p{ color:var(--ink-dim); font-size:.9rem; margin-top:8px; max-width:720px; margin-left:auto; margin-right:auto; line-height:1.5; }
+
+.eq{ display:flex; align-items:center; justify-content:center; gap:12px; flex-wrap:wrap; margin:18px 0 22px; }
+.tok{ font-family:"Space Grotesk"; font-weight:600; font-size:.98rem; padding:9px 16px; border-radius:10px; border:1px solid var(--line); display:flex; align-items:center; gap:8px; }
+.tok.pg{ color:var(--cyan); border-color:rgba(56,225,255,.4); background:rgba(56,225,255,.05); }
+.tok.ai{ color:var(--violet); border-color:rgba(167,139,250,.4); background:rgba(167,139,250,.05); }
+.tok.res{ color:var(--gold); border-color:rgba(252,211,77,.4); background:rgba(252,211,77,.06); box-shadow:0 0 22px -8px var(--gold); }
+.op{ font-family:"Space Grotesk"; font-size:1.4rem; font-weight:700; color:var(--ink-dim); } .op.eq{ color:var(--gold); }
+
+.cols{ display:grid; grid-template-columns:1fr 1fr; gap:18px; align-items:start; }
+.panel{ background:linear-gradient(160deg,var(--panel),var(--panel2)); border:1px solid var(--line); border-radius:16px; padding:18px 20px; }
+.panel.pg{ border-top:3px solid var(--cyan); } .panel.ai{ border-top:3px solid var(--violet); }
+.p-head{ display:flex; align-items:center; gap:11px; margin-bottom:4px; }
+.p-head .pi{ font-size:1.6rem; } .p-head h2{ font-family:"Space Grotesk"; font-size:1.2rem; font-weight:700; }
+.panel.pg h2{ background:linear-gradient(90deg,var(--cyan),var(--teal)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+.panel.ai h2{ background:linear-gradient(90deg,var(--violet),var(--magenta)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+.p-sub{ font-size:.78rem; color:var(--ink-dim); margin:2px 0 15px; padding-left:44px; line-height:1.45; }
+
+.item{ display:flex; gap:13px; align-items:flex-start; padding:12px 12px; border-radius:12px; border:1px solid var(--line-soft); margin-bottom:10px; background:rgba(255,255,255,.012); transition:.18s; }
+.item:hover{ border-color:var(--line); transform:translateX(4px); }
+.item .ii{ width:40px;height:40px;border-radius:11px; display:grid; place-items:center; font-size:1.25rem; flex-shrink:0; }
+.panel.pg .item .ii{ background:rgba(56,225,255,.10); border:1px solid rgba(56,225,255,.32); }
+.panel.ai .item .ii{ background:rgba(167,139,250,.10); border:1px solid rgba(167,139,250,.32); }
+.item .it b{ font-size:.98rem; font-weight:600; }
+.item .it p{ font-size:.82rem; color:var(--ink-dim); margin-top:4px; line-height:1.5; }
+.item .it .badge{ display:inline-block; font-family:"IBM Plex Mono"; font-size:.6rem; margin-top:7px; padding:2px 8px; border-radius:6px; }
+.panel.pg .badge{ color:var(--teal); background:rgba(45,212,191,.1); border:1px solid rgba(45,212,191,.3); }
+.panel.ai .badge{ color:var(--violet); background:rgba(167,139,250,.1); border:1px solid rgba(167,139,250,.3); }
+
+/* HA live strip */
+.ha-live{ display:flex; align-items:center; gap:10px; margin-top:9px; font-family:"IBM Plex Mono"; font-size:.66rem; color:var(--ink-dim); }
+.ha-live .dot{ width:8px;height:8px;border-radius:50%; background:var(--green); box-shadow:0 0 8px var(--green); animation:blink 1.6s ease infinite; }
+@keyframes blink{ 0%,100%{opacity:1} 50%{opacity:.4} }
+.ha-live b{ color:var(--green); }
+
+/* result */
+.result{ margin-top:20px; background:linear-gradient(120deg,rgba(74,222,128,.10),rgba(252,211,77,.06),rgba(167,139,250,.08));
+  border:1px solid rgba(252,211,77,.4); border-radius:16px; padding:18px 22px; display:flex; align-items:center; gap:20px; box-shadow:0 0 34px -14px var(--gold); }
+.result .ri{ font-size:2.6rem; flex-shrink:0; }
+.result .rt b{ font-family:"Space Grotesk"; font-size:1.28rem; font-weight:700;
+  background:linear-gradient(90deg,var(--green),var(--gold) 55%,var(--violet)); -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; }
+.result .rt p{ font-size:.9rem; color:var(--ink-dim); margin-top:6px; line-height:1.55; max-width:720px; } .result .rt p b{ color:var(--ink); -webkit-text-fill-color:var(--ink); }
+.checks{ display:flex; gap:7px; flex-wrap:wrap; margin-left:auto; max-width:210px; justify-content:flex-end; flex-shrink:0; }
+.chk{ font-family:"IBM Plex Mono"; font-size:.62rem; color:var(--green); border:1px solid rgba(74,222,128,.4); background:rgba(74,222,128,.08); border-radius:20px; padding:3px 9px; }
+@media (max-width:820px){ .cols{ grid-template-columns:1fr; } .result{ flex-direction:column; align-items:flex-start; } .checks{ margin-left:0; } }
+</style>
+</head>
+<body>
+<div class="top-header">
+  <div class="logo-glyph">⛈️</div>
+  <div class="logo-txt"><b>Production-Grade AI Ecosystem</b><span>for thunderstorm prediction</span></div>
+  <div class="hdr-spacer"></div>
+  <a href="multi_hazard_architecture.html" class="home-btn" style="margin-right:8px;color:var(--amber);border-color:rgba(251,191,36,.45)">🏗️ Architecture</a>
+  <a href="index.html" class="home-btn">← Suite Home</a>
+</div>
+
+<div class="wrap">
+  <div class="hero">
+    <h1>A <span class="g">Production-Grade</span> AI Ecosystem for Thunderstorm Prediction</h1>
+    <p>Our goal isn't a one-off demo — it's a system the public and authorities can <b style="color:var(--ink)">depend on</b>. That means it must be production-grade, and built on a complete AI ecosystem.</p>
+  </div>
+
+  <div class="eq">
+    <span class="tok pg">⚙️ Production Grade</span><span class="op">+</span>
+    <span class="tok ai">🧠 AI Ecosystem</span><span class="op eq">=</span>
+    <span class="tok res">⛈️ Reliable Early Warning</span>
+  </div>
+
+  <div class="cols">
+    <!-- PRODUCTION GRADE -->
+    <div class="panel pg">
+      <div class="p-head"><span class="pi">⚙️</span><h2>Production Grade</h2></div>
+      <div class="p-sub">The promises the system must keep, 24×7, in the real world:</div>
+
+      <div class="item"><span class="ii">🛡️</span><div class="it"><b>High Availability</b>
+        <p>Every weather station runs <b style="color:var(--ink)">24/7</b>. A precise monitoring mechanism watches each station's health and flags any outage instantly — so no location ever loses coverage.</p>
+        <div class="ha-live"><span class="dot"></span>Stations online <b id="ha-count">30 / 30</b> · uptime <b id="ha-up">99.97%</b></div></div></div>
+
+      <div class="item"><span class="ii">📈</span><div class="it"><b>Scalability</b>
+        <p>Add more stations across regions and the ecosystem keeps performing optimally — the same speed and accuracy whether it's a handful of stations or thousands.</p>
+        <span class="badge">10 → 10,000+ stations</span></div></div>
+
+      <div class="item"><span class="ii">🎯</span><div class="it"><b>Accuracy</b>
+        <p>Accurate predictions by <b style="color:var(--ink)">fusing three AI models</b> — sky-camera vision, sensor time-series and satellite/radar geospatial — instead of relying on one signal.</p>
+        <span class="badge">3-model fusion</span></div></div>
+
+      <div class="item"><span class="ii">⚡</span><div class="it"><b>Performance</b>
+        <p><b style="color:var(--ink)">Quick response</b> — readings are processed and warnings delivered within seconds, so alerts reach people while there's still time to act.</p>
+        <span class="badge">alerts in seconds</span></div></div>
+
+      <div class="item"><span class="ii">🔒</span><div class="it"><b>Security</b>
+        <p>The entire ecosystem is resilient to cyber attacks. Every station and the cloud sit on a <b style="color:var(--ink)">private VPN</b> — the same zero-trust approach proven in the <b style="color:var(--ink)">Leopard Detection System</b>.</p>
+        <span class="badge">Private VPN · zero-trust</span></div></div>
+    </div>
+
+    <!-- AI ECOSYSTEM -->
+    <div class="panel ai">
+      <div class="p-head"><span class="pi">🧠</span><h2>AI Ecosystem</h2></div>
+      <div class="p-sub">Everything the system is built from — the brains and the machinery:</div>
+
+      <div class="item"><span class="ii">🧠</span><div class="it"><b>AI</b>
+        <p>The intelligence — Vision, Time-Series and Geospatial models that learn storm patterns and predict thunderstorms.</p>
+        <span class="badge">Vision · Time-Series · Geospatial</span></div></div>
+
+      <div class="item"><span class="ii">🐧</span><div class="it"><b>Linux</b>
+        <p>The operating system it all runs on — the <b style="color:var(--ink)">most widely-used server OS</b>, powering the cloud and the stations.</p>
+        <span class="badge">server OS foundation</span></div></div>
+
+      <div class="item"><span class="ii">🖥️</span><div class="it"><b>Hardware</b>
+        <p>The <b style="color:var(--ink)">best hardware</b> for the job — GPU servers (like our data-centre AI-HPC server) that train the models and run predictions fast.</p>
+        <span class="badge">GPU · AI-HPC server</span></div></div>
+
+      <div class="item"><span class="ii">🐳</span><div class="it"><b>Docker</b>
+        <p>The <b style="color:var(--ink)">production deployment method</b> — package the app once and run it identically on any machine, from a laptop to the cloud.</p>
+        <span class="badge">build once · run anywhere</span></div></div>
+
+      <div class="item"><span class="ii">🌐</span><div class="it"><b>Technology Domain</b>
+        <p>Where the workloads actually run — <b style="color:var(--ink)">Edge / Cloud Computing</b>: sensors at the edge, heavy AI in the cloud.</p>
+        <span class="badge">Edge + Cloud</span></div></div>
+    </div>
+  </div>
+
+  <!-- RESULT -->
+  <div class="result">
+    <div class="ri">⛈️</div>
+    <div class="rt">
+      <b>A Thunderstorm Early-Warning System You Can Trust</b>
+      <p><b>Production Grade</b> makes it dependable — always on, accurate, fast and secure. The <b>AI Ecosystem</b> gives it the intelligence and the infrastructure. Together, that's a system the public and disaster authorities can rely on for <b>real early warning</b>, not just a demo.</p>
+    </div>
+    <div class="checks"><span class="chk">✓ 24/7</span><span class="chk">✓ Scales</span><span class="chk">✓ Accurate</span><span class="chk">✓ Fast</span><span class="chk">✓ Secure</span></div>
+  </div>
+</div>
+
+<script>
+// tiny live touch for the High-Availability strip
+setInterval(()=>{
+  const up=(99.90+Math.random()*0.09).toFixed(2);
+  const el=document.getElementById('ha-up'); if(el) el.textContent=up+'%';
+  // very rarely show a station briefly recovering
+  const c=document.getElementById('ha-count');
+  if(c){ if(Math.random()<0.12){ c.textContent='29 / 30'; c.style.color='var(--amber)'; setTimeout(()=>{ c.textContent='30 / 30'; c.style.color=''; },1600); } }
+}, 2600);
+</script>
+</body>
+</html>

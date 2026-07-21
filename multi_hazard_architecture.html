@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Weather Prediction System · Architecture</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+:root{
+  --bg:#070B12; --panel:#0E1622; --panel2:#121C2B; --line:#1E2C3F; --line-soft:#16212F;
+  --ink:#DCE6F2; --ink-dim:#7C8CA3; --ink-faint:#3D4F63;
+  --cyan:#38E1FF; --teal:#2DD4BF; --green:#4ADE80; --amber:#FBBF24; --violet:#A78BFA; --magenta:#E879F9; --rose:#FB5E6D; --orange:#FB923C; --blue:#5B9DFF; --storm:#FBBF24;
+}
+html,body{ min-height:100%; font-family:"Sora",sans-serif; background:var(--bg); color:var(--ink); }
+.top-header{ height:56px; background:linear-gradient(90deg,#08101E,#0A0F1A); border-bottom:1px solid var(--line);
+  display:flex; align-items:center; padding:0 20px; gap:12px; position:sticky; top:0; z-index:50; }
+.logo-glyph{ width:34px;height:34px;border-radius:9px; background:linear-gradient(150deg,rgba(251,191,36,.24),rgba(56,225,255,.12));
+  border:1px solid rgba(251,191,36,.45); display:grid; place-items:center; font-size:1.05rem; }
+.logo-txt b{ font-family:"Space Grotesk"; font-weight:700; font-size:1rem; }
+.logo-txt span{ display:block; font-size:.6rem; color:var(--ink-dim); letter-spacing:1.1px; text-transform:uppercase; }
+.hdr-spacer{ flex:1; }
+.home-btn{ font-family:"IBM Plex Mono"; font-size:.72rem; color:var(--cyan); text-decoration:none; border:1px solid rgba(56,225,255,.4); border-radius:8px; padding:6px 13px; } .home-btn:hover{ background:rgba(56,225,255,.12); }
+
+.wrap{ max-width:1200px; margin:0 auto; padding:18px 22px 34px; }
+.sec-title{ display:flex; align-items:center; gap:11px; margin:8px 0 14px; }
+.sec-title h2{ font-family:"Space Grotesk"; font-size:1.08rem; font-weight:600; }
+.sec-title .tag{ font-family:"IBM Plex Mono"; font-size:.64rem; color:var(--ink-dim); }
+
+/* ── block diagram ── */
+.diagram-frame{ overflow-x:auto; border:1px solid var(--line); border-radius:14px; background:radial-gradient(900px 420px at 35% 0%, rgba(56,225,255,.04), transparent 60%), var(--panel2); }
+.diagram{ position:relative; height:640px; min-width:1180px; }
+#linksvg{ position:absolute; inset:0; width:100%; height:100%; pointer-events:none; z-index:1; }
+.col-cap{ position:absolute; top:10px; transform:translateX(-50%); font-family:"IBM Plex Mono"; font-size:.62rem; letter-spacing:1px; text-transform:uppercase; color:var(--ink-faint); }
+.node{ position:absolute; transform:translate(-50%,-50%); z-index:2; background:linear-gradient(160deg,var(--panel),var(--panel2)); border:1.5px solid var(--line); border-radius:11px; padding:9px 12px; }
+.node .nh{ font-family:"Space Grotesk"; font-weight:600; font-size:.82rem; }
+.node .ns{ font-size:.6rem; color:var(--ink-dim); font-family:"IBM Plex Mono"; margin-top:2px; }
+/* inputs */
+.snode{ width:148px; display:flex; align-items:center; gap:9px; border-left:3px solid var(--cyan); padding:7px 11px; }
+.snode .ni{ font-size:1.1rem; } .snode span{ font-size:.76rem; font-weight:500; }
+.cam{ width:148px; border-color:rgba(167,139,250,.5); border-left:3px solid var(--violet); box-shadow:0 0 18px -12px var(--violet); }
+.cam .nh{ color:var(--violet); }
+/* weather station */
+.wnode{ width:168px; border-color:rgba(56,225,255,.5); box-shadow:0 0 24px -12px var(--cyan); text-align:center; }
+.wnode .nh{ color:var(--cyan); font-size:.9rem; } .wnode .nbadge{ display:inline-block; margin-top:7px; font-family:"IBM Plex Mono"; font-size:.55rem; color:var(--rose); border:1px solid rgba(251,94,109,.4); background:rgba(251,94,109,.08); border-radius:6px; padding:2px 8px; }
+/* satellite api */
+.sat{ width:196px; border-color:rgba(74,222,128,.5); box-shadow:0 0 24px -12px var(--green); text-align:center; }
+.sat .nh{ color:var(--green); } .sat .ns{ line-height:1.4; }
+/* cloud */
+.cnode{ width:246px; border-color:rgba(251,191,36,.5); box-shadow:0 0 32px -12px var(--storm); }
+.cnode .nh{ color:var(--storm); font-size:.95rem; text-align:center; margin-bottom:8px; }
+.cnode .sub{ display:flex; flex-direction:column; background:rgba(255,255,255,.02); border:1px solid var(--line); border-radius:8px; padding:7px 10px; margin-bottom:6px; font-size:.73rem; font-weight:600; }
+.cnode .sub small{ font-weight:400; color:var(--ink-dim); font-family:"IBM Plex Mono"; font-size:.58rem; margin-top:2px; }
+.cnode .sub.ai{ border-color:rgba(167,139,250,.5); background:rgba(167,139,250,.06); color:var(--violet); }
+.cnode .sub.fuse{ border-color:rgba(251,191,36,.5); background:rgba(251,191,36,.07); color:var(--storm); }
+.cnode .sub.alert{ border-color:rgba(251,94,109,.4); color:var(--rose); }
+/* mobile */
+.mnode{ width:148px; border-color:rgba(74,222,128,.5); box-shadow:0 0 24px -12px var(--green); text-align:center; }
+.mnode .nh{ color:var(--green); }
+.link-lbl{ position:absolute; z-index:3; font-family:"IBM Plex Mono"; font-size:.56rem; padding:2px 7px; border-radius:20px; transform:translate(-50%,-50%); white-space:nowrap; background:var(--bg); border:1px solid var(--line); }
+
+.note{ display:flex; gap:9px; align-items:flex-start; background:var(--panel); border:1px solid var(--line); border-left:3px solid var(--storm); border-radius:9px; padding:11px 14px; margin-top:16px; }
+.note p{ font-size:.76rem; color:var(--ink-dim); line-height:1.55; } .note b{ color:var(--ink); }
+.ai-legend{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-top:14px; }
+.ail{ border:1px solid var(--line); border-radius:11px; padding:12px 14px; background:var(--panel); border-top:3px solid var(--ac); }
+.ail b{ font-family:"Space Grotesk"; font-size:.9rem; color:var(--ac); } .ail p{ font-size:.72rem; color:var(--ink-dim); margin-top:4px; line-height:1.45; }
+
+/* ── live dashboard ── */
+.dash-status{ display:flex; align-items:center; gap:12px; background:linear-gradient(90deg,rgba(251,191,36,.10),transparent); border:1px solid rgba(251,191,36,.35); border-radius:12px; padding:11px 16px; margin-bottom:14px; }
+.dash-status .ds-ic{ font-size:1.6rem; } .dash-status b{ font-family:"Space Grotesk"; font-size:1.02rem; }
+.dash-status .lvl{ font-family:"IBM Plex Mono"; font-size:.72rem; font-weight:600; padding:4px 13px; border-radius:20px; margin-left:auto; }
+.dash-grid{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; }
+.mcard{ background:linear-gradient(160deg,var(--panel),var(--panel2)); border:1px solid var(--line); border-radius:11px; padding:12px 13px; }
+.mcard.star{ border-color:rgba(251,191,36,.5); box-shadow:0 0 18px -10px var(--storm); }
+.mcard .ml{ font-size:.6rem; color:var(--ink-dim); font-family:"IBM Plex Mono"; text-transform:uppercase; letter-spacing:.4px; }
+.mcard .mv{ font-family:"Space Grotesk"; font-weight:700; font-size:1.35rem; margin:2px 0 4px; line-height:1; }
+.mcard svg{ width:100%; height:32px; display:block; } .mcard polyline{ fill:none; stroke-width:2; }
+
+/* ── agent ── */
+.agent{ background:linear-gradient(160deg,rgba(167,139,250,.05),var(--panel)); border:1px solid rgba(167,139,250,.3); border-radius:16px; overflow:hidden; }
+.agent-head{ display:flex; align-items:center; gap:10px; padding:12px 16px; border-bottom:1px solid var(--line-soft); }
+.agent-head .ah-ic{ width:34px;height:34px;border-radius:9px; background:rgba(167,139,250,.15); border:1px solid rgba(167,139,250,.4); display:grid; place-items:center; font-size:1.1rem; }
+.agent-head b{ font-family:"Space Grotesk"; font-size:.9rem; } .agent-head span{ font-size:.6rem; color:var(--ink-dim); font-family:"IBM Plex Mono"; display:block; }
+.chat{ height:210px; overflow-y:auto; padding:14px 16px; display:flex; flex-direction:column; gap:10px; }
+.msg{ max-width:82%; padding:9px 13px; border-radius:12px; font-size:.82rem; line-height:1.5; }
+.msg.user{ align-self:flex-end; background:rgba(56,225,255,.12); border:1px solid rgba(56,225,255,.3); }
+.msg.bot{ align-self:flex-start; background:var(--panel); border:1px solid var(--line); } .msg.bot b{ color:var(--violet); }
+.quick{ display:flex; gap:7px; flex-wrap:wrap; padding:0 16px 10px; }
+.qchip{ font-family:"IBM Plex Mono"; font-size:.66rem; color:var(--cyan); border:1px solid rgba(56,225,255,.35); background:rgba(56,225,255,.05); border-radius:20px; padding:5px 11px; cursor:pointer; }
+.qchip:hover{ background:rgba(56,225,255,.14); }
+.chatbar{ display:flex; gap:8px; padding:12px 16px; border-top:1px solid var(--line-soft); }
+.chatbar input{ flex:1; background:#05090F; border:1px solid var(--line); color:var(--ink); border-radius:9px; padding:9px 12px; font-family:"Sora"; font-size:.82rem; }
+.chatbar button{ font-family:"Space Grotesk"; font-weight:600; font-size:.8rem; color:var(--bg); background:linear-gradient(90deg,var(--violet),var(--magenta)); border:none; border-radius:9px; padding:9px 16px; cursor:pointer; }
+@media (max-width:800px){ .dash-grid{ grid-template-columns:repeat(2,1fr); } .ai-legend{ grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+<div class="top-header">
+  <div class="logo-glyph">⛈️</div>
+  <div class="logo-txt"><b>Weather Prediction System</b><span>Architecture · 3 AI models · thunderstorm early warning</span></div>
+  <div class="hdr-spacer"></div>
+  <a href="production_thunderstorm.html" class="home-btn" style="margin-right:8px;color:var(--green);border-color:rgba(74,222,128,.45)">⚙️ Production-Grade →</a>
+  <a href="multi_hazard_ews.html" class="home-btn" style="margin-right:8px">◀ Hazard Predictor</a>
+  <a href="index.html" class="home-btn">← Suite Home</a>
+</div>
+
+<div class="wrap">
+
+  <!-- ══════ BLOCK DIAGRAM ══════ -->
+  <div class="sec-title"><h2>🏗️ System Architecture</h2><span class="tag">sky-cam + sensors → station → cloud (3 AIs + satellite API) → mobile alert</span></div>
+  <div class="diagram-frame">
+    <div class="diagram" id="diagram">
+      <svg id="linksvg"></svg>
+      <span class="col-cap" style="left:9.5%">Remote Site</span>
+      <span class="col-cap" style="left:29%">Weather Station</span>
+      <span class="col-cap" style="left:70%">Satellite API</span>
+      <span class="col-cap" style="left:70%;top:210px">Cloud Server</span>
+      <span class="col-cap" style="left:92%">Early Warning</span>
+
+      <!-- inputs: sky camera + sensors -->
+      <div class="node cam" id="cam" style="left:9.5%;top:90px"><div class="nh">📷 Sky Camera</div><div class="ns">cloud images of the sky</div></div>
+      <div class="node snode" id="s0" style="left:9.5%;top:175px"><span class="ni">🌡️</span><span>Temperature</span></div>
+      <div class="node snode" id="s1" style="left:9.5%;top:238px"><span class="ni">💧</span><span>Humidity</span></div>
+      <div class="node snode" id="s2" style="left:9.5%;top:301px"><span class="ni">🎚️</span><span>Air Pressure</span></div>
+      <div class="node snode" id="s3" style="left:9.5%;top:364px"><span class="ni">💨</span><span>Wind</span></div>
+      <div class="node snode" id="s4" style="left:9.5%;top:427px"><span class="ni">🌧️</span><span>Rainfall</span></div>
+      <div class="node snode" id="s5" style="left:9.5%;top:490px"><span class="ni">⚡</span><span>Lightning</span></div>
+
+      <!-- weather station -->
+      <div class="node wnode" id="station" style="left:29%;top:300px">
+        <div class="nh">🌦️ Weather Station</div>
+        <div class="ns">collects sensor readings &amp; sky-cam images</div>
+        <div class="nbadge">⛔ no edge processing</div>
+      </div>
+
+      <!-- satellite api (external) -->
+      <div class="node sat" id="sat" style="left:70%;top:80px">
+        <div class="nh">🛰️ Satellite / Radar API</div>
+        <div class="ns">cloud calls with <b style="color:var(--ink)">lat / long</b><br>→ returns satellite &amp; radar images</div>
+      </div>
+
+      <!-- cloud -->
+      <div class="node cnode" id="cloud" style="left:70%;top:400px">
+        <div class="nh">☁️ Cloud Server</div>
+        <div class="sub">🗄️ Data Storage<small>keeps all readings &amp; images</small></div>
+        <div class="sub ai" id="vis">🖼️ Vision AI<small>understands clouds from sky-cam</small></div>
+        <div class="sub ai" id="ts">📈 Time-Series AI<small>learns patterns from sensor data</small></div>
+        <div class="sub ai" id="geo">🛰️ Geospatial AI<small>reads radar &amp; satellite imagery</small></div>
+        <div class="sub fuse" id="pred">⊕ Fuse all 3 → ⛈️ Thunderstorm Prediction</div>
+        <div class="sub alert" id="alert">🚨 Alert Engine<small>early warning</small></div>
+      </div>
+
+      <!-- mobile -->
+      <div class="node mnode" id="mobile" style="left:92%;top:400px">
+        <div class="nh">📱 Mobile App</div>
+        <div class="ns">early-warning alert</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ai-legend">
+    <div class="ail" style="--ac:var(--violet)"><b>🖼️ Vision AI</b><p>Understands <b style="color:var(--ink)">clouds</b> from <b style="color:var(--ink)">sky-camera images</b> — spotting the tall, dark build-ups that mean storms.</p></div>
+    <div class="ail" style="--ac:var(--cyan)"><b>📈 Time-Series AI</b><p>Learns <b style="color:var(--ink)">patterns</b> from the <b style="color:var(--ink)">weather sensor data</b> over time — how temp, pressure &amp; humidity change before a storm.</p></div>
+    <div class="ail" style="--ac:var(--green)"><b>🛰️ Geospatial AI</b><p>Uses <b style="color:var(--ink)">radar &amp; satellite imagery</b> (fetched from the API by lat/long) to understand the <b style="color:var(--ink)">regional weather</b>.</p></div>
+  </div>
+
+  <div class="note"><span>💡</span><p><b>Three views, one forecast:</b> the sky-camera and sensors go to the <b>Weather Station</b> (no computing there) and up to the <b>cloud</b>, which also <b>calls a satellite/radar API using the station's lat/long</b> to pull regional imagery. In the cloud, <b>Vision AI</b> reads the clouds, <b>Time-Series AI</b> reads the sensor trends, and <b>Geospatial AI</b> reads the satellite picture — the three are <b>fused into one thunderstorm prediction</b>, and an alert is pushed to the mobile app.</p></div>
+
+  <!-- ══════ LIVE DASHBOARD ══════ -->
+  <div class="sec-title" style="margin-top:28px"><h2>📊 Live Weather Dashboard</h2><span class="tag">latest readings + the fused AI prediction</span></div>
+  <div class="dash-status"><span class="ds-ic" id="ds-ic">⛈️</span><div><b id="ds-txt">Thunderstorm risk building</b><span style="font-size:.62rem;color:var(--ink-dim);font-family:'IBM Plex Mono'" id="ds-sub">updated just now</span></div><span class="lvl" id="ds-lvl">ENHANCED</span></div>
+  <div class="dash-grid" id="dash-grid"></div>
+
+  <!-- ══════ AGENT ══════ -->
+  <div class="sec-title" style="margin-top:28px"><h2>🤖 Ask the Weather Agent</h2><span class="tag">ask about the weather in plain language, anytime</span></div>
+  <div class="agent">
+    <div class="agent-head"><span class="ah-ic">🤖</span><div><b>Weather Q&amp;A Agent</b><span>answers from the live station data</span></div></div>
+    <div class="chat" id="chat"></div>
+    <div class="quick" id="quick"></div>
+    <div class="chatbar"><input id="chat-in" placeholder="e.g. Will there be a thunderstorm today?"><button id="chat-send">Ask</button></div>
+  </div>
+</div>
+
+<script>
+const SVGNS="http://www.w3.org/2000/svg";
+const diagram=document.getElementById('diagram'), lsvg=document.getElementById('linksvg');
+function anchor(id,side){ const r=document.getElementById(id).getBoundingClientRect(), p=diagram.getBoundingClientRect();
+  if(side==='t') return {x:r.left+r.width/2-p.left, y:r.top-p.top};
+  if(side==='b') return {x:r.left+r.width/2-p.left, y:r.bottom-p.top};
+  return {x:(side==='r'? r.right : r.left)-p.left, y:r.top+r.height/2-p.top}; }
+const SENSORS=['s0','s1','s2','s3','s4','s5'];
+function path(d,stroke,w){ const e=document.createElementNS(SVGNS,'path'); e.setAttribute('d',d); e.setAttribute('fill','none'); e.setAttribute('stroke',stroke); e.setAttribute('stroke-width',w||1.4); e.setAttribute('stroke-dasharray','5 5'); lsvg.appendChild(e); }
+function lbl(id,x,y,txt,color){ let e=document.getElementById(id); if(!e){ e=document.createElement('div'); e.className='link-lbl'; e.id=id; diagram.appendChild(e); } e.textContent=txt; e.style.color=color; e.style.left=x+'px'; e.style.top=y+'px'; }
+function drawLinks(){
+  lsvg.innerHTML='';
+  const st=anchor('station','l');
+  SENSORS.forEach(s=>{ const a=anchor(s,'r'); const mx=(a.x+st.x)/2; path(`M ${a.x} ${a.y} C ${mx} ${a.y}, ${mx} ${st.y}, ${st.x} ${st.y}`,'rgba(56,225,255,.22)'); });
+  { const a=anchor('cam','r'); const mx=(a.x+st.x)/2; path(`M ${a.x} ${a.y} C ${mx} ${a.y}, ${mx} ${st.y}, ${st.x} ${st.y}`,'rgba(167,139,250,.3)'); }
+  { const A=anchor('station','r'), B=anchor('cloud','l'); path(`M ${A.x} ${A.y} L ${B.x} ${B.y}`,'rgba(45,212,191,.32)',1.8); }
+  { const A=anchor('sat','b'), B=anchor('cloud','t'); path(`M ${A.x} ${A.y} L ${B.x} ${B.y}`,'rgba(74,222,128,.34)',1.8);
+    lbl('l-req',(A.x+B.x)/2-42,(A.y+B.y)/2,'↑ lat/long','#FBBF24'); lbl('l-img',(A.x+B.x)/2+44,(A.y+B.y)/2,'↓ image','#4ADE80'); }
+  { const A=anchor('cloud','r'), B=anchor('mobile','l'); path(`M ${A.x} ${A.y} L ${B.x} ${B.y}`,'rgba(251,94,109,.34)',1.8); }
+}
+function pkt(fromId,fromSide,toId,toSide,color,dur){ const A=anchor(fromId,fromSide),B=anchor(toId,toSide);
+  const d=document.createElementNS(SVGNS,'circle'); d.setAttribute('r',3.8); d.setAttribute('fill',color); d.style.filter='drop-shadow(0 0 4px '+color+')'; lsvg.appendChild(d);
+  const t0=performance.now();
+  (function an(now){ let t=(now-t0)/dur; if(t>=1){ d.remove(); return; } const e=t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
+    d.setAttribute('cx',A.x+(B.x-A.x)*e); d.setAttribute('cy',A.y+(B.y-A.y)*e); requestAnimationFrame(an); })(t0);
+}
+let si=0;
+function boot(){
+  drawLinks();
+  setInterval(()=>{ const s=SENSORS[si%SENSORS.length]; si++; pkt(s,'r','station','l','#38E1FF',760); }, 430);
+  setInterval(()=>pkt('cam','r','station','l','#A78BFA',820), 1300);
+  setInterval(()=>pkt('station','r','cloud','l','#2DD4BF',950), 950);
+  setInterval(()=>{ pkt('cloud','t','sat','b','#FBBF24',720); setTimeout(()=>pkt('sat','b','cloud','t','#4ADE80',720),820); }, 2500);  // call lat/long ↑, image ↓
+  setInterval(()=>pkt('cloud','r','mobile','l','#FB5E6D',950), 2100);
+}
+window.addEventListener('resize', drawLinks);
+
+/* ── live dashboard ── */
+const METRICS=[
+  {k:'prob', l:'Thunderstorm Risk', unit:'%',    v:78,  min:45, max:94, color:'#FBBF24', star:true},
+  {k:'cloud',l:'Cloud Cover',       unit:' %',    v:80,  min:20, max:100, color:'#94a3b8'},
+  {k:'temp', l:'Temperature',       unit:' °C',   v:31,  min:24, max:37, color:'#FB923C'},
+  {k:'rh',   l:'Humidity',          unit:' %',    v:74,  min:45, max:94, color:'#5B9DFF'},
+  {k:'pres', l:'Air Pressure',      unit:' hPa',  v:1004,min:992,max:1014,color:'#38E1FF'},
+  {k:'wind', l:'Wind Speed',        unit:' km/h', v:24,  min:5,  max:58, color:'#A78BFA'},
+  {k:'rain', l:'Rainfall',          unit:' mm/h', v:6,   min:0,  max:40, color:'#2DD4BF'},
+  {k:'ltg',  l:'Lightning',         unit:' /min', v:14,  min:0,  max:34, color:'#FBBF24'},
+];
+const STATE={};
+function initDash(){ const g=document.getElementById('dash-grid'); if(!g) return; g.innerHTML='';
+  METRICS.forEach(m=>{ m.hist=[]; STATE[m.k]=m.v;
+    const c=document.createElement('div'); c.className='mcard'+(m.star?' star':'');
+    c.innerHTML=`<div class="ml">${m.l}</div><div class="mv" id="mv-${m.k}" style="color:${m.color}">—</div><svg viewBox="0 0 200 32" preserveAspectRatio="none"><polyline id="sp-${m.k}" style="stroke:${m.color}"/></svg>`;
+    g.appendChild(c); });
+  tickDash(); setInterval(tickDash,1500);
+}
+function tickDash(){
+  METRICS.forEach(m=>{ let v=m.v+(Math.random()-0.5)*(m.max-m.min)*0.09; v=Math.max(m.min,Math.min(m.max,v)); m.v=v; STATE[m.k]=v;
+    m.hist.push(v); if(m.hist.length>30)m.hist.shift();
+    const el=document.getElementById('mv-'+m.k); if(el) el.textContent=Math.round(v)+m.unit;
+    const sp=document.getElementById('sp-'+m.k); if(sp&&m.hist.length>1){ const n=m.hist.length;
+      sp.setAttribute('points', m.hist.map((val,i)=>`${(i/(n-1))*200},${32-((val-m.min)/(m.max-m.min))*28-2}`).join(' ')); }
+  });
+  const p=STATE.prob; let lvl,col,ic,txt;
+  if(p<55){lvl='LOW';col='#4ADE80';ic='🌤️';txt='Calm conditions';}
+  else if(p<70){lvl='MODERATE';col='#FBBF24';ic='🌧️';txt='Storms possible';}
+  else if(p<85){lvl='ENHANCED';col='#FB923C';ic='⛈️';txt='Thunderstorm risk building';}
+  else {lvl='SEVERE';col='#FB5E6D';ic='🌩️';txt='Severe thunderstorm imminent';}
+  const L=document.getElementById('ds-lvl'); if(L){ L.textContent=lvl; L.style.color=col; L.style.background=col+'22'; }
+  const I=document.getElementById('ds-ic'); if(I) I.textContent=ic;
+  const T=document.getElementById('ds-txt'); if(T) T.textContent=txt;
+}
+
+/* ── weather agent ── */
+const QUICK=['Will there be a thunderstorm?','How do the clouds look?','Is it safe outdoors?','How is the rain?','Wind & pressure?'];
+function initChat(){ const q=document.getElementById('quick'); if(!q) return;
+  QUICK.forEach(t=>{ const c=document.createElement('div'); c.className='qchip'; c.textContent=t; c.onclick=()=>ask(t); q.appendChild(c); });
+  addMsg('bot','Hi! I combine the sky-camera, sensor and satellite data. Ask me about the current weather or the thunderstorm risk — anytime.');
+  document.getElementById('chat-send').onclick=()=>{ const v=document.getElementById('chat-in').value.trim(); if(v)ask(v); };
+  document.getElementById('chat-in').addEventListener('keydown',e=>{ if(e.key==='Enter'){ const v=e.target.value.trim(); if(v)ask(v);} });
+}
+function addMsg(who,html){ const chat=document.getElementById('chat'); const d=document.createElement('div'); d.className='msg '+who; d.innerHTML=html; chat.appendChild(d); chat.scrollTop=chat.scrollHeight; }
+function ask(q){ addMsg('user',q); const inp=document.getElementById('chat-in'); if(inp)inp.value=''; setTimeout(()=>addMsg('bot',answer(q)),350); }
+function answer(q){ q=q.toLowerCase(); const S=STATE, r=Math.round;
+  const prob=r(S.prob),cloud=r(S.cloud),temp=r(S.temp),rh=r(S.rh),pres=r(S.pres),wind=r(S.wind),rain=r(S.rain),ltg=r(S.ltg);
+  const lvl= prob<55?'low': prob<70?'moderate': prob<85?'<b>enhanced</b>':'<b>severe</b>';
+  if(/cloud|sky|camera|overcast/.test(q)) return `📷 The sky-camera shows <b>${cloud}% cloud cover</b>${cloud>70?' — tall, dark build-ups that Vision AI links to storms.':' — mostly clear to partly cloudy.'}`;
+  if(/lightning|strike/.test(q)) return `⚡ Lightning is at <b>${ltg} strikes/min</b> right now — stay away from open areas and tall objects.`;
+  if(/safe|outdoor|outside|go out/.test(q)) return prob>=70? `Not advisable — thunderstorm risk is <b>${prob}%</b> (${lvl}). Best to stay indoors for the next few hours.` : `It's ${lvl} (${prob}%) — reasonably safe, but keep an eye on the sky.`;
+  if(/rain|flood|precip|downpour/.test(q)) return `🌧️ Rainfall is <b>${rain} mm/h</b>. ${rain>15?'Heavy — watch for local flooding.':'Light to moderate right now.'}`;
+  if(/wind|pressure|gust/.test(q)) return `💨 Wind is <b>${wind} km/h</b> and air pressure is <b>${pres} hPa</b>${pres<1000?' — falling pressure often means a storm is coming.':'.'}`;
+  if(/temp|humid|hot|feel/.test(q)) return `🌡️ It's <b>${temp}°C</b> with <b>${rh}%</b> humidity — warm and moist, which helps storms form.`;
+  if(/satellite|radar|region|geo/.test(q)) return `🛰️ Geospatial AI is reading the latest satellite &amp; radar imagery for the region (pulled by lat/long) — it factors into the ${lvl} risk.`;
+  return `⛈️ Right now the <b>thunderstorm risk is ${prob}%</b> (${lvl}) — combining sky-cam (${cloud}% cloud), sensors (temp ${temp}°C, pressure ${pres} hPa, rain ${rain} mm/h) and satellite imagery.`;
+}
+
+window.addEventListener('load', ()=>{ setTimeout(boot,60); initDash(); initChat(); });
+</script>
+</body>
+</html>
