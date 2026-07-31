@@ -1,0 +1,351 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>K3s Campus Cluster — Rack Topology</title>
+<style>
+ :root{--bg:#0A0E1A;--bg2:#0B1426;--panel:#0F1A30;--hair:#22344F;--text:#A6B8CE;--dim:#748097;--white:#F2F6FC;--cyan:#33DDFF;
+  --mono:ui-monospace,"JetBrains Mono",Menlo,Consolas,monospace;--sans:"Segoe UI",system-ui,-apple-system,Roboto,sans-serif;}
+ *{box-sizing:border-box}
+ html,body{margin:0;height:100%;background:radial-gradient(1500px 900px at 50% 30%,#10203a 0%,var(--bg2) 55%,var(--bg) 100%);
+   color:var(--text);font-family:var(--sans);overflow:hidden}
+ #app{position:fixed;inset:0;display:flex;flex-direction:column}
+ .topbar{display:flex;align-items:center;justify-content:space-between;padding:12px 22px;gap:16px;flex:0 0 auto;z-index:5}
+ .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.3em;color:var(--cyan);text-transform:uppercase;margin:0 0 4px}
+ h1{margin:0;font-size:24px;font-weight:800;color:var(--white);line-height:1.05}
+ .controls{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+ .btn{font-family:var(--mono);font-size:12px;color:var(--text);background:var(--panel);border:1px solid var(--hair);
+   border-radius:999px;padding:8px 14px;cursor:pointer;transition:.18s;user-select:none;white-space:nowrap}
+ .btn:hover{border-color:var(--cyan);color:var(--white)}
+ .btn.off{opacity:.42}
+ .btn .dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--cyan);margin-right:7px;vertical-align:middle;box-shadow:0 0 8px var(--cyan)}
+ .btn.off .dot{background:var(--dim);box-shadow:none}
+ .stage{position:relative;flex:1 1 auto;min-height:0}
+ svg#scene{width:100%;height:100%;display:block}
+ @keyframes march{to{stroke-dashoffset:-1000}}
+ @keyframes spinr{to{transform:rotate(-360deg)}}
+ @keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+ @keyframes glow{0%,100%{opacity:.18}50%{opacity:.5}}
+ .hub-wheel{transform-origin:var(--cx) var(--cy);animation:spinr 30s linear infinite}
+ .hub-glow{animation:glow 4s ease-in-out infinite}
+ .orch{stroke-dasharray:2 12;animation:march 3.4s linear infinite}
+ .commlink{animation:march 2s linear infinite}
+ .live-dot{animation:pulse 2.6s ease-in-out infinite}
+ .pkt{filter:drop-shadow(0 0 5px currentColor)}
+ .paused *{animation-play-state:paused!important}
+ .no-orch .orch{display:none}
+ .no-flow .flow{display:none}
+ .no-infra .infra{opacity:0}
+ .infra{transition:opacity .3s}
+ .lab{cursor:pointer}
+ .lab .lab-box{transition:.2s}
+ .lab:hover .lab-box{stroke-opacity:1;stroke-width:2.6}
+ .lab.sel .lab-box{stroke-opacity:1;stroke-width:3}
+ text{font-family:var(--mono);dominant-baseline:middle}
+ .t-name{font-family:var(--sans);font-weight:700}
+ @media (prefers-reduced-motion:reduce){*{animation:none!important}}
+
+ #allpanel{position:absolute;inset:0;background:rgba(8,12,22,.92);backdrop-filter:blur(4px);z-index:30;display:none;overflow:auto}
+ #allpanel.show{display:block}
+ .allhead{position:sticky;top:0;display:flex;justify-content:space-between;align-items:center;padding:15px 26px;background:rgba(10,15,26,.92);border-bottom:1px solid var(--hair)}
+ .allhead span{font-family:var(--mono);letter-spacing:.2em;text-transform:uppercase;color:var(--cyan);font-size:13px}
+ .allclose{cursor:pointer;font-family:var(--mono);font-size:13px;color:var(--text);border:1px solid var(--hair);border-radius:999px;padding:7px 15px}
+ .allclose:hover{border-color:var(--cyan);color:#fff}
+ .allgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;padding:22px 26px;max-width:1640px;margin:0 auto}
+ .allcard{background:linear-gradient(180deg,rgba(17,27,51,.96),rgba(12,20,38,.96));border:1px solid var(--hair);border-radius:12px;padding:16px 18px}
+ .allcard h3{margin:0;font-size:20px}
+ .allcard .meta{font-family:var(--mono);font-size:12px;color:#8fa3ba;margin:4px 0 9px}
+ .allcard .sum{font-size:14px;color:#c2cfdf;margin:0 0 12px;line-height:1.5}
+ .comp{display:flex;gap:11px;margin:10px 0}
+ .comp .cbadge{width:15px;height:17px;border-radius:3px;flex:0 0 auto;margin-top:3px;background:rgba(255,255,255,.03)}
+ .comp .cname{font-weight:700;font-size:14.5px;color:#eef4fb}
+ .comp .crole{font-family:var(--mono);font-size:11.5px;margin-left:7px}
+ .comp .cdesc{font-size:13.5px;color:#a6b8ce;line-height:1.5;margin-top:3px}
+
+ .tagline{margin:9px 0 0;font-size:15px;color:#b4c4d6;font-weight:500;line-height:1.45;max-width:960px;letter-spacing:.2px}
+ .hl-mark{color:#f5fbff;font-weight:700;padding:2px 8px;border-radius:6px;white-space:nowrap;
+   background:linear-gradient(100deg,transparent 33%,rgba(255,255,255,.6) 50%,transparent 67%) 0 0/240% 100% no-repeat,
+     linear-gradient(120deg,rgba(45,212,106,.34),rgba(51,221,255,.34));
+   background-blend-mode:screen;
+   box-shadow:inset 0 0 0 1px rgba(51,221,255,.38),0 0 16px rgba(51,221,255,.2);
+   animation:sweep 3.4s ease-in-out infinite}
+ @keyframes sweep{0%{background-position:240% 0,0 0}60%,100%{background-position:-70% 0,0 0}}
+ .hl-grad{font-weight:800;white-space:nowrap;
+   background:linear-gradient(90deg,#33DDFF,#2DD46A,#9B7BFF,#F0A24E,#33DDFF);
+   background-size:280% 100%;-webkit-background-clip:text;background-clip:text;
+   -webkit-text-fill-color:transparent;color:transparent;
+   animation:huegrad 7s linear infinite;filter:drop-shadow(0 0 6px rgba(80,180,255,.28))}
+ @keyframes huegrad{to{background-position:280% 0}}
+
+ .mark-line{color:#eaf3fb;padding:4px 12px;border-radius:8px;
+   -webkit-box-decoration-break:clone;box-decoration-break:clone;line-height:1.9;
+   background:linear-gradient(100deg,transparent 28%,rgba(255,255,255,.5) 50%,transparent 72%) 0 0/260% 100% no-repeat,
+     linear-gradient(120deg,rgba(45,212,106,.26),rgba(51,221,255,.26));
+   background-blend-mode:screen;
+   box-shadow:inset 0 0 0 1px rgba(51,221,255,.38),0 0 22px rgba(51,221,255,.22);
+   animation:sweep 3.8s ease-in-out infinite}
+ .hl-key{color:#ffffff;font-weight:800;text-shadow:0 0 10px rgba(45,212,106,.55)}
+</style></head>
+<body>
+<div id="app">
+ <div class="topbar">
+   <div><p class="eyebrow">AI-HPC Centre of Excellence · Live Topology</p><h1>K3s Campus Cluster</h1><p class="tagline"><span class="mark-line">Built on the college’s existing PCs — <b class="hl-key">zero new hardware</b> — one live cluster spanning <span class="hl-grad">8 production-grade software domains</span>.</span></p></div>
+   <div class="controls">
+     <div class="btn" data-t="flow"><span class="dot"></span>Data flow</div>
+     <div class="btn" data-t="orch"><span class="dot"></span>Orchestration</div>
+     <div class="btn" data-t="infra"><span class="dot"></span>Infrastructure</div>
+     <div class="btn" id="showall">Show all</div>
+     <div class="btn" data-t="pause">Pause</div>
+   </div>
+ </div>
+ <div class="stage"><svg id="scene" viewBox="0 0 1720 1160" preserveAspectRatio="xMidYMid meet"></svg><div id="allpanel"><div class="allhead"><span>All labs · components</span><div class="allclose" id="allclose">✕ Close</div></div><div class="allgrid" id="allgrid"></div></div></div>
+</div>
+<script>
+const NS="http://www.w3.org/2000/svg";
+const scene=document.getElementById("scene");
+function el(t,a={},p=scene){const n=document.createElementNS(NS,t);for(const k in a)n.setAttribute(k,a[k]);if(p)p.appendChild(n);return n;}
+function tx(x,y,s,a={},p=scene){const n=el("text",Object.assign({x,y},a),p);n.textContent=s;return n;}
+
+// ---- data (8 labs) ----
+const L={
+ systems:{name:"Systems Lab",abbr:"SYS",ns:"ns/systems",accent:"#9B7BFF",status:"live",nodes:4,
+   conts:[["dockeruser","docker.io","A dedicated Linux user with the docker.io runtime installed (no Docker Desktop). Students build images, run containers and learn the full container lifecycle here."],["python-demo","sysinfo","Sample Python and shell scripts that read live system parameters — CPU, memory and processes — so students practise scripting on a real machine."],["user-logins","home dirs","Individual WSL2 login accounts, each with a private home area for writing and running their own Linux and Python work."]],
+   desc:"Linux, Docker & Kubernetes on multi-user WSL2 logins; the dockeruser account teaches the full container lifecycle."},
+ aiml:{name:"Advanced AI/ML Lab",abbr:"ML",ns:"ns/aiml",accent:"#2DD46A",status:"live",nodes:4,gpu:true,
+   conts:[["vllm","local LLMs","A vLLM inference server hosting open-source LLMs (Llama 3, Mistral) locally for fast, private, high-throughput serving."],["mas-agents","call vLLM","Multi-agent containers that orchestrate reasoning and call the local vLLM endpoints, using RAG and tool / MCP workflows."],["classical-ml","sklearn/CV","Scikit-learn and computer-vision workloads covering classical ML and CV, from prototype training through to deployment."]],
+   desc:"Local LLMs served via vLLM, multi-agent containers that call them, and classical ML — backed by the L40S GPU."},
+ bigdata:{name:"Big Data Lab",abbr:"BD",ns:"ns/bigdata",accent:"#EE9900",status:"live",nodes:3,
+   conts:[["spark-master","driver","The Spark driver / master pod that schedules jobs and coordinates work across the cluster."],["spark-workers","executors","Spark executor pods that run PySpark tasks in parallel and scale out for large datasets, then scale back in when idle."]],
+   desc:"Apache Spark master + worker pods running real PySpark pipelines at scale."},
+ distsys:{name:"Distributed Systems Lab",abbr:"DS",ns:"ns/distsys",accent:"#F0A24E",status:"live",nodes:3,
+   conts:[["raft-pods","consensus","Raft / Paxos consensus pods — kill pods to watch leader election, fault-tolerance and recovery happen live."],["kv-store","state","A replicated key-value store that holds the agreed consensus state across the participating nodes."]],
+   desc:"Raft / Paxos pods across nodes — kill pods to watch fault-tolerance and recovery live."},
+ cyber:{name:"Cybersecurity Lab",abbr:"CS",ns:"ns/cyber",accent:"#F0556E",status:"live",nodes:3,
+   conts:[["pentest-pod","isolated","An isolated, air-gapped pod giving students a safe sandbox for penetration-testing exercises."],["vuln-scan","audit","A vulnerability-scanning and auditing container used for network-hardening and assessment drills."]],
+   desc:"Isolated, air-gapped namespace for safe penetration testing and network hardening."},
+ iot:{name:"IoT Lab",abbr:"IoT",ns:"ns/iot",accent:"#33DDFF",status:"live",nodes:3,input:"gateway",
+   conts:[["iot-platform","reads sensors","Ingests telemetry from the weather gateway over the LAN switch and normalises the raw sensor readings."],["dashboard","live UI","A web-dashboard container that pulls the live sensor data and renders the monitoring UI students open in a browser."]],
+   desc:"Weather gateway → LAN switch → iot-platform container → live dashboard UI."},
+ edge:{name:"Edge & Cloud Lab",abbr:"EDGE",ns:"ns/edge",accent:"#5599FF",status:"live",nodes:3,input:"ipcam",
+   conts:[["inference","CV frames","An edge container that processes IP-camera frames with computer-vision inference in real time."],["cloud-store","DB","A cloud / database container that stores the processed results and keeps event history."],["alerts","notify","Raises notifications to operators whenever the inference stage detects a noteworthy event."]],
+   desc:"IP-camera frames processed by an edge inference container, stored to a cloud DB, with alerts."},
+ ros:{name:"Robotics / ROS Lab",abbr:"ROS",ns:"ns/ros",accent:"#14C8B4",status:"live",nodes:3,
+   conts:[["gazebo-sim","physics","A Gazebo physics simulation of robots and their environment for safe, repeatable testing."],["ros2-nav","SLAM/Nav","ROS 2 nodes running SLAM, mapping and the navigation stack to drive the robot."],["rviz","viz","RViz visualisation of sensor data, maps and robot state for debugging and live demos."]],
+   desc:"ROS 2 with Gazebo simulation and RViz — robot modeling, SLAM and navigation."},
+};
+const TOP=["systems","aiml","bigdata","distsys"];
+const BOT=["cyber","iot","edge","ros"];
+const COL={live:"#2DD46A",progress:"#33DDFF",planned:"#8FA0B8"};
+L.systems.conts.reverse(); L.aiml.conts.reverse();
+
+// ---- geometry ----
+const VW=1720,VH=1080;
+const M=30;                       // outer margin
+const clX=M, clY=56, clW=VW-2*M, clH=780;   // cluster rectangle
+const padX=26, gap=26;
+const cols=4, labW=(clW-2*padX-(cols-1)*gap)/cols, labH=210;
+const CW=52, CHH=74;              // container object size
+const rowTopY=clY+40, rowBotY=clY+clH-labH-30;
+const colX=i=> clX+padX + i*(labW+gap);
+const HUBX=clX+clW/2, HUBY=(rowTopY+labH + rowBotY)/2;   // centre
+scene.style.setProperty("--cx",HUBX+"px");scene.style.setProperty("--cy",HUBY+"px");
+
+const defs=el("defs");
+defs.innerHTML=`<radialGradient id="hubg" cx="50%" cy="50%" r="50%">
+ <stop offset="0%" stop-color="#33DDFF" stop-opacity=".85"/><stop offset="55%" stop-color="#1c6f9c" stop-opacity=".3"/>
+ <stop offset="100%" stop-color="#0b1426" stop-opacity="0"/></radialGradient>`;
+
+// ---- fixed K3s cluster rectangle ----
+const clusterG=el("g");
+el("rect",{x:clX,y:clY,width:clW,height:clH,rx:16,fill:"rgba(10,17,30,.35)",stroke:"#213048","stroke-width":1},clusterG);
+el("rect",{x:clX,y:clY,width:clW,height:clH,rx:16,fill:"none",stroke:"#3A6E8C","stroke-width":2,"stroke-dasharray":"3 9"},clusterG);
+const clabW=470;
+el("rect",{x:clX+22,y:clY-16,width:clabW,height:32,rx:16,fill:"#0c1f30",stroke:"#3A6E8C","stroke-width":1.3},clusterG);
+tx(clX+22+clabW/2,clY,"⬡  K3s CLUSTER · 30 × WSL2 NODES · 2 SERVERS + AGENTS",{"text-anchor":"middle","font-size":13,fill:"#bfeeff","letter-spacing":"1.5"},clusterG);
+
+// ---- orchestration lines (added first, under boxes) ----
+const orchG=el("g");
+
+// ---- labs ----
+const labsG=el("g");
+const CPT={}; // container top-centre points for flows
+function drawLab(id,x,y){
+  const d=L[id]; const g=el("g",{class:"lab","data-id":id},labsG);
+  el("rect",{x,y,width:labW,height:labH,rx:12,fill:"rgba(13,22,40,.6)",stroke:"var(--hair)","stroke-width":1.2},g);
+  el("rect",{x,y,width:labW,height:labH,rx:12,fill:"none",stroke:d.accent,"stroke-width":1.8,
+     "stroke-dasharray":"4 6","stroke-opacity":d.status==="planned"?.55:.8,class:"lab-box"},g);
+  // header: badge + name + meta
+  el("rect",{x:x+16,y:y+15,width:34,height:34,rx:8,fill:"rgba(255,255,255,.05)",stroke:d.accent,"stroke-width":1.6},g);
+  tx(x+33,y+33,d.abbr,{"text-anchor":"middle","font-size":d.abbr.length>3?10:12,fill:d.accent,"font-weight":"700"},g);
+  tx(x+60,y+27,d.name,{"font-size":16.5,fill:"#dbe7f4","font-weight":"700",class:"t-name"},g);
+  const sc=COL[d.status], stt=d.status==="live"?"LIVE":d.status==="progress"?"BUILDING":"PLANNED";
+  tx(x+60,y+45,`${d.ns} · ${d.nodes} nodes${d.gpu?" · +GPU":""}`,{"font-size":11,fill:"#7f93aa"},g);
+  const pw=stt.length*7+16;
+  el("rect",{x:x+labW-pw-14,y:y+17,width:pw,height:18,rx:9,fill:"none",stroke:sc,"stroke-width":1.2,"stroke-opacity":.85},g);
+  tx(x+labW-pw/2-14,y+26.5,stt,{"text-anchor":"middle","font-size":10,fill:sc,"letter-spacing":"1"},g);
+  // containers as vertical objects
+  const n=d.conts.length, slot=(labW-24)/n, cw=CW, chh=CHH, topY=y+72;
+  CPT[id]=[];
+  d.conts.forEach((c,i)=>{
+    const sx=x+12+slot*i+slot/2;         // slot centre
+    const bx=sx-cw/2, by=topY;
+    el("rect",{x:bx,y:by,width:cw,height:chh,rx:7,fill:"rgba(255,255,255,.04)",stroke:d.accent,"stroke-width":1.7,"stroke-opacity":.9},g);
+    // container "lid" slats
+    el("line",{x1:bx+9,y1:by+15,x2:bx+cw-9,y2:by+15,stroke:d.accent,"stroke-width":1.4,"stroke-opacity":.7},g);
+    el("line",{x1:bx+9,y1:by+23,x2:bx+cw-9,y2:by+23,stroke:d.accent,"stroke-width":1.4,"stroke-opacity":.45},g);
+    // status dot
+    el("circle",{cx:bx+cw-11,cy:by+11,r:3.6,fill:sc,class:d.status!=="planned"?"live-dot":""},g);
+    tx(bx+cw/2,by+50,"▤",{"text-anchor":"middle","font-size":15,fill:d.accent,"fill-opacity":.5},g);
+    // name + role under the object
+    tx(sx,by+chh+16,c[0],{"text-anchor":"middle","font-size":11.5,fill:"#e4eef8"},g);
+    tx(sx,by+chh+31,c[1],{"text-anchor":"middle","font-size":9.5,fill:"#71839c"},g);
+    CPT[id].push([sx,by]);
+  });
+  // orchestration line hub -> this box (near edge facing hub)
+  const edgeY = (y<HUBY)? y+labH : y;   // top-row: bottom edge; bottom-row: top edge
+  el("line",{x1:HUBX,y1:HUBY,x2:x+labW/2,y2:edgeY,class:"orch",stroke:d.accent,"stroke-width":1.6,"stroke-opacity":.5},orchG);
+  // click opens the full-width detail card
+  g.addEventListener("click",(e)=>{e.stopPropagation();select(id);});
+  return {x,y};
+}
+TOP.forEach((id,i)=>drawLab(id,colX(i),rowTopY));
+BOT.forEach((id,i)=>drawLab(id,colX(i),rowBotY));
+
+// ---- infrastructure (side gutters) ----
+const infra=el("g",{class:"infra"});
+function chip(x,y,title,sub,color){
+  el("line",{x1:x<HUBX?x+80:x-80,y1:y,x2:HUBX,y2:HUBY,stroke:color,"stroke-width":1.3,"stroke-dasharray":"4 7","stroke-opacity":.4},infra);
+  el("rect",{x:x-78,y:y-26,width:156,height:52,rx:10,fill:"rgba(255,255,255,.04)",stroke:color,"stroke-width":1.5,"stroke-opacity":.85},infra);
+  tx(x,y-5,title,{"text-anchor":"middle","font-size":13,fill:"#e2edf7","font-weight":"700"},infra);
+  tx(x,y+13,sub,{"text-anchor":"middle","font-size":10.5,fill:"#7f93aa"},infra);
+}
+chip(clX+96,HUBY-40,"Shared storage","PV / NFS · homes · DBs","#9B7BFF");
+chip(clX+96,HUBY+40,"Local registry","dockeruser images","#2DD46A");
+chip(clX+clW-96,HUBY-40,"GPU · L40S","~13K CUDA · AI/ML","#2DD46A");
+chip(clX+clW-96,HUBY+40,"Observability","Prometheus · Grafana","#F0A24E");
+
+// ---- hub (control plane, centre) ----
+const hub=el("g");
+el("circle",{cx:HUBX,cy:HUBY,r:120,fill:"url(#hubg)",class:"hub-glow"},hub);
+const wheel=el("g",{class:"hub-wheel"},hub);
+for(let i=0;i<8;i++){const a=i*Math.PI/4,ex=HUBX+56*Math.cos(a),ey=HUBY+56*Math.sin(a);
+  el("line",{x1:HUBX,y1:HUBY,x2:ex,y2:ey,stroke:"#2b6f92","stroke-width":2.4},wheel);el("circle",{cx:ex,cy:ey,r:4.5,fill:"#33DDFF"},wheel);}
+el("circle",{cx:HUBX,cy:HUBY,r:60,fill:"none",stroke:"#33DDFF","stroke-width":2.4,"stroke-opacity":.7},hub);
+el("circle",{cx:HUBX,cy:HUBY,r:44,fill:"#0c1f33",stroke:"#33DDFF","stroke-width":2},hub);
+tx(HUBX,HUBY-6,"K3s",{"text-anchor":"middle","font-size":24,fill:"#EAF7FF","font-weight":"800",class:"t-name"},hub);
+tx(HUBX,HUBY+14,"control plane",{"text-anchor":"middle","font-size":11,fill:"#8fcbe0","letter-spacing":"1.5"},hub);
+[[-1,"server-1"],[1,"server-2"]].forEach(([s,lbl])=>{const bx=HUBX+s*96-20,by=HUBY-96;
+  el("rect",{x:bx,y:by,width:40,height:26,rx:6,fill:"rgba(51,221,255,.13)",stroke:"#33DDFF","stroke-width":1.6},hub);
+  tx(bx+20,by+13,"⬡",{"text-anchor":"middle","font-size":13,fill:"#33DDFF"},hub);
+  tx(bx+20,by-9,lbl,{"text-anchor":"middle","font-size":9.5,fill:"#7fa6c2"},hub);});
+
+// ---- physical layer: switch + devices on central spine ----
+const phys=el("g");
+const SW=[HUBX,HUBY+98], GW=[HUBX-128,HUBY+18], CAM=[HUBX+128,HUBY+18];
+el("rect",{x:SW[0]-92,y:SW[1]-20,width:184,height:40,rx:9,fill:"#0d1b2e",stroke:"#33DDFF","stroke-width":1.8},phys);
+tx(SW[0],SW[1]-2,"LAN SWITCH",{"text-anchor":"middle","font-size":13,fill:"#EAF7FF","font-weight":"800","letter-spacing":"1.5"},phys);
+tx(SW[0],SW[1]+12,"campus network",{"text-anchor":"middle","font-size":9,fill:"#7f93aa"},phys);
+function dev(p,icon,label){el("circle",{cx:p[0],cy:p[1],r:24,fill:"rgba(240,162,78,.1)",stroke:"#F0A24E","stroke-width":1.7},phys);
+  tx(p[0],p[1],icon,{"text-anchor":"middle","font-size":16},phys);
+  tx(p[0],p[1]-38,label,{"text-anchor":"middle","font-size":10.5,fill:"#f4dcb8","font-weight":"700"},phys);}
+dev(GW,"📡","Weather Gateway");dev(CAM,"🎥","IP Camera");
+function P(a){return "M"+a.map(p=>p.join(",")).join(" L");}
+const iotP=CPT.iot[0], iotD=CPT.iot[1], edI=CPT.edge[0], edC=CPT.edge[1], edA=CPT.edge[2];
+const flows=[
+ [P([GW,[GW[0]+40,SW[1]],SW]),"#F0A24E",2.4,0],
+ [P([CAM,[CAM[0]-40,SW[1]],SW]),"#F0A24E",2.4,.6],
+ [P([SW,[iotP[0],SW[1]+40],iotP]),"#33DDFF",2.4,2.2],
+ [P([iotP,[iotP[0],iotP[1]-24],[iotD[0],iotD[1]-24],iotD]),"#33DDFF",1.6,4.2],
+ [P([SW,[edI[0],SW[1]+40],edI]),"#5599FF",2.4,2.8],
+ [P([edI,[edI[0],edI[1]-22],[edC[0],edC[1]-22],edC]),"#5599FF",1.5,4.8],
+ [P([edC,[edC[0],edC[1]-22],[edA[0],edA[1]-22],edA]),"#5599FF",1.5,6],
+];
+flows.forEach(([d,c])=>el("path",{d,fill:"none",stroke:c,"stroke-width":1.6,"stroke-opacity":.28,class:"flow"},phys));
+flows.forEach(([d,c,dur,beg])=>{const g=el("g",{class:"flow"},phys);const dot=el("circle",{r:5,fill:c,class:"pkt",color:c},g);
+  el("animateMotion",{dur:dur+"s",repeatCount:"indefinite",path:d,begin:beg+"s"},dot);});
+
+// ---- animated communication BETWEEN containers inside each lab ----
+const labFlows={
+ systems:{h:[[0,1],[1,2]],bi:false}, aiml:{h:[[1,2]],bi:true},  bigdata:{h:[[0,1]],bi:true},
+ distsys:{h:[[0,1]],bi:true},        cyber:{h:[[0,1]],bi:false}, iot:{h:[[0,1]],bi:false},
+ edge:{h:[[0,1],[1,2]],bi:false},    ros:{h:[[0,1],[1,2]],bi:false}
+};
+Object.keys(labFlows).forEach(id=>{
+  const d=L[id], pts=CPT[id]; if(!pts||pts.length<2)return;
+  const midY=pts[0][1]+CHH/2;
+  labFlows[id].h.forEach(([i,j],k)=>{
+    const ax=pts[i][0]+CW/2+2, bx=pts[j][0]-CW/2-2;
+    const fwd="M"+ax+","+midY+" L"+bx+","+midY, rev="M"+bx+","+midY+" L"+ax+","+midY;
+    el("path",{d:fwd,fill:"none",stroke:d.accent,"stroke-width":1.6,"stroke-opacity":.5,"stroke-dasharray":"2 5",class:"flow commlink"},phys);
+    const g=el("g",{class:"flow"},phys);
+    const dot=el("circle",{r:4.5,fill:d.accent,class:"pkt",color:d.accent},g);
+    el("animateMotion",{dur:"1.5s",repeatCount:"indefinite",path:fwd,begin:(k*0.55)+"s"},dot);
+    if(labFlows[id].bi){
+      const g2=el("g",{class:"flow"},phys);
+      const dot2=el("circle",{r:4.5,fill:d.accent,class:"pkt",color:d.accent},g2);
+      el("animateMotion",{dur:"1.5s",repeatCount:"indefinite",path:rev,begin:"0.75s"},dot2);
+    }
+  });
+});
+
+// ---- full-width detail card (click a lab to populate) ----
+function wrap(str,max){const w=str.split(" "),out=[];let ln="";for(const word of w){if((ln+" "+word).trim().length>max){out.push(ln.trim());ln=word;}else ln+=" "+word;}if(ln.trim())out.push(ln.trim());return out;}
+const cardX=clX, cardW=clW, cardY=clY+clH+18, cardH=290;
+const detail=el("g");
+el("rect",{x:cardX,y:cardY,width:cardW,height:cardH,rx:14,fill:"rgba(12,20,38,.8)",stroke:"var(--hair)","stroke-width":1.3},detail);
+const dInner=el("g",{},detail);
+function clearD(){while(dInner.firstChild)dInner.removeChild(dInner.firstChild);}
+function hintD(){clearD();
+  tx(cardX+cardW/2,cardY+cardH/2-8,"\u25F1  Click any lab card above",{"text-anchor":"middle","font-size":17,fill:"#8296ad","font-weight":"700"},dInner);
+  tx(cardX+cardW/2,cardY+cardH/2+18,"Its components \u2014 and what each one does \u2014 will appear here, full width.",{"text-anchor":"middle","font-size":12.5,fill:"#63748c"},dInner);
+}
+function tspanLine(x,y,parts){const t=el("text",{x,y},dInner);parts.forEach(pp=>{const sp=document.createElementNS(NS,"tspan");for(const k in pp.a)sp.setAttribute(k,pp.a[k]);sp.textContent=pp.t;t.appendChild(sp);});return t;}
+function buildDetail(id){
+  clearD(); const d=L[id]; const px0=cardX+36; const SS="font-family:var(--sans)";
+  el("rect",{x:cardX+15,y:cardY+18,width:6,height:cardH-36,rx:3,fill:d.accent},dInner);
+  tx(px0,cardY+40,d.name,{"font-size":26,fill:d.accent,"font-weight":"800",class:"t-name"},dInner);
+  tx(px0,cardY+66,d.ns+"    ·    "+d.nodes+" WSL2 nodes"+(d.gpu?"    ·    +GPU (L40S)":"")+"    ·    LIVE",{"font-size":14,fill:"#93a7be"},dInner);
+  tx(px0,cardY+92,d.desc,{"font-size":15,fill:"#c2cfdf",style:SS},dInner);
+  el("line",{x1:px0,y1:cardY+110,x2:cardX+cardW-26,y2:cardY+110,stroke:"var(--hair)","stroke-width":1},dInner);
+  tx(px0,cardY+132,"CONTAINERS / COMPONENTS",{"font-size":12,fill:"#7f8ea3","letter-spacing":"2.5"},dInner);
+  const n=d.conts.length, pad=36, innerW=cardW-2*pad, colW=innerW/n, textW=colW-30;
+  const cpl=Math.max(24,Math.floor(textW/7.4));
+  d.conts.forEach((c,i)=>{
+    const cx0=px0+i*colW;
+    if(i>0) el("line",{x1:cx0-18,y1:cardY+146,x2:cx0-18,y2:cardY+cardH-18,stroke:"var(--hair)","stroke-width":1,"stroke-opacity":.5},dInner);
+    el("rect",{x:cx0,y:cardY+150,width:15,height:17,rx:3,fill:"none",stroke:d.accent,"stroke-width":1.8},dInner);
+    tspanLine(cx0+26,cardY+159,[{t:c[0],a:{fill:"#eef4fb","font-weight":"700","font-size":"17",style:SS}},{t:"· "+c[1],a:{fill:d.accent,"font-size":"12.5",dx:"10"}}]);
+    wrap(c[2]||"", cpl).slice(0,5).forEach((ln,k)=>tx(cx0+2,cardY+186+k*20,ln,{"font-size":13.5,fill:"#a6b8ce",style:SS},dInner));
+  });
+}
+let selId=null;
+function select(id){selId=id;document.querySelectorAll(".lab").forEach(g=>g.classList.toggle("sel",g.dataset.id===id));buildDetail(id);}
+hintD();
+
+// assemble draw order
+scene.append(clusterG,orchG,infra,labsG,hub,phys,detail);
+scene.addEventListener("click",()=>{selId=null;document.querySelectorAll(".lab").forEach(g=>g.classList.remove("sel"));hintD();});
+
+// toggles
+document.querySelectorAll(".btn[data-t]").forEach(b=>{const t=b.dataset.t;
+ b.addEventListener("click",()=>{
+   if(t==="pause"){const p=scene.classList.toggle("paused");b.textContent=p?"Play":"Pause";
+     if(p)scene.pauseAnimations&&scene.pauseAnimations();else scene.unpauseAnimations&&scene.unpauseAnimations();return;}
+   b.classList.toggle("off");scene.classList.toggle("no-"+t,b.classList.contains("off"));});
+});
+
+// ---- Show all overlay ----
+const ORDER=[...TOP,...BOT];
+function esc(x){return (x||"").replace(/&/g,"&amp;").replace(/</g,"&lt;");}
+function buildAll(){
+  const g=document.getElementById("allgrid"); g.innerHTML="";
+  ORDER.forEach(id=>{const d=L[id];
+    const comps=d.conts.map(c=>`<div class="comp"><span class="cbadge" style="border:1.8px solid ${d.accent}"></span><div><span class="cname">${esc(c[0])}</span><span class="crole" style="color:${d.accent}">\u00B7 ${esc(c[1])}</span><div class="cdesc">${esc(c[2])}</div></div></div>`).join("");
+    const card=document.createElement("div"); card.className="allcard"; card.style.borderLeft="4px solid "+d.accent;
+    card.innerHTML=`<h3 style="color:${d.accent}">${esc(d.name)}</h3><div class="meta">${esc(d.ns)} \u00B7 ${d.nodes} WSL2 nodes${d.gpu?" \u00B7 +GPU":""} \u00B7 LIVE</div><div class="sum">${esc(d.desc)}</div>${comps}`;
+    g.appendChild(card);
+  });
+}
+const allp=document.getElementById("allpanel");
+document.getElementById("showall").addEventListener("click",()=>{buildAll();allp.classList.add("show");});
+document.getElementById("allclose").addEventListener("click",()=>allp.classList.remove("show"));
+allp.addEventListener("click",e=>{if(e.target===allp)allp.classList.remove("show");});
+</script></body></html>
