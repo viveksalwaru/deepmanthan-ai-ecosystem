@@ -1,0 +1,197 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DeepManthan AI · WhatsApp — a Production-Grade Ecosystem, live</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&family=Sora:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{ --bg:#070B12; --panel:#0E1622; --panel2:#111a28; --line:#1E2C3F; --ink:#DCE6F2; --ink2:#A0D8FF; --dim:#7C8CA3; --cyan:#38E1FF; --teal:#2DD4BF; --violet:#A78BFA; --green:#4ADE80; --amber:#FBBF24; --wa:#25D366; }
+*{ box-sizing:border-box; }
+body{ margin:0; background:radial-gradient(1200px 700px at 80% -5%, #10261b 0%, transparent 55%), radial-gradient(1000px 600px at 0% 0%, #10202e 0%, transparent 50%), var(--bg); color:var(--ink); font-family:"Sora",system-ui,sans-serif; padding-bottom:34px; }
+a{ text-decoration:none; }
+.slim{ display:flex; align-items:center; gap:12px; padding:12px 22px; border-bottom:1px solid var(--line); background:rgba(9,13,20,.7); position:sticky; top:0; z-index:20; }
+.slim .lg{ width:30px;height:30px;border-radius:8px;display:grid;place-items:center;font-size:18px;background:linear-gradient(150deg,rgba(37,211,102,.25),rgba(45,212,191,.12));border:1px solid rgba(37,211,102,.4); }
+.slim b{ font-family:"Space Grotesk"; color:#fff; }
+.slim .back{ margin-left:auto; font-family:"IBM Plex Mono"; font-size:.72rem; color:var(--dim); border:1px solid var(--line); border-radius:999px; padding:7px 13px; }
+.slim .back:hover{ color:#fff; border-color:var(--wa); }
+.hero{ text-align:center; padding:22px 22px 4px; max-width:900px; margin:0 auto; }
+.hero .eyebrow{ font-family:"IBM Plex Mono"; font-size:.7rem; letter-spacing:3px; text-transform:uppercase; color:var(--wa); }
+.hero h1{ font-family:"Space Grotesk"; font-size:clamp(2rem,4.6vw,2.9rem); margin:12px 0 8px; color:#fff; }
+.hero h1 .wa{ color:var(--wa); }
+.hero p{ color:var(--dim); max-width:700px; margin:0 auto; font-size:1.08rem; }
+.caps{ display:grid; grid-template-columns:repeat(5,1fr); gap:14px; max-width:1080px; margin:20px auto 6px; padding:0 20px; }
+.cap{ background:var(--panel2); border:1px solid var(--line); border-radius:14px; padding:20px 12px; text-align:center; transition:.25s; }
+.cap.active{ border-color:var(--wa); box-shadow:0 0 26px -6px var(--wa); transform:translateY(-4px); }
+.cap .ci{ font-size:1.9rem; } .cap .cv{ font-family:"Space Grotesk"; font-weight:700; color:#fff; font-size:1.5rem; margin-top:5px; } .cap .cl{ color:var(--dim); font-size:.76rem; text-transform:uppercase; letter-spacing:.5px; margin-top:4px; }
+.scene{ position:relative; display:flex; align-items:center; justify-content:space-between; gap:32px; max-width:1080px; margin:16px auto; padding:10px 20px; }
+.phone{ width:210px; flex:0 0 auto; background:#0b141a; border:2px solid #1f2c33; border-radius:28px; padding:11px; box-shadow:0 16px 40px -14px #000; }
+.phone .top{ height:32px; background:var(--wa); border-radius:17px 17px 5px 5px; margin:-11px -11px 8px; display:flex; align-items:center; gap:8px; padding:0 13px; font-size:.78rem; color:#04321c; font-weight:700; }
+.phone .top .av{ width:18px;height:18px;border-radius:50%;background:#04321c33;display:grid;place-items:center;font-size:.72rem; }
+.phone .screen{ height:360px; overflow:hidden; display:flex; flex-direction:column; gap:7px; padding:8px; background:linear-gradient(#0c1a12,#0a1410); border-radius:5px 5px 15px 15px; }
+.bub{ max-width:82%; font-size:.82rem; padding:8px 12px; border-radius:12px; line-height:1.35; animation:pop .25s ease; }
+.bub.out{ align-self:flex-end; background:#075E54; color:#eafff5; border-bottom-right-radius:2px; }
+.bub.in{ align-self:flex-start; background:#1f2c33; color:#e7eef2; border-bottom-left-radius:2px; }
+.bub .tick{ margin-left:6px; font-size:.76rem; color:#8aa; }
+.bub .tick.read{ color:#53bdeb; }
+@keyframes pop{ from{ transform:scale(.9); opacity:0; } to{ transform:scale(1); opacity:1; } }
+.cluster{ display:flex; flex-direction:column; gap:11px; align-items:center; position:relative; }
+.clabel{ font-family:"IBM Plex Mono"; font-size:.78rem; color:var(--wa); text-transform:uppercase; letter-spacing:1px; margin-bottom:3px; }
+.node{ width:216px; background:var(--panel); border:1px solid #22384a; border-radius:13px; padding:12px 16px; animation:npulse 3s ease-in-out infinite; }
+.node:nth-child(3){ animation-delay:.6s; } .node:nth-child(4){ animation-delay:1.2s; } .node:nth-child(5){ animation-delay:1.8s; }
+.node .nh{ display:flex; align-items:center; gap:9px; font-size:.86rem; color:var(--ink); font-family:"IBM Plex Mono"; }
+.node .dot{ width:11px;height:11px;border-radius:50%;background:var(--green); box-shadow:0 0 9px var(--green); }
+.node .load{ height:7px; background:#182430; border-radius:4px; margin-top:10px; overflow:hidden; } .node .load i{ display:block; height:100%; width:18%; background:linear-gradient(90deg,var(--wa),var(--teal)); transition:width .9s ease; }
+.node.down{ border-color:#f2555a; opacity:.55; animation:none; } .node.down .dot{ background:#f2555a; box-shadow:0 0 8px #f2555a; } .node.down .nh .st{ margin-left:auto; color:#f2555a; }
+.node .nh .st{ margin-left:auto; color:var(--green); font-size:.74rem; }
+@keyframes npulse{ 0%,100%{ box-shadow:0 0 22px -12px var(--wa); } 50%{ box-shadow:0 0 32px -6px var(--wa); } }
+.packets{ position:absolute; inset:0; pointer-events:none; z-index:5; }
+.packet{ position:absolute; top:0; left:0; display:inline-flex; align-items:center; gap:6px; font-family:"IBM Plex Mono"; font-size:.78rem; font-weight:600; color:#04321c; background:var(--wa); border-radius:20px; padding:7px 13px; box-shadow:0 0 18px -2px var(--wa); white-space:nowrap; }
+.packet.sec{ background:#0b1220; color:#7CFFB0; border:1px solid var(--wa); box-shadow:0 0 18px -4px var(--wa); }
+.req{ position:absolute; top:0; left:0; width:6px; height:6px; border-radius:50%; background:var(--wa); box-shadow:0 0 9px var(--wa); transition:opacity .18s; }
+.req.c2{ background:var(--cyan); box-shadow:0 0 9px var(--cyan); }
+.ripple{ position:absolute; width:10px; height:10px; margin:-5px; border:2px solid var(--wa); border-radius:50%; pointer-events:none; animation:rip .5s ease-out forwards; }
+@keyframes rip{ from{ transform:scale(.4); opacity:.8; } to{ transform:scale(3.6); opacity:0; } }
+.node.busy{ border-color:var(--wa); animation:nbusy .45s ease-in-out infinite; }
+@keyframes nbusy{ 0%,100%{ box-shadow:0 0 24px -8px var(--wa); } 50%{ box-shadow:0 0 46px 0 var(--wa); } }
+.reqrate{ position:absolute; top:-6px; left:50%; transform:translateX(-50%); background:#0b1220; border:1px solid var(--wa); color:var(--wa); font-family:"IBM Plex Mono"; font-weight:600; font-size:.92rem; padding:6px 15px; border-radius:20px; opacity:0; transition:opacity .3s; white-space:nowrap; box-shadow:0 0 22px -4px var(--wa); z-index:9; top:-10px; }
+.reqrate.show{ opacity:1; }
+.controls{ display:flex; flex-wrap:wrap; gap:12px; justify-content:center; margin:16px auto 0; max-width:1040px; padding:0 20px; }
+.btn{ font-family:"Space Grotesk"; font-weight:600; font-size:1rem; border:1px solid var(--line); background:var(--panel2); color:var(--ink); border-radius:11px; padding:14px 22px; cursor:pointer; transition:.15s; }
+.btn:hover{ border-color:var(--wa); color:#fff; transform:translateY(-2px); }
+.btn.primary{ background:var(--wa); color:#04321c; border-color:var(--wa); }
+.btn.primary:hover{ filter:brightness(1.06); }
+.legend{ text-align:center; color:var(--dim); font-size:.92rem; margin:18px auto 10px; max-width:720px; padding:0 20px; }
+.toast{ width:fit-content; max-width:820px; margin:6px auto 0; background:#0b1220; border:1px solid var(--wa); color:#eafff5; padding:15px 26px; border-radius:14px; font-size:1.06rem; font-weight:500; opacity:0; transition:opacity .3s; box-shadow:0 14px 40px -10px #000; text-align:center; }
+.toast.show{ opacity:1; }
+@media(max-width:760px){ .caps{ grid-template-columns:repeat(2,1fr); } .scene{ flex-direction:column; } .packets{ display:none; } }
+</style></head>
+<body>
+<div class="slim"><div class="lg">🧩</div><b>DeepManthan AI</b><a class="back" href="production_ai_ecosystem.html">← Back to the explainer</a></div>
+
+<header class="hero">
+  <div class="eyebrow">Production-Grade AI Ecosystem · live</div>
+  <h1>The app you already trust: <span class="wa">WhatsApp</span></h1>
+  <p>It's not "just an app" — it's a production-grade system. Press a button and watch it prove each capability: fast, accurate, always-on, massively scalable, and secure.</p>
+</header>
+
+<div class="caps">
+  <div class="cap" id="cap-fast"><div class="ci">⚡</div><div class="cv" id="mFast">48 ms</div><div class="cl">Fast</div></div>
+  <div class="cap" id="cap-acc"><div class="ci">✓✓</div><div class="cv" id="mAcc">100%</div><div class="cl">Accurate</div></div>
+  <div class="cap" id="cap-avail"><div class="ci">🟢</div><div class="cv" id="mAvail">99.99%</div><div class="cl">Available 24/7</div></div>
+  <div class="cap" id="cap-scale"><div class="ci">👥</div><div class="cv" id="mScale">1K</div><div class="cl">Scalable</div></div>
+  <div class="cap" id="cap-sec"><div class="ci">🔒</div><div class="cv" id="mSec">E2E</div><div class="cl">Secure</div></div>
+</div>
+
+<div class="scene" id="scene">
+  <div class="phone sender" id="sender"><div class="top"><span class="av">A</span>You</div><div class="screen"></div></div>
+  <div class="cluster" id="cluster">
+    <div class="clabel">WhatsApp servers</div>
+    <div class="reqrate" id="reqrate">0 req/s</div>
+    <div class="node"><div class="nh"><span class="dot"></span>node-1<span class="st">live</span></div><div class="load"><i></i></div></div>
+    <div class="node"><div class="nh"><span class="dot"></span>node-2<span class="st">live</span></div><div class="load"><i></i></div></div>
+    <div class="node"><div class="nh"><span class="dot"></span>node-3<span class="st">live</span></div><div class="load"><i></i></div></div>
+    <div class="node"><div class="nh"><span class="dot"></span>node-4<span class="st">live</span></div><div class="load"><i></i></div></div>
+  </div>
+  <div class="phone receiver" id="receiver"><div class="top"><span class="av">B</span>Friend</div><div class="screen"></div></div>
+  <div class="packets" id="packets"></div>
+</div>
+
+<div class="controls">
+  <button class="btn primary" onclick="sendMessage()">💬 Send a message</button>
+  <button class="btn" onclick="showEncryption()">🔒 Show encryption</button>
+  <button class="btn" onclick="scaleUp()">🚀 Scale to billions</button>
+  <button class="btn" onclick="failover()">⚠️ Simulate outage</button>
+  <button class="btn" onclick="autoDemo()">▶ Run full demo</button>
+</div>
+<div class="legend">Every tap runs the real production pattern: encrypt → route across a server cluster → deliver → acknowledge — in milliseconds, for billions of people, without going down.</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const scene=document.getElementById('scene'), packets=document.getElementById('packets'),
+      sender=document.getElementById('sender'), receiver=document.getElementById('receiver'),
+      cluster=document.getElementById('cluster'), toast=document.getElementById('toast');
+const nodes=[...cluster.querySelectorAll('.node')];
+let down=-1, currentUsers=1000, busy=false;
+
+function pos(el){ const s=scene.getBoundingClientRect(), r=el.getBoundingClientRect(); return {x:r.left-s.left+r.width/2, y:r.top-s.top+r.height/2}; }
+function activeNode(){ const ok=nodes.map((n,i)=>i).filter(i=>i!==down); return nodes[ok[Math.floor(ok.length/2)]]; }
+function toastMsg(t){ toast.textContent=t; toast.classList.add('show'); }
+function lightCap(id){ const el=document.getElementById(id); el.classList.add('active'); setTimeout(()=>el.classList.remove('active'),2400); }
+function setM(id,v){ document.getElementById(id).textContent=v; }
+function bubble(phone,text,side){ const scr=phone.querySelector('.screen'); const b=document.createElement('div'); b.className='bub '+side; b.innerHTML=text; scr.appendChild(b); scr.scrollTop=scr.scrollHeight; while(scr.children.length>6) scr.removeChild(scr.firstChild); return b; }
+function abbr(v){ v=Math.round(v); if(v>=1e9)return (v/1e9).toFixed(1).replace(/\.0$/,'')+'B'; if(v>=1e6)return Math.round(v/1e6)+'M'; if(v>=1e3)return Math.round(v/1e3)+'K'; return ''+v; }
+function animateCount(id,from,to,dur,fmt){ const el=document.getElementById(id), t0=performance.now(); (function step(t){ const k=Math.min(1,(t-t0)/dur), e=1-Math.pow(1-k,3), v=from+(to-from)*e; el.textContent=fmt?fmt(v):Math.round(v); if(k<1)requestAnimationFrame(step); })(performance.now()); }
+
+function flyPacket(opt){
+  const p=document.createElement('div'); p.className='packet'+(opt.secure?' sec':'');
+  const tx=document.createElement('span'); tx.textContent=opt.secure?'•••••':(opt.text||'msg');
+  if(opt.secure){ const lk=document.createElement('span'); lk.textContent='🔒'; p.appendChild(lk); }
+  p.appendChild(tx); packets.appendChild(p);
+  const A=pos(sender), V=pos(activeNode()), B=pos(receiver), dur=opt.dur||470;
+  const place=pt=>{ p.style.transform='translate('+(pt.x-p.offsetWidth/2)+'px,'+(pt.y-p.offsetHeight/2)+'px)'; };
+  place(A);
+  let scr; if(opt.secure){ scr=setInterval(()=>{ tx.textContent=Array.from({length:5},()=>'!@#$%&*?х9§'[Math.floor(Math.random()*11)]).join(''); },70); }
+  requestAnimationFrame(()=>{ p.style.transition='transform '+dur+'ms cubic-bezier(.4,.05,.5,1)'; place(V); });
+  setTimeout(()=>place(B), dur+30);
+  setTimeout(()=>{ if(scr)clearInterval(scr); p.remove(); opt.onArrive&&opt.onArrive(); }, dur*2+80);
+}
+
+function sendMessage(){
+  if(busy) return; lightCap('cap-fast'); lightCap('cap-acc');
+  const lat=42+Math.floor(Math.random()*16); setM('mFast',lat+' ms');
+  const out=bubble(sender,'Hey! 👋 <span class="tick">✓</span>','out');
+  flyPacket({ text:'Hey!', onArrive:()=>{
+    bubble(receiver,'Hey! 👋','in');
+    const tk=out.querySelector('.tick'); setTimeout(()=>{ tk.textContent='✓✓'; tk.classList.add('read'); },350);
+    toastMsg('Delivered & read in '+lat+' ms — ✓✓');
+  }});
+}
+function showEncryption(){
+  if(busy) return; lightCap('cap-sec');
+  const out=bubble(sender,'My PIN is 4291 🤫 <span class="tick">✓</span>','out');
+  flyPacket({ secure:true, dur:1600, onArrive:()=>{
+    bubble(receiver,'My PIN is 4291 🤫','in');
+    const tk=out.querySelector('.tick'); tk.textContent='✓✓'; tk.classList.add('read');
+    toastMsg('End-to-end encrypted 🔒 — scrambled in transit, only you two can read it');
+  }});
+}
+function randNode(){ const ok=nodes.filter((n,i)=>i!==down); return ok[Math.floor(Math.random()*ok.length)]; }
+function placeXY(el,x,y,h){ el.style.transform='translate('+(x-h)+'px,'+(y-h)+'px)'; }
+function ripple(x,y){ const r=document.createElement('div'); r.className='ripple'; r.style.left=x+'px'; r.style.top=y+'px'; packets.appendChild(r); setTimeout(()=>r.remove(),520); }
+function spawnReq(){
+  const s=scene.getBoundingClientRect(), W=s.width, H=s.height; let sx,sy, side=Math.floor(Math.random()*4);
+  if(side===0){ sx=Math.random()*W; sy=-12; } else if(side===1){ sx=W+12; sy=Math.random()*H; }
+  else if(side===2){ sx=Math.random()*W; sy=H+12; } else { sx=-12; sy=Math.random()*H; }
+  const t=pos(randNode()), tx=t.x+(Math.random()*48-24), ty=t.y+(Math.random()*30-15);
+  const p=document.createElement('div'); p.className='req'+(Math.random()<0.5?' c2':''); packets.appendChild(p);
+  placeXY(p,sx,sy,3);
+  requestAnimationFrame(()=>{ p.style.transition='transform '+(340+Math.random()*340)+'ms linear'; placeXY(p,tx,ty,3); });
+  setTimeout(()=>{ if(Math.random()<0.22) ripple(tx,ty); p.style.opacity='0'; }, 420+Math.random()*260);
+  setTimeout(()=>p.remove(), 840);
+}
+function requestStorm(count,dur){ for(let i=0;i<count;i++) setTimeout(spawnReq, Math.random()*dur); }
+function reqFmt(v){ v=Math.round(v); let s; if(v>=1e6)s=(v/1e6).toFixed(1)+'M'; else if(v>=1e3)s=Math.round(v/1e3)+'K'; else s=''+v; return s+' req/s'; }
+function scaleUp(){
+  if(busy) return; lightCap('cap-scale');
+  animateCount('mScale',currentUsers,2700000000,2000,abbr); currentUsers=2700000000;
+  nodes.forEach((n,i)=>{ if(i!==down){ n.querySelector('.load i').style.width=(58+Math.random()*24)+'%'; n.classList.add('busy'); setTimeout(()=>n.classList.remove('busy'),2400); } });
+  const rr=document.getElementById('reqrate'); rr.classList.add('show'); animateCount('reqrate',0,1240000,2000,reqFmt);
+  requestStorm(260,2000);
+  setTimeout(()=>rr.classList.remove('show'),2700);
+  toastMsg('2.7 billion users · ~1.2M requests/sec hitting the cluster — auto-scaled, still green 🟢');
+}
+function failover(){
+  if(busy) return; lightCap('cap-avail'); down=1; nodes[1].classList.add('down');
+  nodes[1].querySelector('.st').textContent='DOWN'; nodes[1].querySelector('.load i').style.width='0%';
+  toastMsg('⚠️ node-2 crashed — rerouting traffic…');
+  setTimeout(()=>{ const out=bubble(sender,'Still there? <span class="tick">✓</span>','out');
+    flyPacket({ text:'ping', onArrive:()=>{ bubble(receiver,'Yep! 🟢 all good','in'); const tk=out.querySelector('.tick'); tk.textContent='✓✓'; tk.classList.add('read'); toastMsg('Failover in 0.3s — no message lost. Uptime holds at 99.99% 🟢'); } });
+  },800);
+  setTimeout(()=>{ nodes[1].classList.remove('down'); nodes[1].querySelector('.st').textContent='live'; nodes[1].querySelector('.load i').style.width='18%'; down=-1; toastMsg('node-2 recovered ✓ — back to full capacity'); },4400);
+}
+function autoDemo(){
+  if(busy) return; busy=true;
+  const steps=[ ()=>sendMessage(), ()=>showEncryption(), ()=>scaleUp(), ()=>failover() ];
+  let d=200; steps.forEach((fn,i)=>{ setTimeout(()=>{ busy=false; fn(); busy=true; }, d); d+= (i===2?2200: i===3?6200:1700); });
+  setTimeout(()=>{ busy=false; toastMsg('That is a production-grade AI ecosystem — fast, accurate, available, scalable, secure ✓'); }, d);
+}
+window.addEventListener('load',()=>{ toastMsg('Press a button below to watch WhatsApp prove each capability ↓'); bubble(sender,'Tap a button below 👇','out'); setTimeout(()=>document.getElementById('cap-fast').classList.add('active'),400); setTimeout(()=>document.getElementById('cap-fast').classList.remove('active'),2600); });
+</script>
+</body></html>
